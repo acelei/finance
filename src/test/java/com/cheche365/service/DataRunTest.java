@@ -148,8 +148,7 @@ public class DataRunTest {
         }
     }
 
-
-    private String type = "sks";
+    private String type = "sbt";
 
     @Test
     public void singRun() {
@@ -175,6 +174,11 @@ public class DataRunTest {
     public void exportSignFile() throws InterruptedException, ExecutionException, SQLException, IOException {
         File f = exportFile(type, "select * from result_sbt_3 where `省` is null");
         FileUtils.copyFile(f, new File("空_sbt.xlsx"));
+    }
+
+    @Test
+    public void exportRjFile() throws InterruptedException, ExecutionException, SQLException, IOException {
+        exportFile("sbt");
     }
 
     @Test
@@ -211,6 +215,51 @@ public class DataRunTest {
         dataList.put(ExcelUtil2.EMPTY_MAP);
 
         return f.get();
+    }
+
+    String tjSql = "select `省`,`3-出单保险代理机构（车车科技适用）`,`7-出单保险公司（明细至保险公司分支机构）`,\n" +
+            "       sum(`14-手续费总额（报行内+报行外）(含税)`) as `14-手续费总额（报行内+报行外）(含税)`,\n" +
+            "       sum(`15-手续费总额（报行内+报行外）(不含税)`) as `15-手续费总额（报行内+报行外）(不含税)`,\n" +
+            "       sum(`19-手续费金额（含税）`) as `19-手续费金额（含税）`,\n" +
+            "       sum(`20-手续费金额（不含税）`) as `20-手续费金额（不含税）`,\n" +
+            "       sum(`23-收款金额`) as `23-收款金额`,\n" +
+            "       sum(`27-开票金额（不含税）`) as `27-开票金额（不含税）`,\n" +
+            "       sum(`28-开票金额（含税）`) as `28-开票金额（含税）`,\n" +
+            "       sum(`29-20191231应收账款（含已开票和未开票）`) as `29-20191231应收账款（含已开票和未开票）`,\n" +
+            "       sum(`33-收款金额`) as `33-收款金额`,\n" +
+            "       sum(`37-开票金额（含税）`) as `37-开票金额（含税）`,\n" +
+            "       sum(`38-尚未开票金额（不含税）`) as `38-尚未开票金额（不含税）`,\n" +
+            "       sum(`39-尚未开票金额（含税）`) as `39-尚未开票金额（含税）`,\n" +
+            "       sum(`42-佣金金额（已入账）`) as `42-佣金金额（已入账）`,\n" +
+            "       sum(`45-支付金额`) as `45-支付金额`,\n" +
+            "       sum(`46-未计提佣金（19年底尚未入帐）`) as `46-未计提佣金（19年底尚未入帐）`\n" +
+            "       from result_#_3 group by `省`,`3-出单保险代理机构（车车科技适用）`,`7-出单保险公司（明细至保险公司分支机构）`";
+
+    public void exportFile(String type) throws SQLException, IOException {
+        List<String> head = Lists.newArrayList(
+                "省",
+                "3-出单保险代理机构（车车科技适用）",
+                "7-出单保险公司（明细至保险公司分支机构）",
+                "14-手续费总额（报行内+报行外）(含税)",
+                "15-手续费总额（报行内+报行外）(不含税)",
+                "19-手续费金额（含税）",
+                "20-手续费金额（不含税）",
+                "23-收款金额",
+                "27-开票金额（不含税）",
+                "28-开票金额（含税）",
+                "29-20191231应收账款（含已开票和未开票）",
+                "33-收款金额",
+                "37-开票金额（含税）",
+                "38-尚未开票金额（不含税）",
+                "39-尚未开票金额（含税）",
+                "42-佣金金额（已入账）",
+                "45-支付金额",
+                "46-未计提佣金（19年底尚未入帐）"
+        );
+        List<GroovyRowResult> rows = baseSql.rows(tjSql.replace("#", type));
+        List<Map> list = Lists.newArrayList(rows);
+        File file = ExcelUtil2.writeToExcel(head, list);
+        FileUtils.copyFile(file, new File("统计_sbt.xlsx"));
     }
 
     @Test
