@@ -171,23 +171,15 @@ public class MatchSingleData {
         synchronized (lock) {
             List<TwoHandleSign> insProOrderMonthList = thsListMap.get(generRateMapKey(twoHandleSign));
             List<TwoHandleSign> allSourceDataList = new ArrayList<>();
-            if (StringUtils.isEmpty(twoHandleSign.getAgentName())) {
-                if (type == 1) {
-                    allSourceDataList = insProOrderMonthList.stream()
-                            .filter(it -> StringUtils.isNotEmpty(it.getSids()) && StringUtils.isEmpty(it.getCids()))
-                            .filter(it -> StringUtils.isEmpty(it.getAgentName()))
-                            .collect(Collectors.toList());
-                } else {
+            if (type == 1) {
+                allSourceDataList = insProOrderMonthList.stream()
+                        .filter(it -> StringUtils.isNotEmpty(it.getSids()) && StringUtils.isEmpty(it.getCids()))
+                        .collect(Collectors.toList());
+            } else {
+                if (StringUtils.isEmpty(twoHandleSign.getAgentName())) {
                     allSourceDataList = insProOrderMonthList.stream()
                             .filter(it -> StringUtils.isNotEmpty(it.getCids()) && StringUtils.isEmpty(it.getSids()))
                             .filter(it -> StringUtils.isEmpty(it.getAgentName()))
-                            .collect(Collectors.toList());
-                }
-            } else {
-                if (type == 1) {
-                    allSourceDataList = insProOrderMonthList.stream()
-                            .filter(it -> StringUtils.isNotEmpty(it.getSids()) && StringUtils.isEmpty(it.getCids()))
-                            .filter(it -> it.getAgentName().equals(twoHandleSign.getAgentName()))
                             .collect(Collectors.toList());
                 } else {
                     allSourceDataList = insProOrderMonthList.stream()
@@ -215,7 +207,7 @@ public class MatchSingleData {
                 if (CollectionUtils.isNotEmpty(filterList)) {
                     sourceDataList = allSourceDataList.stream()
                             .filter(it -> !filterList.contains(it.getId()))
-                            .limit(10)
+                            .limit(5)
                             .collect(Collectors.toList());
                 } else {
                     sourceDataList = allSourceDataList.stream().limit(5).collect(Collectors.toList());
