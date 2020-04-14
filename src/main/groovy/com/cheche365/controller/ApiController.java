@@ -1,0 +1,101 @@
+package com.cheche365.controller;
+
+import com.cheche365.entity.RestResponse;
+import com.cheche365.service.DataRunService;
+import com.cheche365.service.InitData;
+import groovy.sql.GroovyRowResult;
+import groovy.sql.Sql;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.sql.SQLException;
+import java.util.List;
+
+@RestController
+public class ApiController {
+    @Autowired
+    private Sql baseSql;
+    @Autowired
+    private DataRunService dataRunService;
+    @Autowired
+    private InitData initData;
+
+    @GetMapping({"data/before/{type}", "data/before"})
+    public RestResponse<String> before(@PathVariable(required = false) String type) throws SQLException {
+        if (type != null) {
+            initData.run(type);
+        } else {
+            List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=0");
+
+            for (GroovyRowResult row : rows) {
+                String t = row.get("type").toString();
+                initData.run(t);
+            }
+        }
+
+        return RestResponse.success();
+    }
+
+    @GetMapping({"data/init/{type}", "data/init"})
+    public RestResponse<String> init(@PathVariable(required = false) String type) throws SQLException {
+        if (type != null) {
+            dataRunService.init(type);
+        } else {
+            List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=0");
+
+            for (GroovyRowResult row : rows) {
+                String t = row.get("type").toString();
+                dataRunService.init(t);
+                baseSql.executeUpdate("update table_type set flag=1 where `type`=?", new Object[]{t});
+            }
+        }
+        return RestResponse.success();
+    }
+
+    @GetMapping({"data/process/{type}", "data/process"})
+    public RestResponse<String> process(@PathVariable(required = false) String type) throws SQLException {
+        if (type != null) {
+            dataRunService.process(type);
+        } else {
+            List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=1");
+
+            for (GroovyRowResult row : rows) {
+                String t = row.get("type").toString();
+                dataRunService.process(t);
+                baseSql.executeUpdate("update table_type set flag=2 where `type`=?", new Object[]{t});
+            }
+        }
+        return RestResponse.success();
+    }
+
+    @GetMapping({"data/result/{type}", "data/result"})
+    public RestResponse<String> result(@PathVariable String type) throws SQLException {
+        if (type != null) {
+            dataRunService.result(type);
+        } else {
+            List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=2");
+
+            for (GroovyRowResult row : rows) {
+                String t = row.get("type").toString();
+                dataRunService.result(t);
+                baseSql.executeUpdate("update table_type set flag=3 where `type`=?", new Object[]{t});
+            }
+        }
+        return RestResponse.success();
+    }
+
+    @GetMapping("data/rollback/{type}")
+    public RestResponse<String> rollback(@PathVariable String type) {
+        initData.roll(type);
+        initData.fixPremium(type, "");
+        return RestResponse.success();
+    }
+
+    @GetMapping("data/reRun/{type}")
+    public RestResponse<String> reRun(@PathVariable String type) {
+        dataRunService.reRun(type);
+        return RestResponse.success();
+    }
+}

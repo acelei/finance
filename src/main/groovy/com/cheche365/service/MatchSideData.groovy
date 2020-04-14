@@ -1,0 +1,216 @@
+package com.cheche365.service
+
+import com.cheche365.util.ThreadPoolUtils
+import com.cheche365.util.Utils
+import groovy.sql.GroovyRowResult
+import groovy.sql.Sql
+import groovy.util.logging.Slf4j
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.stereotype.Service
+
+@Service
+@Slf4j
+class MatchSideData {
+    @Autowired
+    protected Sql baseSql
+
+    String querySettlement = "select id,id as s_id,sum_fee as fee,sum_commission as commission,`14-手续费总额（报行内+报行外）(含税)`,`15-手续费总额（报行内+报行外）(不含税)`,`42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`,DATE_FORMAT(`9-保单出单日期`,'%Y-%m') as order_month,`保险公司`,`省`, null as flag from settlement_# where d_id in (3,4,5)"
+    String queryCommission = "select id,id as c_id,sum_fee as fee,sum_commission as commission,`14-手续费总额（报行内+报行外）(含税)`,`15-手续费总额（报行内+报行外）(不含税)`,`42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`,DATE_FORMAT(`9-保单出单日期`,'%Y-%m') as order_month,`保险公司`,`省`,`40-代理人名称`, null as flag from commission_# where d_id in (3,4,5)"
+
+    void run(String type) {
+        processSettlement(type)
+        processCommission(type)
+    }
+
+    void processSettlement(String type) {
+        Map commissionGroup = baseSql.rows(getQueryCommission().replace("#", type)).groupBy {
+            it.'保险公司' + it.'省' + it.'order_month' + it.'40-代理人名称'
+        }
+        List<GroovyRowResult> settlements = baseSql.rows(getQuerySettlement().replace("#", type))
+        ThreadPoolUtils.executeRun(settlements, { it ->
+            matchCommission(it, commissionGroup, type)
+        }).await()
+
+    }
+
+    void processCommission(String type) {
+        Map settlementGroup = baseSql.rows(getQuerySettlement().replace("#", type)).groupBy {
+            it.'保险公司' + it.'省' + it.'order_month'
+        }
+        List<GroovyRowResult> commissions = baseSql.rows(getQueryCommission().replace("#", type))
+        ThreadPoolUtils.executeRun(commissions, { it ->
+            matchSettlement(it, settlementGroup, type)
+        }).await()
+    }
+
+    void matchCommission(GroovyRowResult settlement, Map<String, List<GroovyRowResult>> commissionGroup, String type) {
+        for (List<GroovyRowResult> commissions : commissionGroup.values()) {
+            int size = Math.ceil(commissions.size / 10)
+            int n = size
+            while (n-- > 0) {
+                List<GroovyRowResult> tmp
+                if (commissions.size() > 10) {
+                    tmp = Utils.getRandomList(commissions, 10)
+                } else {
+                    tmp = commissions
+                }
+                def matchMap = matchData([settlement], tmp)
+                if (matchMap != null) {
+                    if (isMatch(matchMap, commissionGroup)) {
+                        updateCommissionResult(matchMap, type)
+                        return
+                    } else {
+                        n = size
+                    }
+                }
+            }
+        }
+        log.info("匹配失败:{}", settlement)
+    }
+
+    void matchSettlement(GroovyRowResult commission, Map<String, List<GroovyRowResult>> settlementGroup, String type) {
+        for (List<GroovyRowResult> settlements : settlementGroup.values()) {
+            int size = Math.ceil(settlements.size / 10)
+            int n = size
+            while (n-- > 0) {
+                List<GroovyRowResult> tmp
+                if (settlements.size() > 10) {
+                    tmp = Utils.getRandomList(settlements, 10)
+                } else {
+                    tmp = settlements
+                }
+                def matchMap = matchData(tmp, [commission])
+                if (matchMap != null) {
+                    if (isMatch(matchMap, settlementGroup)) {
+                        updateSettlementResult(matchMap, type)
+                        return
+                    } else {
+                        n = size
+                    }
+                }
+            }
+        }
+        log.info("匹配失败:{}", commission)
+    }
+
+    private static Map<List<GroovyRowResult>, List<GroovyRowResult>> matchData(List<GroovyRowResult> settlements, List<GroovyRowResult> commissions) {
+        List<GroovyRowResult> commissionTmp, settlementTmp
+        settlementTmp = settlements.findAll { it.flag == null }
+        commissionTmp = commissions.findAll { it.flag == null }
+        return Utils.matchCombine(settlementTmp, commissionTmp, {
+            s, c ->
+                def fee = s*.fee.collect { it as double }.sum()
+                def commission = c*.commission.collect { it as double }.sum()
+                return Math.abs((fee - commission) / fee) < 1
+        })
+    }
+
+    private boolean isMatch(Map<List<GroovyRowResult>, List<GroovyRowResult>> matchMap, Object lock) {
+        synchronized (lock) {
+            for (def key : matchMap.keySet()) {
+                def tmp1 = key.find { i -> i.flag != null }
+                if (tmp1 != null) {
+                    return false
+                }
+                def tmp2 = matchMap.get(key).find { i -> i.flag != null }
+                if (tmp2 != null) {
+                    return false
+                }
+            }
+
+            matchMap.each { key, value ->
+                key.each {
+                    it.flag = 1
+                }
+                value.each {
+                    it.flag = 1
+                }
+            }
+            return true
+        }
+    }
+
+    static String insertRef = "insert into result_gross_margin_ref (table_name,result_id,s_id,c_id,type) values "
+    String sTable = "settlement_#"
+    String cTable = "commission_#"
+
+    void updateCommissionResult(Map<List<GroovyRowResult>, List<GroovyRowResult>> matchMap, String type) {
+        def row
+        def c42 = 0, c45 = 0, c46 = 0, sumCommission = 0
+        matchMap.each { key, value ->
+            if (key.size() > 1) {
+                throw new Exception("只能对一条单边结算进行匹配")
+            }
+            List valueList = new ArrayList()
+            String tableName = "'${getsTable()}'"
+            String joinType = "1"
+            key.each { s ->
+                row = s
+                c42 += (s.'42-佣金金额（已入账）' as double)
+                c45 += (s.'45-支付金额' as double)
+                c46 += (s.'46-未计提佣金（19年底尚未入帐）' as double)
+                sumCommission += (s.'commission' as double)
+                def sId = (s.s_id as String).split(",")[0]
+                value.each { c ->
+                    c42 += (c.'42-佣金金额（已入账）' as double)
+                    c45 += (c.'45-支付金额' as double)
+                    c46 += (c.'46-未计提佣金（19年底尚未入帐）' as double)
+                    sumCommission += (c.'commission' as double)
+                    (c.c_id as String).split(",").each {
+                        StringJoiner values = new StringJoiner(",", "(", ")")
+                        values.add(tableName.replace("#", type))
+                        values.add(s.id as String)
+                        values.add(sId)
+                        values.add(it)
+                        values.add(joinType)
+                        valueList.add(values)
+                    }
+                }
+            }
+
+            baseSql.executeInsert(insertRef + valueList.join(","))
+            baseSql.executeUpdate("update ${getsTable()} set handle_sign=4,`42-佣金金额（已入账）`=?,`45-支付金额`=?,`46-未计提佣金（19年底尚未入帐）`=?,sum_commission=?,gross_profit=?,c_id=? where id=?"
+                    .replace("#", type), [c42, c45, c46, sumCommission, ((row.fee as double) - sumCommission) / (row.fee as double), value*.id.join(','), row.id])
+            baseSql.executeUpdate("update ${getcTable()} set handle_sign=5 where id in (${value*.id.join(',')})".replace("#", type))
+        }
+    }
+
+    void updateSettlementResult(Map<List<GroovyRowResult>, List<GroovyRowResult>> matchMap, String type) {
+        def row
+        def s14 = 0, s15 = 0, sumFee = 0
+        matchMap.each { key, value ->
+            if (value.size() > 1) {
+                throw new Exception("只能对一条单边付佣进行匹配")
+            }
+            List valueList = new ArrayList()
+            String tableName = "'${getcTable()}'"
+            String joinType = "2"
+            value.each { c ->
+                row = c
+                s14 += (c.'14-手续费总额（报行内+报行外）(含税)' as double)
+                s15 += (c.'15-手续费总额（报行内+报行外）(不含税)' as double)
+                sumFee += (c.'fee' as double)
+                def cId = (c.c_id as String).split(",")[0]
+                key.each { s ->
+                    s14 += (s.'14-手续费总额（报行内+报行外）(含税)' as double)
+                    s15 += (s.'15-手续费总额（报行内+报行外）(不含税)' as double)
+                    sumFee += (s.'fee' as double)
+                    (s.s_id as String).split(",").each {
+                        StringJoiner values = new StringJoiner(",", "(", ")")
+                        values.add(tableName.replace("#", type))
+                        values.add(c.id as String)
+                        values.add(it)
+                        values.add(cId)
+                        values.add(joinType)
+                        valueList.add(values)
+                    }
+                }
+            }
+
+            baseSql.executeInsert(insertRef + valueList.join(","))
+            baseSql.executeUpdate("update ${getsTable()} set handle_sign=5 where id in (${key*.s_id.join(',')})".replace("#", type))
+            baseSql.executeUpdate("update ${getcTable()} set handle_sign=4,`14-手续费总额（报行内+报行外）(含税)`=?,`15-手续费总额（报行内+报行外）(不含税)`=?,sum_fee=?,gross_profit=?,s_id=? where id=?"
+                    .replace("#", type), [s14, s15, sumFee, (sumFee - (row.commission as double)) / sumFee, key*.s_id.join(','), row.id])
+        }
+    }
+}

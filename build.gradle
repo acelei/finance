@@ -1,0 +1,45 @@
+plugins {
+    id 'groovy'
+    id 'java'
+    id "org.springframework.boot" version "2.2.6.RELEASE"
+}
+
+group 'com.cheche365'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+
+repositories {
+    maven { url "http://maven.aliyun.com/nexus/content/groups/public/" }
+    maven { url "http://192.168.1.251:8081/nexus/content/repositories/releases/" }
+    maven { url "http://192.168.1.251:8081/nexus/content/repositories/snapshots/" }
+    // 使用本地maven库
+    mavenLocal()
+    // 使用中央mav库
+    mavenCentral()
+}
+
+configurations {
+    runtime.exclude(group: 'org.springframework.boot', module: 'spring-boot-starter-tomcat')
+}
+
+dependencies {
+    compile 'org.codehaus.groovy:groovy-all:2.3.11'
+    compile 'com.google.guava:guava:28.2-jre'
+    compile 'com.hankcs:hanlp:portable-1.7.7'
+    compile 'org.springframework.boot:spring-boot-starter-web:2.2.6.RELEASE'
+    compile 'org.springframework.boot:spring-boot-starter-jdbc:2.2.6.RELEASE'
+    compile 'com.alibaba:druid-spring-boot-starter:1.1.21'
+    compile 'mysql:mysql-connector-java:5.1.48'
+    compile 'com.monitorjbl:xlsx-streamer:2.1.0'
+    compile "org.apache.commons:commons-lang3:3.10"
+    compile "commons-beanutils:commons-beanutils:1.9.3"
+    compile 'commons-io:commons-io:2.6'
+
+    annotationProcessor 'org.projectlombok:lombok:1.18.12'
+    compileOnly 'org.projectlombok:lombok:1.18.12'
+    testCompileOnly 'org.projectlombok:lombok:1.18.12'
+    testCompile 'org.springframework.boot:spring-boot-starter-test:2.2.6.RELEASE'
+
+    runtime "org.springframework.boot:spring-boot-starter-undertow:2.2.6.RELEASE"
+}
