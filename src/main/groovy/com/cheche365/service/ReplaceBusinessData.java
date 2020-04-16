@@ -51,7 +51,6 @@ public class ReplaceBusinessData {
             "      from das_data_pool_business\n" +
             "      group by insurance_company_id, province_id";
 
-    private String updateFlag = "update table_type set flag = '3' where `type` = tableNameRef";
     private String updateBusinessDataHandleSign = "update `tableName` set handle_sign = '2' where id = idVal";
     private String listReplaceBusiness = "select t1.id,\n" +
             "       t1.s_id                                                                                          as sids,\n" +
@@ -135,7 +134,6 @@ public class ReplaceBusinessData {
             for (String tableName : threeTableName) {
                 replaceBusiness(tableName, insProList);
             }
-            baseSql.executeUpdate(updateFlag.replace("tableNameRef", tableNameRef));
             log.info("replaceBusiness success! tableNameRef:{}", tableNameRef);
         } catch (Exception e) {
             e.printStackTrace();
