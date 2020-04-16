@@ -98,4 +98,5 @@ public class ApiController {
         dataRunService.reRun(type);
         return RestResponse.success();
     }
+
 }

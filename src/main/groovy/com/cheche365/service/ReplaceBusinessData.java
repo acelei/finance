@@ -135,7 +135,7 @@ public class ReplaceBusinessData {
             for (String tableName : threeTableName) {
                 replaceBusiness(tableName, insProList);
             }
-            baseSql.executeUpdate(updateFlag.replace("tableName", "table_type"));
+            baseSql.executeUpdate(updateFlag.replace("tableNameRef", tableNameRef));
             log.info("replaceBusiness success! tableNameRef:{}", tableNameRef);
         } catch (Exception e) {
             e.printStackTrace();

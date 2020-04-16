@@ -41,6 +41,8 @@ public class DataRunTest {
     private MatchSingleData matchSingleData;
     @Autowired
     private ReplaceBusinessData replaceBusinessData;
+    @Autowired
+    private InsertTableData insertTableData;
 
     @Test
     public void init() throws SQLException {
@@ -270,6 +272,15 @@ public class DataRunTest {
     @Test
     public void testReplaceBusinessData() {
         replaceBusinessData.replaceBusinessList("bj");
+    }
+
+    @Test
+    public void testInsertTableData() {
+        try {
+            insertTableData.insertData();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
 }
