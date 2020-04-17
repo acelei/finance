@@ -177,13 +177,13 @@ public class MatchSingleData {
         synchronized (lock) {
             List<TwoHandleSign> insProOrderMonthList = thsListMap.get(generRateMapKey(twoHandleSign));
             List<TwoHandleSign> allSourceDataList = new ArrayList<>();
-            LocalDate targetOrderMonth = LocalDate.parse(twoHandleSign.getOrderMonth() + "-01");
+            LocalDate targetOrderMonth = LocalDate.parse(twoHandleSign.getOrderMonth() + "-01", fmt);
             if (type == 1) {
                 allSourceDataList = insProOrderMonthList.stream()
                         .filter(it -> StringUtils.isNotEmpty(it.getSids()) && StringUtils.isEmpty(it.getCids()))
                         .filter(it -> StringUtils.isNotEmpty(it.getOrderMonth()))
                         .filter(it -> (it.getOrderMonth().equals(twoHandleSign.getOrderMonth())
-                                || LocalDate.parse(it.getOrderMonth() + "-01").isAfter(targetOrderMonth)))
+                                || LocalDate.parse(it.getOrderMonth() + "-01", fmt).isAfter(targetOrderMonth)))
                         .collect(Collectors.toList());
             } else {
                 if (StringUtils.isEmpty(twoHandleSign.getAgentName())) {
@@ -192,7 +192,7 @@ public class MatchSingleData {
                             .filter(it -> StringUtils.isEmpty(it.getAgentName()))
                             .filter(it -> StringUtils.isNotEmpty(it.getOrderMonth()))
                             .filter(it -> (it.getOrderMonth().equals(twoHandleSign.getOrderMonth())
-                                    || LocalDate.parse(it.getOrderMonth() + "-01").isAfter(targetOrderMonth)))
+                                    || LocalDate.parse(it.getOrderMonth() + "-01", fmt).isAfter(targetOrderMonth)))
                             .collect(Collectors.toList());
                 } else {
                     allSourceDataList = insProOrderMonthList.stream()
@@ -200,7 +200,7 @@ public class MatchSingleData {
                             .filter(it -> it.getAgentName().equals(twoHandleSign.getAgentName()))
                             .filter(it -> StringUtils.isNotEmpty(it.getOrderMonth()))
                             .filter(it -> (it.getOrderMonth().equals(twoHandleSign.getOrderMonth())
-                                    || LocalDate.parse(it.getOrderMonth() + "-01").isAfter(targetOrderMonth)))
+                                    || LocalDate.parse(it.getOrderMonth() + "-01", fmt).isAfter(targetOrderMonth)))
                             .collect(Collectors.toList());
                 }
             }
