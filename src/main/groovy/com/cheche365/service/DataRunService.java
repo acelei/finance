@@ -28,6 +28,8 @@ public class DataRunService {
     @Autowired
     private MatchSingleData matchSingleData;
     @Autowired
+    private MatchSideData matchSideData;
+    @Autowired
     private ReplaceBusinessData replaceBusinessData;
 
     /**
@@ -48,7 +50,7 @@ public class DataRunService {
         // 处理保险公司及地区
         fixInsuranceCompanyArea.run(type);
         // 写入result表
-        dataCombine.result(type);
+//        dataCombine.result(type);
         // 写入result2表
         dataCombine.result2(type);
         // 标记result2单边数据
@@ -74,20 +76,23 @@ public class DataRunService {
         matchResultSideData.run(type);
         // 3.对毛利率问题数据进行调整
         fixProfit.fixSettlementCommission(type);
+
+        tabSideData.putDownFlag1(type);
         // 4.result中毛利率异常匹配自身单边数据
         matchSingleData.matchSingleDataList(type, true);
         // 5.在result2中将单边数据匹配毛利率较高数据
         reMatchResultSideData.run(type);
+        // 9.设置替换标记
+        initData.flagErrData(type);
         // 6.将剩下的单边数据标记下放
-        tabSideData.putDownFlag(type);
+        tabSideData.putDownFlag2(type);
         // 7.将result_2中的毛利率异常数据匹配散表中的单边数据
         matchSingleData.matchSingleDataList(type, false);
         // 8.将settlement,commission剩余单边数据匹配至result2中毛利率较高数据
         reMatchSideData.run(type);
-        // 9.设置替换标记
-        initData.flagErrData(type);
+
         // 10.保费与收入数据比例异常的数据做数据替换
-        replaceBusinessData.replaceBusinessList(type);
+//        replaceBusinessData.replaceBusinessList(type);
     }
 
     /**

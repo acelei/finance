@@ -2,6 +2,7 @@ package com.cheche365.service;
 
 import app.SpringApplicationLauncher;
 import com.cheche365.util.ThreadPoolUtils;
+import com.google.common.collect.Lists;
 import groovy.sql.GroovyRowResult;
 import groovy.sql.Sql;
 import lombok.extern.log4j.Log4j2;
@@ -57,7 +58,7 @@ public class InitDataTest {
 
     @Test
     public void createTable() throws SQLException {
-        String type = "tj";
+        String type = "zongbu_bxw";
 
         baseSql.execute("create table settlement_# like settlement_bj".replace("#",type));
         baseSql.execute("create table commission_# like commission_bj".replace("#",type));
@@ -77,8 +78,8 @@ public class InitDataTest {
         for (GroovyRowResult row : rows) {
             String type = row.get("type").toString();
             try {
-                baseSql.execute("ALTER TABLE `result_#_final`  ADD COLUMN `sum_fee` varchar(100) NULL,ADD COLUMN `sum_commission` varchar(100) NULL,ADD COLUMN `gross_profit` varchar(100) NULL".replace("#", type));
-                baseSql.execute("ALTER TABLE `result_#_2_final`  ADD COLUMN `sum_fee` varchar(100) NULL,ADD COLUMN `sum_commission` varchar(100) NULL,ADD COLUMN `gross_profit` varchar(100) NULL".replace("#", type));
+                baseSql.execute("ALTER TABLE `settlement_#` MODIFY COLUMN `s_id` varchar(255) NULL DEFAULT NULL,MODIFY COLUMN `c_id` varchar(255) NULL DEFAULT NULL".replace("#", type));
+                baseSql.execute("ALTER TABLE `commission_#` MODIFY COLUMN `s_id` varchar(255) NULL DEFAULT NULL,MODIFY COLUMN `c_id` varchar(255) NULL DEFAULT NULL".replace("#", type));
 
             } catch (Exception e) {
                 log.error(type);
@@ -94,4 +95,19 @@ public class InitDataTest {
             tabSideData.setDefaultSideFlag(type);
         }
     }
+
+    String[] tables = new String[]{"`das_data_pool_business`","`das_data_pool_business_1`","`das_data_pool_business_14`","`das_data_pool_business_16`","`das_data_pool_business_18`","`das_data_pool_business_2002`","`das_data_pool_business_2005_110000`","`das_data_pool_business_2005_120000`","`das_data_pool_business_2005_130000`","`das_data_pool_business_2005_140000`","`das_data_pool_business_2005_150000`","`das_data_pool_business_2005_210000`","`das_data_pool_business_2005_220000`","`das_data_pool_business_2005_230000`","`das_data_pool_business_2005_310000`","`das_data_pool_business_2005_320000`","`das_data_pool_business_2005_330000`","`das_data_pool_business_2005_340000`","`das_data_pool_business_2005_350000`","`das_data_pool_business_2005_360000`","`das_data_pool_business_2005_370000`","`das_data_pool_business_2005_410000`","`das_data_pool_business_2005_420000`","`das_data_pool_business_2005_430000`","`das_data_pool_business_2005_440000`","`das_data_pool_business_2005_450000`","`das_data_pool_business_2005_460000`","`das_data_pool_business_2005_500000`","`das_data_pool_business_2005_510000`","`das_data_pool_business_2005_520000`","`das_data_pool_business_2005_530000`","`das_data_pool_business_2005_540000`","`das_data_pool_business_2005_610000`","`das_data_pool_business_2005_620000`","`das_data_pool_business_2005_630000`","`das_data_pool_business_2005_640000`","`das_data_pool_business_2005_650000`","`das_data_pool_business_2007`","`das_data_pool_business_2011`","`das_data_pool_business_2019`","`das_data_pool_business_2021`","`das_data_pool_business_2022`","`das_data_pool_business_2023`","`das_data_pool_business_2024`","`das_data_pool_business_2027`","`das_data_pool_business_2042`","`das_data_pool_business_2043`","`das_data_pool_business_2044`","`das_data_pool_business_2045`","`das_data_pool_business_2046`","`das_data_pool_business_2050`","`das_data_pool_business_2056`","`das_data_pool_business_2060`","`das_data_pool_business_2062`","`das_data_pool_business_2065`","`das_data_pool_business_2066`","`das_data_pool_business_2073`","`das_data_pool_business_2085`","`das_data_pool_business_2088`","`das_data_pool_business_2095`","`das_data_pool_business_21`","`das_data_pool_business_2100`","`das_data_pool_business_25`","`das_data_pool_business_26`","`das_data_pool_business_27`","`das_data_pool_business_32`","`das_data_pool_business_35`","`das_data_pool_business_36`","`das_data_pool_business_4`","`das_data_pool_business_40`","`das_data_pool_business_4002`","`das_data_pool_business_45`","`das_data_pool_business_46`","`das_data_pool_business_49`","`das_data_pool_business_50`","`das_data_pool_business_52`","`das_data_pool_business_54`","`das_data_pool_business_55`","`das_data_pool_business_57`","`das_data_pool_business_62`"};
+
+    @Test
+    public void initBusiness() throws  InterruptedException {
+
+        ThreadPoolUtils.executeRun(Lists.newArrayList(tables),table-> {
+            try {
+                baseSql.execute("update # set handle_sign=0".replace("#",  table));
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }).await();
+    }
+
 }

@@ -52,6 +52,17 @@ class FixInsuranceCompanyArea {
         }).await()
     }
 
+    void runTable(String tableName) {
+        log.info("处理开始:${tableName}")
+        log.info("拆分保险公司名称开始:${tableName}")
+        def list = tableRun("select `7-出单保险公司（明细至保险公司分支机构）`,`保险公司`,`市`,`省`,`保险公司id` from ${tableName} where `7-出单保险公司（明细至保险公司分支机构）` is not null and (`保险公司` is null or `省` is null) group by `7-出单保险公司（明细至保险公司分支机构）` ")
+        log.info("拆分保险公司名称完成:${tableName}")
+        log.info("更新保险公司名称及ID开始:${tableName}")
+        updateRun(list, tableName)
+        log.info("更新保险公司名称及ID完成:${tableName}")
+        log.info("处理完毕:${tableName}")
+    }
+
     List<GroovyRowResult> tableRun(String sql) {
         List<GroovyRowResult> list = new CopyOnWriteArrayList<>()
         ThreadPoolUtils.executeRun(baseSql.rows(sql), {

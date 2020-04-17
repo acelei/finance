@@ -13,8 +13,8 @@ class ReMatchSideData {
     @Autowired
     private Sql baseSql
 
-    String errorSettlementSide = "select id,id as s_id,sum_fee as fee,sum_commission as commission,`14-手续费总额（报行内+报行外）(含税)`,`15-手续费总额（报行内+报行外）(不含税)`,`42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`,DATE_FORMAT(`9-保单出单日期`,'%Y-%m') as order_month,`保险公司`,`省` from settlement_# where handle_sign=6"
-    String errorCommissionSide = "select id,id as c_id,sum_fee as fee,sum_commission as commission,`14-手续费总额（报行内+报行外）(含税)`,`15-手续费总额（报行内+报行外）(不含税)`,`42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`,DATE_FORMAT(`9-保单出单日期`,'%Y-%m') as order_month,`保险公司`,`省`,`40-代理人名称` from commission_# where handle_sign=6"
+    String errorSettlementSide = "select id,id as s_id,sum_fee as fee,sum_commission as commission,`14-手续费总额（报行内+报行外）(含税)`,`15-手续费总额（报行内+报行外）(不含税)`,`42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`,DATE_FORMAT(`9-保单出单日期`,'%Y-%m') as order_month,`保险公司`,`省` from settlement_# where handle_sign=6 and date_format(`9-保单出单日期`,'%Y')='2019'"
+    String errorCommissionSide = "select id,id as c_id,sum_fee as fee,sum_commission as commission,`14-手续费总额（报行内+报行外）(含税)`,`15-手续费总额（报行内+报行外）(不含税)`,`42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`,DATE_FORMAT(`9-保单出单日期`,'%Y-%m') as order_month,`保险公司`,`省`,`40-代理人名称` from commission_# where handle_sign=6 and date_format(`9-保单出单日期`,'%Y')='2019'"
 
     void run(String type) {
         settlementMatch(type)
@@ -49,7 +49,10 @@ class ReMatchSideData {
             }
         }
         if (result != null) {
+            log.info("匹配成功:{},{}", row.id, result.id)
             updateSettlement(row, result, type)
+        } else {
+            log.info("匹配失败:{}", row)
         }
     }
 
@@ -65,7 +68,10 @@ class ReMatchSideData {
             }
         }
         if (result != null) {
+            log.info("匹配成功:{},{}", row.id, result.id)
             updateCommission(row, result, type)
+        } else {
+            log.info("匹配失败:{}", row)
         }
     }
 
@@ -75,11 +81,12 @@ select id,s_id,c_id,sum_fee  as fee,
        `14-手续费总额（报行内+报行外）(含税)`,`15-手续费总额（报行内+报行外）(不含税)`,
        `42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`
 from result_#_2
-where handle_sign in (0, 1, 4)
+where handle_sign in (0, 1, 3, 4)
   and ifnull(0+`10-全保费`, 0)-sum_fee > ?
-  and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') = ?
+  and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') <= ?
   and `保险公司` = ?
   and `省` = ?
+  and `8-险种名称` in ('交强险','商业险')
 order by gross_profit
 limit 100
 '''
@@ -89,11 +96,12 @@ select id,s_id,c_id,sum_fee  as fee,
        `14-手续费总额（报行内+报行外）(含税)`,`15-手续费总额（报行内+报行外）(不含税)`,
        `42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`
 from result_#_2
-where handle_sign in (0, 1, 4)
+where handle_sign in (0, 1, 3, 4)
   and sum_fee > ?
-  and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') = ?
+  and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') <= ?
   and `保险公司` = ?
   and `省` = ?
+  and `8-险种名称` in ('交强险','商业险')
 order by gross_profit desc
 limit 100
 '''
@@ -103,12 +111,13 @@ select id,s_id,c_id,sum_fee  as fee,
        `14-手续费总额（报行内+报行外）(含税)`,`15-手续费总额（报行内+报行外）(不含税)`,
        `42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`
 from result_#_2
-where handle_sign in (0, 1, 4)
+where handle_sign in (0, 1, 3, 4)
   and (2*sum_fee)-sum_commission > ?
   and `40-代理人名称`=?
-  and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') = ?
+  and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') <= ?
   and `保险公司` = ?
   and `省` = ?
+  and `8-险种名称` in ('交强险','商业险')
 order by gross_profit desc
 limit 100
 '''
@@ -118,12 +127,13 @@ select id,s_id,c_id,sum_fee  as fee,
        `14-手续费总额（报行内+报行外）(含税)`,`15-手续费总额（报行内+报行外）(不含税)`,
        `42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`
 from result_#_2
-where handle_sign in (0, 1, 4)
+where handle_sign in (0, 1, 3, 4)
   and sum_commission > ?
   and `40-代理人名称`=?
-  and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') = ?
+  and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') <= ?
   and `保险公司` = ?
   and `省` = ?
+  and `8-险种名称` in ('交强险','商业险')
 order by sum_commission desc,
          gross_profit
 limit 100

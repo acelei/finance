@@ -3,6 +3,7 @@ package com.cheche365.controller;
 import com.cheche365.entity.RestResponse;
 import com.cheche365.service.DataRunService;
 import com.cheche365.service.InitData;
+import com.cheche365.service.ReplaceBusinessData;
 import groovy.sql.GroovyRowResult;
 import groovy.sql.Sql;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,8 @@ public class ApiController {
     private DataRunService dataRunService;
     @Autowired
     private InitData initData;
+    @Autowired
+    private ReplaceBusinessData replaceBusinessData;
 
     @GetMapping({"data/before/{type}", "data/before"})
     public RestResponse<String> before(@PathVariable(required = false) String type) throws SQLException {
@@ -32,6 +35,7 @@ public class ApiController {
             for (GroovyRowResult row : rows) {
                 String t = row.get("type").toString();
                 initData.run(t);
+                baseSql.executeUpdate("update table_type set flag=1 where `type`=?", new Object[]{t});
             }
         }
 
@@ -43,12 +47,12 @@ public class ApiController {
         if (type != null) {
             dataRunService.init(type);
         } else {
-            List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=0");
+            List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=1");
 
             for (GroovyRowResult row : rows) {
                 String t = row.get("type").toString();
                 dataRunService.init(t);
-                baseSql.executeUpdate("update table_type set flag=1 where `type`=?", new Object[]{t});
+                baseSql.executeUpdate("update table_type set flag=2 where `type`=?", new Object[]{t});
             }
         }
         return RestResponse.success();
@@ -59,12 +63,28 @@ public class ApiController {
         if (type != null) {
             dataRunService.process(type);
         } else {
-            List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=1");
+            List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=2");
 
             for (GroovyRowResult row : rows) {
                 String t = row.get("type").toString();
                 dataRunService.process(t);
-                baseSql.executeUpdate("update table_type set flag=2 where `type`=?", new Object[]{t});
+                baseSql.executeUpdate("update table_type set flag=3 where `type`=?", new Object[]{t});
+            }
+        }
+        return RestResponse.success();
+    }
+
+    @GetMapping({"data/replace/{type}","data/replace"})
+    public RestResponse<String> replace(@PathVariable String type) throws SQLException {
+        if (type != null) {
+            replaceBusinessData.replaceBusinessList(type);
+        } else {
+            List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=3");
+
+            for (GroovyRowResult row : rows) {
+                String t = row.get("type").toString();
+                replaceBusinessData.replaceBusinessList(t);
+                baseSql.executeUpdate("update table_type set flag=4 where `type`=?", new Object[]{t});
             }
         }
         return RestResponse.success();
@@ -75,12 +95,12 @@ public class ApiController {
         if (type != null) {
             dataRunService.result(type);
         } else {
-            List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=2");
+            List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=4");
 
             for (GroovyRowResult row : rows) {
                 String t = row.get("type").toString();
                 dataRunService.result(t);
-                baseSql.executeUpdate("update table_type set flag=3 where `type`=?", new Object[]{t});
+                baseSql.executeUpdate("update table_type set flag=5 where `type`=?", new Object[]{t});
             }
         }
         return RestResponse.success();
@@ -98,5 +118,4 @@ public class ApiController {
         dataRunService.reRun(type);
         return RestResponse.success();
     }
-
 }

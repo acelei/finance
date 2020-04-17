@@ -29,7 +29,9 @@ class FixProfit {
        `8-险种名称` in ('交强险','商业险')
        and c_id is not null
        and s_id is not null
-       and handle_sign = 0) as temp
+       and handle_sign = 0
+       and date_format(`9-保单出单日期`,'%Y')='2019'
+       ) as temp
        where AbS(gross_profit) > 1
 '''
 
@@ -45,11 +47,11 @@ class FixProfit {
 
     @Deprecated
     void handleSettlementCommission(GroovyRowResult row, String type) {
-        if (row.grossMargin < -1) {
+        if ((row.grossMargin as double) < -1) {
             handleGrossCommissionMargin(row, type)
         }
 
-        if (row.grossMargin > 1) {
+        if ((row.grossMargin as double) > 1) {
             handleGrossSettlementMargin(row, type)
         }
     }
@@ -92,7 +94,8 @@ class FixProfit {
 
         List resultList = Utils.combine(dataList, { i ->
             def fee = i*.fee.collect { it as double }.sum()
-            def r = (fee - row.sumCommission as double) / fee
+            def commission = row.sumCommission as double
+            def r = (fee - commission) / fee
             r > -1 && r < 1
         })
 
@@ -105,7 +108,6 @@ class FixProfit {
             baseSql.executeUpdate(errFlag.replace('#', type), [row.id])
         }
     }
-
 
     void handleGrossMargin(GroovyRowResult row, String type) {
         List settlementList = baseSql.rows(settlementSql.replace("#", type) + "(${row.sIds})")

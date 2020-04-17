@@ -25,7 +25,8 @@ public class FixInsuranceCompanyAreaTest {
      */
     @Test
     public void run() {
-        fixInsuranceCompanyArea.run("sbt");
+//        fixInsuranceCompanyArea.run("zongbu_bxw");
+        fixInsuranceCompanyArea.runTable("settlement_commission_temp");
     }
 
     @Test

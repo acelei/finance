@@ -97,17 +97,22 @@ class DataCombine {
             def it = result.get(i)
             StringJoiner values = new StringJoiner(",", "(", ")")
             columns.each { item ->
-                values.add("'${it[item]}'")
+                def value = it[item]
+                if (value == null) {
+                    values.add("null")
+                }else {
+                    values.add("'${(it[item] as String).replace("'","\\'")}'")
+                }
             }
             valueList.add(values)
 
             if (i % 5000 == 0) {
-                baseSql.executeInsert((sql + valueList.join(',')).replace("'null'", "null"))
+                baseSql.executeInsert((sql + valueList.join(',')))
                 valueList.clear()
             }
         }
 
-        baseSql.executeInsert((sql + valueList.join(',')).replace("'null'", "null"))
+        baseSql.executeInsert((sql + valueList.join(',')))
     }
 
     String clean2Sql = 'truncate result_#_2'

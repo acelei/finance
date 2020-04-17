@@ -54,7 +54,8 @@ public class MatchSingleData {
             "             ifnull(`gross_profit`, 0.00) as grossMargin \n" +
             "      from `resultTableName` t1\n" +
             "      where handle_sign = 2\n" +
-            "      and `8-险种名称` in ('交强险', '商业险') ";
+            "      and `8-险种名称` in ('交强险', '商业险') " +
+            "      and date_format(`9-保单出单日期`,'%Y')='2019'";
 
     private String listSingleFeeCommissionData = "select t1.id,\n" +
             "        s_id as sids,\n" +
@@ -68,7 +69,8 @@ public class MatchSingleData {
             "        ifnull(`sum_commission`, 0.00) as commission\n" +
             "        from `resultTableName` t1\n" +
             "        where handle_sign = 6\n" +
-            "        and `8-险种名称` in ('交强险', '商业险')";
+            "        and `8-险种名称` in ('交强险', '商业险')" +
+            "        and date_format(`9-保单出单日期`,'%Y')='2019'";
 
     private String updateHandleSignList = "update `resultTableName` set handle_sign = handleSignVal where id in (idListVal)";
     private String updateFourHandleSignList = "update `resultTableName` set handle_sign = handleSignVal, sum_fee = 'realFeeVal', sum_commission = 'realCommissionVal', gross_profit = 'grossProfitVal' where id in (idListVal)";

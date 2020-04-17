@@ -39,7 +39,7 @@ public class ReplaceBusinessData {
 
     private static final BigDecimal JQ_MIN_FEE_RATE = new BigDecimal(0.04);
     private static final BigDecimal JQ_MAX_FEE_RATE = new BigDecimal(0.08);
-    private static final BigDecimal SY_MIN_FEE_RATE = new BigDecimal(0.15);
+    private static final BigDecimal SY_MIN_FEE_RATE = new BigDecimal(0.12);
     private static final BigDecimal SY_MAX_FEE_RATE = new BigDecimal(0.70);
     //人保  财险
     private static final Long RENBAO = 2005L;

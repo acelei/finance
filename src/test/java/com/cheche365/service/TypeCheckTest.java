@@ -62,7 +62,7 @@ public class TypeCheckTest {
 
     @Test
     public void after() {
-        tabSideData.putDownFlag(type);
+        tabSideData.putDownFlag2(type);
     }
 
     @Test
