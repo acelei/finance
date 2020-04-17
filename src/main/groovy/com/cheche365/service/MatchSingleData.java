@@ -17,6 +17,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
@@ -72,6 +74,7 @@ public class MatchSingleData {
     private String updateFourHandleSignList = "update `resultTableName` set handle_sign = handleSignVal, sum_fee = 'realFeeVal', sum_commission = 'realCommissionVal', gross_profit = 'grossProfitVal' where id in (idListVal)";
 
     private String insertResultRefList = "insert into result_gross_margin_ref (`table_name`, result_id, s_id, c_id, `type`, real_fee, real_commission) values ";
+    private DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
 
     public void matchSingleDataList(String tableNameRef, boolean isResultName) {
@@ -168,23 +171,36 @@ public class MatchSingleData {
             lock = ("TWO_COMMISSION_THREAD_" + generRateMapKey(twoHandleSign) + "_END").intern();
         }
 
+        if (StringUtils.isEmpty(twoHandleSign.getOrderMonth())) {
+            twoHandleSign.setOrderMonth("2019-01");
+        }
         synchronized (lock) {
             List<TwoHandleSign> insProOrderMonthList = thsListMap.get(generRateMapKey(twoHandleSign));
             List<TwoHandleSign> allSourceDataList = new ArrayList<>();
+            LocalDate targetOrderMonth = LocalDate.parse(twoHandleSign.getOrderMonth() + "-01");
             if (type == 1) {
                 allSourceDataList = insProOrderMonthList.stream()
                         .filter(it -> StringUtils.isNotEmpty(it.getSids()) && StringUtils.isEmpty(it.getCids()))
+                        .filter(it -> StringUtils.isNotEmpty(it.getOrderMonth()))
+                        .filter(it -> (it.getOrderMonth().equals(twoHandleSign.getOrderMonth())
+                                || LocalDate.parse(it.getOrderMonth() + "-01").isAfter(targetOrderMonth)))
                         .collect(Collectors.toList());
             } else {
                 if (StringUtils.isEmpty(twoHandleSign.getAgentName())) {
                     allSourceDataList = insProOrderMonthList.stream()
                             .filter(it -> StringUtils.isNotEmpty(it.getCids()) && StringUtils.isEmpty(it.getSids()))
                             .filter(it -> StringUtils.isEmpty(it.getAgentName()))
+                            .filter(it -> StringUtils.isNotEmpty(it.getOrderMonth()))
+                            .filter(it -> (it.getOrderMonth().equals(twoHandleSign.getOrderMonth())
+                                    || LocalDate.parse(it.getOrderMonth() + "-01").isAfter(targetOrderMonth)))
                             .collect(Collectors.toList());
                 } else {
                     allSourceDataList = insProOrderMonthList.stream()
                             .filter(it -> StringUtils.isNotEmpty(it.getCids()) && StringUtils.isEmpty(it.getSids()))
                             .filter(it -> it.getAgentName().equals(twoHandleSign.getAgentName()))
+                            .filter(it -> StringUtils.isNotEmpty(it.getOrderMonth()))
+                            .filter(it -> (it.getOrderMonth().equals(twoHandleSign.getOrderMonth())
+                                    || LocalDate.parse(it.getOrderMonth() + "-01").isAfter(targetOrderMonth)))
                             .collect(Collectors.toList());
                 }
             }
