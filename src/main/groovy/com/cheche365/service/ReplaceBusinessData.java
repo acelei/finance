@@ -2,7 +2,6 @@ package com.cheche365.service;
 
 import com.cheche365.entity.DataPool;
 import com.cheche365.entity.ReplaceBusiness;
-import com.cheche365.util.CommonUtils;
 import com.cheche365.util.ThreadPoolUtils;
 import groovy.sql.GroovyRowResult;
 import groovy.sql.Sql;
@@ -272,7 +271,7 @@ public class ReplaceBusinessData {
                     baseSql.executeUpdate(updateBusinessDataHandleSign.replace("tableName", insuranceCompanyTableName).replace("idVal", businessData.getId().toString()));
                     baseSql.executeUpdate(updateBusinessDataHandleSign.replace("tableName", "das_data_pool_business").replace("idVal", businessData.getId().toString()));
                     updateFinish(resultTableName, finance, type);
-                    log.info("replace success! financeId:{}, businessId:{}", finance.getId(), businessData.getId());
+                    log.info("replace success! resultTableName:{}, financeId:{}, businessId:{}", resultTableName, finance.getId(), businessData.getId());
                     break;
                 }
             }
@@ -382,12 +381,14 @@ public class ReplaceBusinessData {
         return "'" + obj.toString() + "'";
     }
 
-    private String generateSettlementTableName(String tableName) {
-        return "settlement_" + tableName.split("_")[1];
+    private static String generateSettlementTableName(String tableName) {
+        String settlementTableName = "settlement_" + tableName.substring(7);
+        return settlementTableName;
     }
 
     private String generateCommissionTableName(String tableName) {
-        return "commission_" + tableName.split("_")[1];
+        String commissionTableName = "commission_" + tableName.substring(7);
+        return commissionTableName;
     }
 
     private DataPool transMap2Bean(GroovyRowResult groovyRowResult) {
