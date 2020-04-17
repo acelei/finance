@@ -201,7 +201,6 @@ public class ReplaceBusinessData {
                 }
             }
             log.info("replaceBusiness success! tableNameRef:{}", tableNameRef);
-            baseSql.executeUpdate(updateTableType.replace("typeVal", tableNameRef));
         } catch (Exception e) {
             e.printStackTrace();
         }
