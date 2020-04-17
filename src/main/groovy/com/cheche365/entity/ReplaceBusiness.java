@@ -15,6 +15,8 @@ public class ReplaceBusiness {
 
     private Long id;
 
+    private String ids;
+
     private String sids;
 
     private String cids;
@@ -36,5 +38,9 @@ public class ReplaceBusiness {
     private String applicant;
 
     private Date financeOrderDate;
+
+    private String orderMonth;
+
+    private String agentName;
 
 }

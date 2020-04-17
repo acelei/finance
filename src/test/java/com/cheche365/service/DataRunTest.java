@@ -274,13 +274,4 @@ public class DataRunTest {
         replaceBusinessData.replaceBusinessList("bj");
     }
 
-    @Test
-    public void testInsertTableData() {
-        try {
-            insertTableData.insertData();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
 }

@@ -51,7 +51,9 @@ public class ReplaceBusinessData {
             "      from das_data_pool_business\n" +
             "      group by insurance_company_id, province_id";
 
+    private String updateTableType = "update table_type set flag = 3 where type = 'typeVal'";
     private String updateBusinessDataHandleSign = "update `tableName` set handle_sign = '2' where id = idVal";
+    private String updateFinishHandleSign = "update `tableName` set handle_sign = 9 where id in (idList)";
     private String listReplaceBusiness = "select t1.id,\n" +
             "       t1.s_id                                                                                          as sids,\n" +
             "       t1.c_id                                                                                          as cids,\n" +
@@ -61,6 +63,7 @@ public class ReplaceBusinessData {
             "       t3.id                                                                                         as provinceId,\n" +
             "       if (`8-险种名称` = '交强险', 1, 2)                                                              as insuranceTypeId,\n" +
             "       `9-保单出单日期`                                                                                as financeOrderDate,\n" +
+            "       left(`9-保单出单日期`, 7)                                                                       as orderMonth,\n" +
             "       if(t1.s_id is not null,\n" +
             "          ifnull(`sum_fee`, 0.00),\n" +
             "          ifnull(`sum_commission`, 0.00)\n" +
@@ -75,7 +78,7 @@ public class ReplaceBusinessData {
             "         ) t4\n" +
             "                 on t1.id = t4.result_id\n" +
             "       where handle_sign = 3\n" +
-            "       and `8-险种名称` in ('交强险', '商业险')\n" +
+            "       and `8-险种名称` in ('交强险', '商业险') and `9-保单出单日期` >= '2019-01-01' \n" +
             "       and t4.id is null";
 
     private String listReplaceBusinessBySe = "select t1.id,\n" +
@@ -87,6 +90,7 @@ public class ReplaceBusinessData {
             "       t3.id                                                                                         as provinceId,\n" +
             "       if (`8-险种名称` = '交强险', 1, 2)                                                              as insuranceTypeId,\n" +
             "       `9-保单出单日期`                                                                                as financeOrderDate,\n" +
+            "       left(`9-保单出单日期`, 7)                                                                       as orderMonth,\n" +
             "       ifnull(`sum_fee`, 0.00)                                              as sumFee\n" +
             "        from `resultTableNameVal` t1\n" +
             "       left join area t3\n" +
@@ -95,9 +99,37 @@ public class ReplaceBusinessData {
             "         where table_name = 'resultTableNameVal'\n" +
             "         ) t4\n" +
             "       on t1.id = t4.finance_id\n" +
-            "       where d_id in (4, 5) and handle_sign = 6 \n" +
-            "       and `8-险种名称` in ('交强险', '商业险')\n" +
+            "       where handle_sign = 6 \n" +
+            "       and `8-险种名称` in ('交强险', '商业险') and `9-保单出单日期` >= '2019-01-01' \n" +
             "       and t4.id is null";
+
+    private String listReplaceBusinessBySeGroup = "select id, sIds, cIds, insuranceCompany, insuranceCompanyId, province, provinceId, insuranceTypeId, financeOrderDate, orderMonth, policyNo,\n" +
+            "       group_concat(id) as ids, sum(sumFee) as sumFee\n" +
+            "from (select t1.id,\n" +
+            "                      s_id                                  as sIds,\n" +
+            "                      c_id                                  as cIds,\n" +
+            "                      保险公司                                  as insuranceCompany,\n" +
+            "                      保险公司id                                as insuranceCompanyId,\n" +
+            "                      省                                     as province,\n" +
+            "                      t3.id                                 as provinceId,\n" +
+            "                      if(`8-险种名称` = '交强险', 1, 2)            as insuranceTypeId,\n" +
+            "                      `9-保单出单日期`                            as financeOrderDate,\n" +
+            "                      left(`9-保单出单日期`, 7)                   as orderMonth,\n" +
+            "                      `6-保单单号`                                as policyNo,\n" +
+            "                      ifnull(sum_fee, 0.00) as sumFee\n" +
+            "               from `resultTableNameVal` t1\n" +
+            "                      left join area t3\n" +
+            "                                on t1.省 = t3.name\n" +
+            "                      left join (select *\n" +
+            "                                 from business_replace_ref\n" +
+            "                                 where table_name = 'resultTableNameVal'\n" +
+            "               ) t4\n" +
+            "                                on t1.id = t4.finance_id\n" +
+            "               where handle_sign = 6 and `8-险种名称` in ('交强险', '商业险')\n" +
+            "                 and `9-保单出单日期` >= '2019-01-01'\n" +
+            "                 and t4.id is null\n" +
+            "              ) as temp\n" +
+            "group by policyNo, insuranceTypeId, insuranceCompanyId, province, orderMonth";
 
     private String listReplaceBusinessByCo = "select t1.id,\n" +
             "       s_id                                                                                          as sids,\n" +
@@ -108,6 +140,7 @@ public class ReplaceBusinessData {
             "       t3.id                                                                                         as provinceId,\n" +
             "       if (`8-险种名称` = '交强险', 1, 2)                                                              as insuranceTypeId,\n" +
             "       `9-保单出单日期`                                                                                as financeOrderDate,\n" +
+            "       left(`9-保单出单日期`, 7)                                                                       as orderMonth,\n" +
             "       ifnull(`sum_commission`, 0.00)          as sumFee\n" +
             "        from `resultTableNameVal` t1\n" +
             "       left join area t3\n" +
@@ -116,9 +149,38 @@ public class ReplaceBusinessData {
             "         where table_name = 'resultTableNameVal'\n" +
             "         ) t4\n" +
             "       on t1.id = t4.finance_id\n" +
-            "       where d_id in (4, 5) and handle_sign = 6 \n" +
-            "       and `8-险种名称` in ('交强险', '商业险')\n" +
+            "       where handle_sign = 6 \n" +
+            "       and `8-险种名称` in ('交强险', '商业险') and `9-保单出单日期` >= '2019-01-01' \n" +
             "       and t4.id is null";
+
+    private String listReplaceBusinessByCoGroup = "select id, sIds, cIds, insuranceCompany, insuranceCompanyId, province, provinceId, insuranceTypeId, financeOrderDate, orderMonth, policyNo, agentName,\n" +
+            "       group_concat(id) as ids, sum(sumFee) as sumFee\n" +
+            "from (select t1.id,\n" +
+            "                      s_id                                  as sIds,\n" +
+            "                      c_id                                  as cIds,\n" +
+            "                      保险公司                                  as insuranceCompany,\n" +
+            "                      保险公司id                                as insuranceCompanyId,\n" +
+            "                      省                                     as province,\n" +
+            "                      t3.id                                 as provinceId,\n" +
+            "                      if(`8-险种名称` = '交强险', 1, 2)            as insuranceTypeId,\n" +
+            "                      `9-保单出单日期`                            as financeOrderDate,\n" +
+            "                      left(`9-保单出单日期`, 7)                   as orderMonth,\n" +
+            "                      `6-保单单号`                                as policyNo,\n" +
+            "                      `40-代理人名称`                             as agentName,\n" +
+            "                      ifnull(sum_commission, 0.00) as sumFee\n" +
+            "               from `resultTableNameVal` t1\n" +
+            "                      left join area t3\n" +
+            "                                on t1.省 = t3.name\n" +
+            "                      left join (select *\n" +
+            "                                 from business_replace_ref\n" +
+            "                                 where table_name = 'resultTableNameVal'\n" +
+            "               ) t4\n" +
+            "                                on t1.id = t4.finance_id\n" +
+            "               where handle_sign = 6 and `8-险种名称` in ('交强险', '商业险')\n" +
+            "                 and `9-保单出单日期` >= '2019-01-01'\n" +
+            "                 and t4.id is null\n" +
+            "              ) as temp\n" +
+            "group by policyNo, insuranceTypeId, insuranceCompanyId, province, orderMonth, agentName";
 
     private DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
@@ -132,23 +194,29 @@ public class ReplaceBusinessData {
             List<String> insProList = grsInsProList.stream().map(it -> it.get("insPro").toString()).collect(Collectors.toList());
             List<String> threeTableName = generateThreeTableNames(tableNameRef);
             for (String tableName : threeTableName) {
-                replaceBusiness(tableName, insProList);
+                if (tableName.startsWith("result_")) {
+                    replaceBusiness(tableName, insProList, 1);
+                } else {
+                    replaceBusiness(tableName, insProList, 2);
+                    replaceBusiness(tableName, insProList, 1);
+                }
             }
             log.info("replaceBusiness success! tableNameRef:{}", tableNameRef);
+            baseSql.executeUpdate(updateTableType.replace("typeVal", tableNameRef));
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private String replaceBusiness(String resultTableName, List<String> allInsPro) throws SQLException {
-        List<ReplaceBusiness> businessList = replaceBusinessListByTableName(resultTableName);
+    private String replaceBusiness(String resultTableName, List<String> allInsPro, int type) throws SQLException {
+        List<ReplaceBusiness> businessList = replaceBusinessListByTableName(resultTableName, type);
         List<Future> futureList = new ArrayList<>();
         for (ReplaceBusiness finance : businessList) {
             String insPro = finance.getInsuranceCompanyId() + "_" + finance.getProvinceId();
-            if (!allInsPro.contains(insPro)) {
+            if (!allInsPro.contains(insPro) || finance.getSumFee().compareTo(BigDecimal.ZERO) == 0) {
                 continue;
             }
-            Future future = runCompletionPool.submit(() -> updateReplaceData(finance, resultTableName));
+            Future future = runCompletionPool.submit(() -> updateReplaceData(finance, resultTableName, type));
             futureList.add(future);
         }
         for (Future future : futureList) {
@@ -160,11 +228,11 @@ public class ReplaceBusinessData {
                 e.printStackTrace();
             }
         }
-        log.info("replaceBusiness success! resultTableName: {}", resultTableName);
+        log.info("replaceBusiness success! resultTableName: {}, type:{}", resultTableName, type);
         return "success";
     }
 
-    private String updateReplaceData(ReplaceBusiness finance, String resultTableName) throws SQLException {
+    private String updateReplaceData(ReplaceBusiness finance, String resultTableName, int type) throws SQLException {
         synchronized (("run_thread_" + finance.getInsuranceCompanyId() + "_" + finance.getProvinceId()).intern()) {
             BigDecimal minPremium, maxPremium;
             String insuranceCompanyTableName = generInsuranceCompany(finance.getInsuranceCompanyId(), finance.getProvinceId());
@@ -200,9 +268,10 @@ public class ReplaceBusinessData {
                     if (finance.getSumFee().compareTo(BigDecimal.ZERO) < 0) {
                         businessData.setPremium(BigDecimal.ZERO.subtract(businessData.getPremium()));
                     }
-                    insertBusinessRef(resultTableName, finance, businessData);
+                    insertBusinessRef(resultTableName, finance, businessData, type);
                     baseSql.executeUpdate(updateBusinessDataHandleSign.replace("tableName", insuranceCompanyTableName).replace("idVal", businessData.getId().toString()));
                     baseSql.executeUpdate(updateBusinessDataHandleSign.replace("tableName", "das_data_pool_business").replace("idVal", businessData.getId().toString()));
+                    updateFinish(resultTableName, finance, type);
                     log.info("replace success! financeId:{}, businessId:{}", finance.getId(), businessData.getId());
                     break;
                 }
@@ -211,7 +280,19 @@ public class ReplaceBusinessData {
         return "success";
     }
 
-    private void insertBusinessRef(String resultTableName, ReplaceBusiness finance, DataPool businessData) throws SQLException {
+    private void updateFinish(String resultTableName, ReplaceBusiness finance, int type) throws SQLException {
+        if (resultTableName.startsWith("result_")) {
+            baseSql.executeUpdate(updateFinishHandleSign.replace("tableName", resultTableName).replace("idList", finance.getId().toString()));
+        } else {
+            if (type == 1) {
+                baseSql.executeUpdate(updateFinishHandleSign.replace("tableName", resultTableName).replace("idList", finance.getId().toString()));
+            } else {
+                baseSql.executeUpdate(updateFinishHandleSign.replace("tableName", resultTableName).replace("idList", finance.getIds()));
+            }
+        }
+    }
+
+    private void insertBusinessRef(String resultTableName, ReplaceBusiness finance, DataPool businessData, int type) throws SQLException {
         List<Map<String, Object>> insertMapList = new ArrayList<>();
         if (resultTableName.startsWith("result_")) {
             if (StringUtils.isNotEmpty(finance.getSids())) {
@@ -240,12 +321,24 @@ public class ReplaceBusinessData {
                 baseSql.executeInsert(insertBusinessRefList(insertMapList));
             }
         } else {
-            Map<String, Object> setMap = new HashMap<>();
-            setMap.put("tableName", resultTableName);
-            setMap.put("financeId", finance.getId());
-            setMap.put("businessData", businessData);
-            insertMapList.add(setMap);
-            baseSql.executeInsert(insertBusinessRefList(insertMapList));
+            if (type == 1) {
+                Map<String, Object> setMap = new HashMap<>();
+                setMap.put("tableName", resultTableName);
+                setMap.put("financeId", finance.getId());
+                setMap.put("businessData", businessData);
+                insertMapList.add(setMap);
+                baseSql.executeInsert(insertBusinessRefList(insertMapList));
+            } else {
+                for (String id : finance.getIds().split(",")) {
+                    Map<String, Object> setMap = new HashMap<>();
+                    setMap.put("tableName", resultTableName);
+                    setMap.put("financeId", id);
+                    setMap.put("businessData", businessData);
+                    insertMapList.add(setMap);
+                }
+                baseSql.executeInsert(insertBusinessRefList(insertMapList));
+            }
+
         }
     }
 
@@ -329,14 +422,22 @@ public class ReplaceBusinessData {
         }
     }
 
-    private List<ReplaceBusiness> replaceBusinessListByTableName(String resultTableName) throws SQLException {
+    private List<ReplaceBusiness> replaceBusinessListByTableName(String resultTableName, int type) throws SQLException {
         List<GroovyRowResult> groovyRowResultList;
         if (resultTableName.startsWith("result_")) {
             groovyRowResultList = baseSql.rows(listReplaceBusiness.replace("resultTableNameVal", resultTableName));
         } else if(resultTableName.startsWith("settlement_")) {
-            groovyRowResultList = baseSql.rows(listReplaceBusinessBySe.replace("resultTableNameVal", resultTableName));
+            if (type == 1) {
+                groovyRowResultList = baseSql.rows(listReplaceBusinessBySe.replace("resultTableNameVal", resultTableName));
+            } else {
+                groovyRowResultList = baseSql.rows(listReplaceBusinessBySeGroup.replace("resultTableNameVal", resultTableName));
+            }
         } else {
-            groovyRowResultList = baseSql.rows(listReplaceBusinessByCo.replace("resultTableNameVal", resultTableName));
+            if (type == 1) {
+                groovyRowResultList = baseSql.rows(listReplaceBusinessByCo.replace("resultTableNameVal", resultTableName));
+            } else {
+                groovyRowResultList = baseSql.rows(listReplaceBusinessByCoGroup.replace("resultTableNameVal", resultTableName));
+            }
         }
         if (CollectionUtils.isEmpty(groovyRowResultList)) {
             return Collections.emptyList();
