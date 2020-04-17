@@ -76,7 +76,7 @@ public class ReplaceBusinessData {
             "         where result_table_name = 'resultTableNameVal'\n" +
             "         ) t4\n" +
             "                 on t1.id = t4.result_id\n" +
-            "       where handle_sign = 3\n" +
+            "       where handle_sign in (3,6) \n" +
             "       and `8-险种名称` in ('交强险', '商业险') and `9-保单出单日期` >= '2019-01-01' \n" +
             "       and t4.id is null";
 
