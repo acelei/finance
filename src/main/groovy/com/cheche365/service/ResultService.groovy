@@ -73,7 +73,7 @@ from settlement_# a
          left join business_replace_ref b on a.id = b.finance_id and b.table_name = 'commission_#'
          left join result_gross_margin_ref c on a.id = c.s_id and c.type in (2,3)  and c.table_name in ('result_#_2', 'settlement_#', 'commission_#')
          left join commission_# d on d.id = c.c_id and c.type = 2
-         left join settlement_# e on d.id = c.c_id and c.type = 3
+         left join settlement_# e on e.id = c.c_id and c.type = 3
          where a.handle_sign!=6
 '''
     String commissionQuery = '''
@@ -139,7 +139,7 @@ from commission_# a
          left join business_replace_ref b on a.id = b.finance_id and b.table_name = 'commission_#'
          left join result_gross_margin_ref c on a.id = c.c_id and c.type in (1,4) and c.table_name in ('result_#_2', 'settlement_#', 'commission_#')
          left join settlement_# d on d.id = c.s_id and c.type = 1
-         left join commission_# e on d.id = c.s_id and c.type = 4
+         left join commission_# e on e.id = c.s_id and c.type = 4
          where a.handle_sign!=6
 '''
     String cleanSql = "truncate result_#_final"

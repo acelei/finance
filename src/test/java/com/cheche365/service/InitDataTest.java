@@ -64,7 +64,7 @@ public class InitDataTest {
 
     @Test
     public void createTable() throws SQLException {
-        String type = "zongbu_bxw";
+        String type = "shandong";
 
         baseSql.execute("create table settlement_# like settlement_bj".replace("#",type));
         baseSql.execute("create table commission_# like commission_bj".replace("#",type));
