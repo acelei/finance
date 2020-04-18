@@ -190,7 +190,7 @@ class MatchSideData {
             baseSql.executeUpdate("update ${getsTable()} set handle_sign=4,`42-佣金金额（已入账）`=?,`45-支付金额`=?,`46-未计提佣金（19年底尚未入帐）`=?,sum_commission=?,gross_profit=?,c_id=? where id=?"
                     .replace("#", type), [c42, c45, c46, sumCommission, ((row.fee as double) - sumCommission) / (row.fee as double), value*.c_id.join(','), row.id])
             baseSql.executeUpdate("update ${getcTable()} set handle_sign=5 where id in (${cids})".replace("#", type))
-            log.info("匹配成功:{}:{} -> {}:{}", getcTable().replace("#", type), cids, getsTable().replace("#", type), row.id)
+            log.info("付佣匹配成功:{}:{} -> {}:{}", getcTable().replace("#", type), cids, getsTable().replace("#", type), row.id)
         }
     }
 
@@ -232,7 +232,7 @@ class MatchSideData {
             baseSql.executeUpdate("update ${getcTable()} set handle_sign=4,`14-手续费总额（报行内+报行外）(含税)`=?,`15-手续费总额（报行内+报行外）(不含税)`=?,sum_fee=?,gross_profit=?,s_id=? where id=?"
                     .replace("#", type), [s14, s15, sumFee, (sumFee - (row.commission as double)) / sumFee, key*.s_id.join(','), row.id])
 
-            log.info("匹配成功:{}:{} -> {}:{}", getsTable().replace("#", type), sids, getcTable().replace("#", type), row.id)
+            log.info("结算匹配成功:{}:{} -> {}:{}", getsTable().replace("#", type), sids, getcTable().replace("#", type), row.id)
         }
     }
 }

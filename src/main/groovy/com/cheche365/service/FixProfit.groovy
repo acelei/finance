@@ -21,6 +21,7 @@ class FixProfit {
         select id,
        s_id                                                as sIds,
        c_id                                                as cIds,
+       ifnull(`11-净保费`,0) as premium,
        sum_fee                            as sumFee,
        sum_commission as sumCommission,
        gross_profit
@@ -112,12 +113,13 @@ class FixProfit {
     void handleGrossMargin(GroovyRowResult row, String type) {
         List settlementList = baseSql.rows(settlementSql.replace("#", type) + "(${row.sIds})")
         List commissionList = baseSql.rows(commissionSql.replace("#", type) + "(${row.cIds})")
+        def premium = row.premium as double
 
         Map map = Utils.matchCombine(settlementList, commissionList, { s, c ->
             def fee = s*.fee.collect { it as double }.sum()
             def commission = c*.commission.collect { it as double }.sum()
             def r = (fee - commission) / fee
-            r > -1 && r < 1
+            (r > -1 && r < 1) || (fee > 0 && commission > 0 && fee < premium * 0.7 && commission < premium * 0.7)
         })
 
         if (map != null) {

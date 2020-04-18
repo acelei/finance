@@ -14,8 +14,8 @@ class ReMatchSideData {
     @Autowired
     private Sql baseSql
 
-    String errorSettlementSide = "select id,id as s_id,sum_fee as fee,sum_commission as commission,`14-手续费总额（报行内+报行外）(含税)`,`15-手续费总额（报行内+报行外）(不含税)`,`42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`,DATE_FORMAT(`9-保单出单日期`,'%Y-%m') as order_month,`保险公司`,`省` from settlement_# where handle_sign=6 and date_format(`9-保单出单日期`,'%Y')='2019'"
-    String errorCommissionSide = "select id,id as c_id,sum_fee as fee,sum_commission as commission,`14-手续费总额（报行内+报行外）(含税)`,`15-手续费总额（报行内+报行外）(不含税)`,`42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`,DATE_FORMAT(`9-保单出单日期`,'%Y-%m') as order_month,`保险公司`,`省`,`40-代理人名称` from commission_# where handle_sign=6 and date_format(`9-保单出单日期`,'%Y')='2019'"
+    String errorSettlementSide = "select group_concat(id) as id,group_concat(id) as s_id,sum(sum_fee) as fee,sum(sum_commission) as commission,sum(`14-手续费总额（报行内+报行外）(含税)`) as `14-手续费总额（报行内+报行外）(含税)`,sum(`15-手续费总额（报行内+报行外）(不含税)`) as `15-手续费总额（报行内+报行外）(不含税)`,sum(`42-佣金金额（已入账）`) as `42-佣金金额（已入账）`,sum(`45-支付金额`) as `45-支付金额`,sum(`46-未计提佣金（19年底尚未入帐）`) as `46-未计提佣金（19年底尚未入帐）`,DATE_FORMAT(`9-保单出单日期`,'%Y-%m') as order_month,`保险公司`,`省` from settlement_# where handle_sign=6 and date_format(`9-保单出单日期`,'%Y')='2019' group by `6-保单单号`,`8-险种名称`"
+    String errorCommissionSide = "select group_concat(id) as id,group_concat(id) as c_id,sum(sum_fee) as fee,sum(sum_commission) as commission,sum(`14-手续费总额（报行内+报行外）(含税)`) as `14-手续费总额（报行内+报行外）(含税)`,sum(`15-手续费总额（报行内+报行外）(不含税)`) as `15-手续费总额（报行内+报行外）(不含税)`,sum(`42-佣金金额（已入账）`) as `42-佣金金额（已入账）`,sum(`45-支付金额`) as `45-支付金额`,sum(`46-未计提佣金（19年底尚未入帐）`) as `46-未计提佣金（19年底尚未入帐）`,DATE_FORMAT(`9-保单出单日期`,'%Y-%m') as order_month,`保险公司`,`省`,`40-代理人名称` from commission_# where handle_sign=6 and date_format(`9-保单出单日期`,'%Y')='2019' group by `6-保单单号`,`8-险种名称`,`40-代理人名称`"
 
     void run(String type) {
         log.info("反向匹配结算单边数据:{}-{}", getsTable(), type)
@@ -63,7 +63,7 @@ class ReMatchSideData {
         }
         if (result != null) {
             updateSettlement(row, result, type)
-            log.info("匹配成功:{}-{} -> {}-{}", getsTable().replace("#", type), row.id, getcTable().replace("#", type), result.id)
+            log.info("结算匹配成功:{}-{} -> {}-{}", getsTable().replace("#", type), row.id, "result_${type}_2", result.id)
         }
     }
 
@@ -80,18 +80,18 @@ class ReMatchSideData {
         }
         if (result != null) {
             updateCommission(row, result, type)
-            log.info("匹配成功:{}-{} -> {}-{}", getcTable().replace("#", type), row.id, getsTable().replace("#", type), result.id)
+            log.info("付佣匹配成功:{}-{} -> {}-{}", getcTable().replace("#", type), row.id, "result_${type}_2", result.id)
         }
     }
 
-    static String quernSettlementUp = '''
+    String quernSettlementUp = '''
 select id,s_id,c_id,sum_fee  as fee,
        sum_commission as commission,
        `14-手续费总额（报行内+报行外）(含税)`,`15-手续费总额（报行内+报行外）(不含税)`,
        `42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`
 from result_#_2
 where handle_sign in (0, 1, 3, 4, 6)
-  and ifnull(0+`10-全保费`, 0)-sum_fee > ?
+  and (ifnull(0+`11-净保费`, 0)*0.7)-sum_fee > ?
   and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') <= ?
   and `保险公司` = ?
   and `省` = ?
@@ -99,14 +99,14 @@ where handle_sign in (0, 1, 3, 4, 6)
 order by gross_profit
 limit 100
 '''
-    static String quernSettlementDown = '''
+    String quernSettlementDown = '''
 select id,s_id,c_id,sum_fee  as fee,
        sum_commission as commission,
        `14-手续费总额（报行内+报行外）(含税)`,`15-手续费总额（报行内+报行外）(不含税)`,
        `42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`
 from result_#_2
 where handle_sign in (0, 1, 3, 4, 6)
-  and sum_fee > ?
+  and sum_fee + ifnull(0+`11-净保费`, 0)*if(`8-险种名称` = '交强险', 0, 0.12)> ?
   and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') <= ?
   and `保险公司` = ?
   and `省` = ?
@@ -114,14 +114,14 @@ where handle_sign in (0, 1, 3, 4, 6)
 order by gross_profit desc
 limit 100
 '''
-    static String quernCommissionUp = '''
+    String quernCommissionUp = '''
 select id,s_id,c_id,sum_fee  as fee,
        sum_commission as commission,
        `14-手续费总额（报行内+报行外）(含税)`,`15-手续费总额（报行内+报行外）(不含税)`,
        `42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`
 from result_#_2
 where handle_sign in (0, 1, 3, 4, 6)
-  and (2*sum_fee)-sum_commission > ?
+  and (ifnull(0+`11-净保费`, 0)*0.7)-sum_commission > ?
   and `40-代理人名称`=?
   and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') <= ?
   and `保险公司` = ?
@@ -130,14 +130,14 @@ where handle_sign in (0, 1, 3, 4, 6)
 order by gross_profit desc
 limit 100
 '''
-    static String quernCommissionDown = '''
+    String quernCommissionDown = '''
 select id,s_id,c_id,sum_fee  as fee,
        sum_commission as commission,
        `14-手续费总额（报行内+报行外）(含税)`,`15-手续费总额（报行内+报行外）(不含税)`,
        `42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`
 from result_#_2
 where handle_sign in (0, 1, 3, 4, 6)
-  and sum_commission > ?
+  and sum_commission + ifnull(0+`11-净保费`, 0)*if(`8-险种名称` = '交强险', 0, 0.12) > ?
   and `40-代理人名称`=?
   and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') <= ?
   and `保险公司` = ?
@@ -152,19 +152,19 @@ limit 100
         def fee = row.fee as double
         def commission = row.commission as double
         if (fee > 0) {
-            return baseSql.rows(quernSettlementUp.replace("#", type), [fee, row.'order_month', row.'保险公司', row.'省'])
+            return baseSql.rows(getQuernSettlementUp().replace("#", type), [fee, row.'order_month', row.'保险公司', row.'省'])
         }
 
         if (fee < 0) {
-            return baseSql.rows(quernSettlementDown.replace("#", type), [0 - fee, row.'order_month', row.'保险公司', row.'省'])
+            return baseSql.rows(getQuernSettlementDown().replace("#", type), [0 - fee, row.'order_month', row.'保险公司', row.'省'])
         }
 
         if (commission > 0) {
-            return baseSql.rows(quernCommissionUp.replace("#", type), [commission, row.'40-代理人名称', row.'order_month', row.'保险公司', row.'省'])
+            return baseSql.rows(getQuernCommissionUp().replace("#", type), [commission, row.'40-代理人名称', row.'order_month', row.'保险公司', row.'省'])
         }
 
         if (commission < 0) {
-            return baseSql.rows(quernCommissionDown.replace("#", type), [0 - commission, row.'40-代理人名称', row.'order_month', row.'保险公司', row.'省'])
+            return baseSql.rows(getQuernCommissionDown().replace("#", type), [0 - commission, row.'40-代理人名称', row.'order_month', row.'保险公司', row.'省'])
         }
     }
 
@@ -194,8 +194,8 @@ limit 100
         def fee = (result.fee as double) + (row.fee as double)
 
         baseSql.executeInsert(insertRef + valueList.join(","))
-        baseSql.executeUpdate("update ${getsTable()} set handle_sign=5 where id=?".replace("#", type), [row.id])
-        baseSql.executeUpdate("update ${getcTable()} set handle_sign=4,`14-手续费总额（报行内+报行外）(含税)`=?,`15-手续费总额（报行内+报行外）(不含税)`=?,sum_fee=?,gross_profit=?,s_id=? where id=?".replace("#", type),
+        baseSql.executeUpdate("update ${getsTable()} set handle_sign=5 where id in (${row.id})".replace("#", type))
+        baseSql.executeUpdate("update result_#_2 set handle_sign=4,`14-手续费总额（报行内+报行外）(含税)`=?,`15-手续费总额（报行内+报行外）(不含税)`=?,sum_fee=?,gross_profit=?,s_id=? where id=?".replace("#", type),
                 [s1, s2, fee, (fee - (result.commission as double)) / fee, "${result.s_id},${row.s_id}" as String, result.id])
     }
 
@@ -222,8 +222,8 @@ limit 100
         def commission = (result.commission as double) + (row.commission as double)
 
         baseSql.executeInsert(insertRef + valueList.join(","))
-        baseSql.executeUpdate("update ${getsTable()} set handle_sign=4,`42-佣金金额（已入账）`=?,`45-支付金额`=?,`46-未计提佣金（19年底尚未入帐）`=?,sum_commission=?,gross_profit=?,c_id=? where id =?".replace("#", type),
+        baseSql.executeUpdate("update result_#_2 set handle_sign=4,`42-佣金金额（已入账）`=?,`45-支付金额`=?,`46-未计提佣金（19年底尚未入帐）`=?,sum_commission=?,gross_profit=?,c_id=? where id =?".replace("#", type),
                 [c1, c2, c3, commission, ((result.fee as double) - commission) / (result.fee as double), "${result.c_id},${row.c_id}" as String, result.id])
-        baseSql.executeUpdate("update ${getcTable()} set handle_sign=5 where id=?".replace("#", type), [row.id])
+        baseSql.executeUpdate("update ${getcTable()} set handle_sign=5 where id in (${row.id})".replace("#", type))
     }
 }
