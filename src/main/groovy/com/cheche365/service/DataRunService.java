@@ -100,7 +100,7 @@ public class DataRunService {
      *
      * @param type
      */
-    public void result(String type) throws SQLException {
+    public void result(String type) {
 
         resultService.run(type);
     }
