@@ -141,7 +141,7 @@ select id,s_id,c_id,sum_fee  as fee,
 from result_#_2
 where handle_sign in (0, 1, 3, 4, 6)
   ans sum_commission>0
-  and sum_commission-(ifnull(0+`11-净保费`, 0)*if(`8-险种名称` = '交强险', 0, 0.12)) > ?
+  and sum_commission > ?
   and `40-代理人名称`=?
   and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') <= ?
   and `保险公司` = ?
