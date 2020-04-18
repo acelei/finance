@@ -66,14 +66,14 @@ public class InitDataTest {
     public void createTable() throws SQLException {
         String type = "shandong";
 
-        baseSql.execute("create table settlement_# like settlement_bj".replace("#",type));
-        baseSql.execute("create table commission_# like commission_bj".replace("#",type));
-        baseSql.execute("create table result_# like result_bj".replace("#",type));
-        baseSql.execute("create table result_#_2 like result_bj_2".replace("#",type));
-        baseSql.execute("create table result_#_back like result_bj_back".replace("#",type));
-        baseSql.execute("create table result_#_3 like result_bj_3".replace("#",type));
-        baseSql.execute("create table result_#_final like result_bj_final".replace("#",type));
-        baseSql.execute("create table result_#_2_final like result_bj_2_final".replace("#",type));
+        baseSql.execute("create table settlement_# like settlement_bj".replace("#", type));
+        baseSql.execute("create table commission_# like commission_bj".replace("#", type));
+        baseSql.execute("create table result_# like result_bj".replace("#", type));
+        baseSql.execute("create table result_#_2 like result_bj_2".replace("#", type));
+        baseSql.execute("create table result_#_back like result_bj_back".replace("#", type));
+        baseSql.execute("create table result_#_3 like result_bj_3".replace("#", type));
+        baseSql.execute("create table result_#_final like result_bj_final".replace("#", type));
+        baseSql.execute("create table result_#_2_final like result_bj_2_final".replace("#", type));
 
     }
 
@@ -102,18 +102,26 @@ public class InitDataTest {
         }
     }
 
-    String[] tables = new String[]{"das_data_pool","das_data_pool_business","das_data_pool_business_1","das_data_pool_business_14","das_data_pool_business_16","das_data_pool_business_18","das_data_pool_business_2002","das_data_pool_business_2005_110000","das_data_pool_business_2005_120000","das_data_pool_business_2005_130000","das_data_pool_business_2005_140000","das_data_pool_business_2005_150000","das_data_pool_business_2005_210000","das_data_pool_business_2005_220000","das_data_pool_business_2005_230000","das_data_pool_business_2005_310000","das_data_pool_business_2005_320000","das_data_pool_business_2005_330000","das_data_pool_business_2005_340000","das_data_pool_business_2005_350000","das_data_pool_business_2005_360000","das_data_pool_business_2005_370000","das_data_pool_business_2005_410000","das_data_pool_business_2005_420000","das_data_pool_business_2005_430000","das_data_pool_business_2005_440000","das_data_pool_business_2005_450000","das_data_pool_business_2005_460000","das_data_pool_business_2005_500000","das_data_pool_business_2005_510000","das_data_pool_business_2005_520000","das_data_pool_business_2005_530000","das_data_pool_business_2005_540000","das_data_pool_business_2005_610000","das_data_pool_business_2005_620000","das_data_pool_business_2005_630000","das_data_pool_business_2005_640000","das_data_pool_business_2005_650000","das_data_pool_business_2007","das_data_pool_business_2011","das_data_pool_business_2016","das_data_pool_business_2019","das_data_pool_business_2021","das_data_pool_business_2022","das_data_pool_business_2023","das_data_pool_business_2024","das_data_pool_business_2026","das_data_pool_business_2027","das_data_pool_business_2041","das_data_pool_business_2042","das_data_pool_business_2043","das_data_pool_business_2044","das_data_pool_business_2045","das_data_pool_business_2046","das_data_pool_business_2050","das_data_pool_business_2056","das_data_pool_business_2058","das_data_pool_business_2060","das_data_pool_business_2062","das_data_pool_business_2065","das_data_pool_business_2066","das_data_pool_business_2072","das_data_pool_business_2073","das_data_pool_business_2076","das_data_pool_business_2085","das_data_pool_business_2088","das_data_pool_business_2090","das_data_pool_business_2095","das_data_pool_business_2096","das_data_pool_business_21","das_data_pool_business_2100","das_data_pool_business_2101","das_data_pool_business_2109","das_data_pool_business_25","das_data_pool_business_26","das_data_pool_business_27","das_data_pool_business_32","das_data_pool_business_35","das_data_pool_business_36","das_data_pool_business_4","das_data_pool_business_40","das_data_pool_business_4002","das_data_pool_business_45","das_data_pool_business_46","das_data_pool_business_49","das_data_pool_business_50","das_data_pool_business_52","das_data_pool_business_54","das_data_pool_business_55","das_data_pool_business_57","das_data_pool_business_62"};
+    String[] tables = new String[]{"das_data_pool", "das_data_pool_business", "das_data_pool_business_1", "das_data_pool_business_14", "das_data_pool_business_16", "das_data_pool_business_18", "das_data_pool_business_2002", "das_data_pool_business_2005_110000", "das_data_pool_business_2005_120000", "das_data_pool_business_2005_130000", "das_data_pool_business_2005_140000", "das_data_pool_business_2005_150000", "das_data_pool_business_2005_210000", "das_data_pool_business_2005_220000", "das_data_pool_business_2005_230000", "das_data_pool_business_2005_310000", "das_data_pool_business_2005_320000", "das_data_pool_business_2005_330000", "das_data_pool_business_2005_340000", "das_data_pool_business_2005_350000", "das_data_pool_business_2005_360000", "das_data_pool_business_2005_370000", "das_data_pool_business_2005_410000", "das_data_pool_business_2005_420000", "das_data_pool_business_2005_430000", "das_data_pool_business_2005_440000", "das_data_pool_business_2005_450000", "das_data_pool_business_2005_460000", "das_data_pool_business_2005_500000", "das_data_pool_business_2005_510000", "das_data_pool_business_2005_520000", "das_data_pool_business_2005_530000", "das_data_pool_business_2005_540000", "das_data_pool_business_2005_610000", "das_data_pool_business_2005_620000", "das_data_pool_business_2005_630000", "das_data_pool_business_2005_640000", "das_data_pool_business_2005_650000", "das_data_pool_business_2007", "das_data_pool_business_2011", "das_data_pool_business_2016", "das_data_pool_business_2019", "das_data_pool_business_2021", "das_data_pool_business_2022", "das_data_pool_business_2023", "das_data_pool_business_2024", "das_data_pool_business_2026", "das_data_pool_business_2027", "das_data_pool_business_2041", "das_data_pool_business_2042", "das_data_pool_business_2043", "das_data_pool_business_2044", "das_data_pool_business_2045", "das_data_pool_business_2046", "das_data_pool_business_2050", "das_data_pool_business_2056", "das_data_pool_business_2058", "das_data_pool_business_2060", "das_data_pool_business_2062", "das_data_pool_business_2065", "das_data_pool_business_2066", "das_data_pool_business_2072", "das_data_pool_business_2073", "das_data_pool_business_2076", "das_data_pool_business_2085", "das_data_pool_business_2088", "das_data_pool_business_2090", "das_data_pool_business_2095", "das_data_pool_business_2096", "das_data_pool_business_21", "das_data_pool_business_2100", "das_data_pool_business_2101", "das_data_pool_business_2109", "das_data_pool_business_25", "das_data_pool_business_26", "das_data_pool_business_27", "das_data_pool_business_32", "das_data_pool_business_35", "das_data_pool_business_36", "das_data_pool_business_4", "das_data_pool_business_40", "das_data_pool_business_4002", "das_data_pool_business_45", "das_data_pool_business_46", "das_data_pool_business_49", "das_data_pool_business_50", "das_data_pool_business_52", "das_data_pool_business_54", "das_data_pool_business_55", "das_data_pool_business_57", "das_data_pool_business_62"};
 
     @Test
-    public void initBusiness() throws  InterruptedException {
+    public void initBusiness() throws InterruptedException {
 
-        ThreadPoolUtils.executeRun(Lists.newArrayList(tables),table-> {
+        ThreadPoolUtils.executeRun(Lists.newArrayList(tables), table -> {
             try {
-                baseSql.execute("update # set handle_sign=0".replace("#",  table));
+                baseSql.execute("update # set handle_sign=0".replace("#", table));
             } catch (SQLException e) {
                 e.printStackTrace();
             }
         }).await();
     }
 
+    @Test
+    public void delete() throws SQLException {
+        List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type");
+        for (GroovyRowResult row : rows) {
+            String type = row.get("type").toString();
+            baseSql.executeUpdate("delete a.* from result_gross_margin_ref a,result_#_2 b where a.table_name='result_#_2' and a.result_id=b.id".replace("#", type));
+        }
+    }
 }
