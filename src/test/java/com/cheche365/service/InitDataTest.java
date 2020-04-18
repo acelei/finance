@@ -25,6 +25,8 @@ public class InitDataTest {
     private Sql baseSql;
     @Autowired
     private TabSideData tabSideData;
+    @Autowired
+    private DataRunService dataRunService;
 
     /**
      * 删除无效数据
@@ -48,9 +50,13 @@ public class InitDataTest {
      */
     @Test
     public void roll() throws SQLException {
-        String type = "yx";
-        initData.roll(type);
-        initData.fixPremium(type, "");
+        List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type");
+
+        for (GroovyRowResult row : rows) {
+            String type = row.get("type").toString();
+            initData.roll(type);
+            baseSql.executeUpdate("update table_type set flag=2 where `type`=?", new Object[]{type});
+        }
     }
 
 
@@ -96,7 +102,7 @@ public class InitDataTest {
         }
     }
 
-    String[] tables = new String[]{"`das_data_pool_business`","`das_data_pool_business_1`","`das_data_pool_business_14`","`das_data_pool_business_16`","`das_data_pool_business_18`","`das_data_pool_business_2002`","`das_data_pool_business_2005_110000`","`das_data_pool_business_2005_120000`","`das_data_pool_business_2005_130000`","`das_data_pool_business_2005_140000`","`das_data_pool_business_2005_150000`","`das_data_pool_business_2005_210000`","`das_data_pool_business_2005_220000`","`das_data_pool_business_2005_230000`","`das_data_pool_business_2005_310000`","`das_data_pool_business_2005_320000`","`das_data_pool_business_2005_330000`","`das_data_pool_business_2005_340000`","`das_data_pool_business_2005_350000`","`das_data_pool_business_2005_360000`","`das_data_pool_business_2005_370000`","`das_data_pool_business_2005_410000`","`das_data_pool_business_2005_420000`","`das_data_pool_business_2005_430000`","`das_data_pool_business_2005_440000`","`das_data_pool_business_2005_450000`","`das_data_pool_business_2005_460000`","`das_data_pool_business_2005_500000`","`das_data_pool_business_2005_510000`","`das_data_pool_business_2005_520000`","`das_data_pool_business_2005_530000`","`das_data_pool_business_2005_540000`","`das_data_pool_business_2005_610000`","`das_data_pool_business_2005_620000`","`das_data_pool_business_2005_630000`","`das_data_pool_business_2005_640000`","`das_data_pool_business_2005_650000`","`das_data_pool_business_2007`","`das_data_pool_business_2011`","`das_data_pool_business_2019`","`das_data_pool_business_2021`","`das_data_pool_business_2022`","`das_data_pool_business_2023`","`das_data_pool_business_2024`","`das_data_pool_business_2027`","`das_data_pool_business_2042`","`das_data_pool_business_2043`","`das_data_pool_business_2044`","`das_data_pool_business_2045`","`das_data_pool_business_2046`","`das_data_pool_business_2050`","`das_data_pool_business_2056`","`das_data_pool_business_2060`","`das_data_pool_business_2062`","`das_data_pool_business_2065`","`das_data_pool_business_2066`","`das_data_pool_business_2073`","`das_data_pool_business_2085`","`das_data_pool_business_2088`","`das_data_pool_business_2095`","`das_data_pool_business_21`","`das_data_pool_business_2100`","`das_data_pool_business_25`","`das_data_pool_business_26`","`das_data_pool_business_27`","`das_data_pool_business_32`","`das_data_pool_business_35`","`das_data_pool_business_36`","`das_data_pool_business_4`","`das_data_pool_business_40`","`das_data_pool_business_4002`","`das_data_pool_business_45`","`das_data_pool_business_46`","`das_data_pool_business_49`","`das_data_pool_business_50`","`das_data_pool_business_52`","`das_data_pool_business_54`","`das_data_pool_business_55`","`das_data_pool_business_57`","`das_data_pool_business_62`"};
+    String[] tables = new String[]{"das_data_pool","das_data_pool_business","das_data_pool_business_1","das_data_pool_business_14","das_data_pool_business_16","das_data_pool_business_18","das_data_pool_business_2002","das_data_pool_business_2005_110000","das_data_pool_business_2005_120000","das_data_pool_business_2005_130000","das_data_pool_business_2005_140000","das_data_pool_business_2005_150000","das_data_pool_business_2005_210000","das_data_pool_business_2005_220000","das_data_pool_business_2005_230000","das_data_pool_business_2005_310000","das_data_pool_business_2005_320000","das_data_pool_business_2005_330000","das_data_pool_business_2005_340000","das_data_pool_business_2005_350000","das_data_pool_business_2005_360000","das_data_pool_business_2005_370000","das_data_pool_business_2005_410000","das_data_pool_business_2005_420000","das_data_pool_business_2005_430000","das_data_pool_business_2005_440000","das_data_pool_business_2005_450000","das_data_pool_business_2005_460000","das_data_pool_business_2005_500000","das_data_pool_business_2005_510000","das_data_pool_business_2005_520000","das_data_pool_business_2005_530000","das_data_pool_business_2005_540000","das_data_pool_business_2005_610000","das_data_pool_business_2005_620000","das_data_pool_business_2005_630000","das_data_pool_business_2005_640000","das_data_pool_business_2005_650000","das_data_pool_business_2007","das_data_pool_business_2011","das_data_pool_business_2016","das_data_pool_business_2019","das_data_pool_business_2021","das_data_pool_business_2022","das_data_pool_business_2023","das_data_pool_business_2024","das_data_pool_business_2026","das_data_pool_business_2027","das_data_pool_business_2041","das_data_pool_business_2042","das_data_pool_business_2043","das_data_pool_business_2044","das_data_pool_business_2045","das_data_pool_business_2046","das_data_pool_business_2050","das_data_pool_business_2056","das_data_pool_business_2058","das_data_pool_business_2060","das_data_pool_business_2062","das_data_pool_business_2065","das_data_pool_business_2066","das_data_pool_business_2072","das_data_pool_business_2073","das_data_pool_business_2076","das_data_pool_business_2085","das_data_pool_business_2088","das_data_pool_business_2090","das_data_pool_business_2095","das_data_pool_business_2096","das_data_pool_business_21","das_data_pool_business_2100","das_data_pool_business_2101","das_data_pool_business_2109","das_data_pool_business_25","das_data_pool_business_26","das_data_pool_business_27","das_data_pool_business_32","das_data_pool_business_35","das_data_pool_business_36","das_data_pool_business_4","das_data_pool_business_40","das_data_pool_business_4002","das_data_pool_business_45","das_data_pool_business_46","das_data_pool_business_49","das_data_pool_business_50","das_data_pool_business_52","das_data_pool_business_54","das_data_pool_business_55","das_data_pool_business_57","das_data_pool_business_62"};
 
     @Test
     public void initBusiness() throws  InterruptedException {

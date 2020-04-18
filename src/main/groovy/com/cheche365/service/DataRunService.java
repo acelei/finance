@@ -108,8 +108,6 @@ public class DataRunService {
     public void reRun(String type) {
         // 恢复result2表数据
         initData.roll(type);
-        // 调整保费
-        initData.fixPremium(type, "");
         process(type);
     }
 }

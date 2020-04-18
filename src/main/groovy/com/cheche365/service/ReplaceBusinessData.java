@@ -99,7 +99,7 @@ public class ReplaceBusinessData {
             "         ) t4\n" +
             "       on t1.id = t4.finance_id\n" +
             "       where handle_sign = 6 \n" +
-            "       and `8-险种名称` in ('交强险', '商业险') and (ifnull(`sum_fee`, 0.00)) >= 0 and `9-保单出单日期` >= '2019-01-01' \n" +
+            "       and `8-险种名称` in ('交强险', '商业险') and `sum_fee` >= 0 and `9-保单出单日期` >= '2019-01-01' \n" +
             "       and t4.id is null";
 
     private String listReplaceBusinessBySeGroup = "select * from ( select id, sIds, cIds, insuranceCompany, insuranceCompanyId, province, provinceId, insuranceTypeId, financeOrderDate, orderMonth, policyNo,\n" +
@@ -149,7 +149,7 @@ public class ReplaceBusinessData {
             "         ) t4\n" +
             "       on t1.id = t4.finance_id\n" +
             "       where handle_sign = 6 \n" +
-            "       and `8-险种名称` in ('交强险', '商业险') and  and (ifnull(`sum_commission`, 0.00)) >= 0 and `9-保单出单日期` >= '2019-01-01' \n" +
+            "       and `8-险种名称` in ('交强险', '商业险') and `sum_commission` >= 0 and `9-保单出单日期` >= '2019-01-01' \n" +
             "       and t4.id is null";
 
     private String listReplaceBusinessByCoGroup = "select * from ( select id, sIds, cIds, insuranceCompany, insuranceCompanyId, province, provinceId, insuranceTypeId, financeOrderDate, orderMonth, policyNo, agentName,\n" +

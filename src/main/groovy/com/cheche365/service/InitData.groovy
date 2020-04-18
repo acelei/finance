@@ -156,6 +156,7 @@ where `8-险种名称` in (
         baseSql.execute('truncate result_#_2'.replace('#', type))
         baseSql.executeInsert(rollSql.replace("#", type))
         log.info("恢复back表完成:{}", type)
+        fixPremium(type, "")
         clean(type)
     }
 

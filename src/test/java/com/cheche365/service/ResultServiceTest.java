@@ -19,6 +19,6 @@ public class ResultServiceTest {
 
     @Test
     public void run() throws SQLException {
-        resultService.run("yx");
+        resultService.run("bj");
     }
 }

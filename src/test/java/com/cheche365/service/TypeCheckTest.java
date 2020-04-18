@@ -27,7 +27,7 @@ public class TypeCheckTest {
     @Autowired
     private ResultService resultService;
 
-    String type = "chongqing";
+    String type = "bj";
 
     @Test
     public void before() {

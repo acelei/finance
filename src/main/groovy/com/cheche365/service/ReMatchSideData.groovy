@@ -54,9 +54,16 @@ class ReMatchSideData {
         List<GroovyRowResult> resultList = findResult(row, type)
 
         GroovyRowResult result
+
         for (GroovyRowResult i : resultList) {
-            def r = ((i.fee as double) + (row.fee as double) - (i.commission as double)) / ((i.fee as double) + (row.fee as double))
-            if (r > -1 && r < 1) {
+            def premium = i.premium as double
+            def fee = (i.fee as double) + (row.fee as double)
+            def commission = (i.commission as double)
+            def r = 0
+            if (fee != 0 && commission != 0) {
+                r = (fee - commission) / fee
+            }
+            if ((r > -1 && r < 1) || (fee > 0 && commission > 0 && fee < premium * 0.7 && commission < premium * 0.7)) {
                 result = i
                 break
             }
@@ -72,8 +79,14 @@ class ReMatchSideData {
 
         GroovyRowResult result
         for (GroovyRowResult i : resultList) {
-            def r = ((i.fee as double) - (i.commission as double) - (row.commission as double)) / (i.fee as double)
-            if (r > -1 && r < 1) {
+            def premium = i.premium as double
+            def fee = (i.fee as double)
+            def commission = (i.commission as double) + (row.commission as double)
+            def r = 0
+            if (fee != 0 && commission != 0) {
+                r = (fee - commission) / fee
+            }
+            if ((r > -1 && r < 1) || (fee > 0 && commission > 0 && fee < premium * 0.7 && commission < premium * 0.7)) {
                 result = i
                 break
             }
@@ -87,6 +100,7 @@ class ReMatchSideData {
     String quernSettlementUp = '''
 select id,s_id,c_id,sum_fee  as fee,
        sum_commission as commission,
+       ifnull(`11-净保费`,0) as premium,
        `14-手续费总额（报行内+报行外）(含税)`,`15-手续费总额（报行内+报行外）(不含税)`,
        `42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`
 from result_#_2
@@ -103,6 +117,7 @@ limit 100
     String quernSettlementDown = '''
 select id,s_id,c_id,sum_fee  as fee,
        sum_commission as commission,
+       ifnull(`11-净保费`,0) as premium,
        `14-手续费总额（报行内+报行外）(含税)`,`15-手续费总额（报行内+报行外）(不含税)`,
        `42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`
 from result_#_2
@@ -113,12 +128,14 @@ where handle_sign in (0, 1, 3, 4, 6)
   and `保险公司` = ?
   and `省` = ?
   and `8-险种名称` in ('交强险','商业险')
-order by gross_profit desc
+order by sum_fee desc,
+         gross_profit desc
 limit 100
 '''
     String quernCommissionUp = '''
 select id,s_id,c_id,sum_fee  as fee,
        sum_commission as commission,
+       ifnull(`11-净保费`,0) as premium,
        `14-手续费总额（报行内+报行外）(含税)`,`15-手续费总额（报行内+报行外）(不含税)`,
        `42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`
 from result_#_2
@@ -136,6 +153,7 @@ limit 100
     String quernCommissionDown = '''
 select id,s_id,c_id,sum_fee  as fee,
        sum_commission as commission,
+       ifnull(`11-净保费`,0) as premium,
        `14-手续费总额（报行内+报行外）(含税)`,`15-手续费总额（报行内+报行外）(不含税)`,
        `42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`
 from result_#_2
@@ -177,10 +195,17 @@ limit 100
     String cTable = "commission_#"
 
     void updateSettlement(GroovyRowResult row, GroovyRowResult result, String type) {
-        def cId = (result.c_id as String).split(",")[0]
-        def sIds = (row.s_id as String).split(",")
-        String tableName = "'${getcTable()}'"
-        String joinType = "2"
+        String cId, tableName, joinType
+        String[] sIds = (row.s_id as String).split(",")
+        if (result.c_id == null) {
+            cId = (result.s_id as String).split(",")[0]
+            tableName = "'${getsTable()}'"
+            joinType = "3"
+        } else {
+            cId = (result.c_id as String).split(",")[0]
+            tableName = "'${getcTable()}'"
+            joinType = "2"
+        }
 
         List valueList = new ArrayList()
         sIds.each {
@@ -204,11 +229,17 @@ limit 100
     }
 
     void updateCommission(GroovyRowResult row, GroovyRowResult result, String type) {
-        def sId = (result.s_id as String).split(",")[0]
-        def cIds = (row.c_id as String).split(",")
-
-        String tableName = "'${getsTable()}'"
-        String joinType = "1"
+        String sId, tableName, joinType
+        String[] cIds = (row.c_id as String).split(",")
+        if (result.s_id == null) {
+            sId = (result.c_id as String).split(",")[0]
+            tableName = "'${getcTable()}'"
+            joinType = "4"
+        } else {
+            sId = (result.s_id as String).split(",")[0]
+            tableName = "'${getsTable()}'"
+            joinType = "1"
+        }
 
         List valueList = new ArrayList()
         cIds.each {
