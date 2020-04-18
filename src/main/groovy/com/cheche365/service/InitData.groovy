@@ -408,8 +408,7 @@ group by `6-保单单号`, if(`8-险种名称` in ('交强险', '商业险'), `8
     private static final String errSql1 = '''
 update result_#_2
 set handle_sign=3
-where s_id is not null
-  and handle_sign in (0, 1, 4, 6)
+where handle_sign in (0, 1, 4, 6)
   and `8-险种名称` in ('交强险', '商业险')
   and abs(sum_fee) > 0
   and (sum_fee / `11-净保费` < if(`8-险种名称` = '交强险', 0, 0.12) or
@@ -419,8 +418,7 @@ where s_id is not null
     private static final String errSql2 = '''
 update result_#_2
 set handle_sign=3
-where s_id is null
-  and handle_sign in (0, 1, 4, 6)
+where handle_sign in (0, 1, 4, 6)
   and `8-险种名称` in ('交强险', '商业险')
   and abs(sum_commission) > 0
   and (sum_commission / `11-净保费` < if(`8-险种名称` = '交强险', 0, 0.12) or

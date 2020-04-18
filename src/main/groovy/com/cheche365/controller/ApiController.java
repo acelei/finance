@@ -4,8 +4,10 @@ import com.cheche365.entity.RestResponse;
 import com.cheche365.service.DataRunService;
 import com.cheche365.service.InitData;
 import com.cheche365.service.ReplaceBusinessData;
+import com.cheche365.util.ThreadPoolUtils;
 import groovy.sql.GroovyRowResult;
 import groovy.sql.Sql;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,6 +17,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 @RestController
+@Log4j2
 public class ApiController {
     @Autowired
     private Sql baseSql;
@@ -33,9 +36,15 @@ public class ApiController {
             List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=0");
 
             for (GroovyRowResult row : rows) {
-                String t = row.get("type").toString();
-                initData.run(t);
-                baseSql.executeUpdate("update table_type set flag=1 where `type`=?", new Object[]{t});
+                ThreadPoolUtils.getTaskPool().execute(() -> {
+                    String t = row.get("type").toString();
+                    try {
+                        initData.run(t);
+                        baseSql.executeUpdate("update table_type set flag=1 where `type`=?", new Object[]{t});
+                    } catch (Exception e) {
+                        log.error("预处理错误", e);
+                    }
+                });
             }
         }
 
@@ -50,9 +59,15 @@ public class ApiController {
             List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=1");
 
             for (GroovyRowResult row : rows) {
-                String t = row.get("type").toString();
-                dataRunService.init(t);
-                baseSql.executeUpdate("update table_type set flag=2 where `type`=?", new Object[]{t});
+                ThreadPoolUtils.getTaskPool().execute(() -> {
+                    String t = row.get("type").toString();
+                    try {
+                        dataRunService.init(t);
+                        baseSql.executeUpdate("update table_type set flag=2 where `type`=?", new Object[]{t});
+                    } catch (Exception e) {
+                        log.error("初始化错误", e);
+                    }
+                });
             }
         }
         return RestResponse.success();
@@ -66,15 +81,21 @@ public class ApiController {
             List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=2");
 
             for (GroovyRowResult row : rows) {
-                String t = row.get("type").toString();
-                dataRunService.process(t);
-                baseSql.executeUpdate("update table_type set flag=3 where `type`=?", new Object[]{t});
+                ThreadPoolUtils.getTaskPool().execute(() -> {
+                    String t = row.get("type").toString();
+                    try {
+                        dataRunService.process(t);
+                        baseSql.executeUpdate("update table_type set flag=3 where `type`=?", new Object[]{t});
+                    } catch (Exception e) {
+                        log.error("数据处理错误", e);
+                    }
+                });
             }
         }
         return RestResponse.success();
     }
 
-    @GetMapping({"data/replace/{type}","data/replace"})
+    @GetMapping({"data/replace/{type}", "data/replace"})
     public RestResponse<String> replace(@PathVariable String type) throws SQLException {
         if (type != null) {
             replaceBusinessData.replaceBusinessList(type);
@@ -82,9 +103,15 @@ public class ApiController {
             List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=3");
 
             for (GroovyRowResult row : rows) {
-                String t = row.get("type").toString();
-                replaceBusinessData.replaceBusinessList(t);
-                baseSql.executeUpdate("update table_type set flag=4 where `type`=?", new Object[]{t});
+                ThreadPoolUtils.getTaskPool().execute(() -> {
+                    String t = row.get("type").toString();
+                    try {
+                        replaceBusinessData.replaceBusinessList(t);
+                        baseSql.executeUpdate("update table_type set flag=4 where `type`=?", new Object[]{t});
+                    } catch (Exception e) {
+                        log.error("数据替换错误", e);
+                    }
+                });
             }
         }
         return RestResponse.success();
@@ -98,9 +125,15 @@ public class ApiController {
             List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=4");
 
             for (GroovyRowResult row : rows) {
-                String t = row.get("type").toString();
-                dataRunService.result(t);
-                baseSql.executeUpdate("update table_type set flag=5 where `type`=?", new Object[]{t});
+                ThreadPoolUtils.getTaskPool().execute(() -> {
+                    String t = row.get("type").toString();
+                    try {
+                        dataRunService.result(t);
+                        baseSql.executeUpdate("update table_type set flag=5 where `type`=?", new Object[]{t});
+                    } catch (SQLException e) {
+                        log.error("结果输出错误", e);
+                    }
+                });
             }
         }
         return RestResponse.success();
