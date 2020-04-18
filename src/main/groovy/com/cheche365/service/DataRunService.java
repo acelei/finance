@@ -76,12 +76,12 @@ public class DataRunService {
         matchResultSideData.run(type);
         // 3.对毛利率问题数据进行调整
         fixProfit.fixSettlementCommission(type);
-
-        tabSideData.putDownFlag1(type);
         // 4.result中毛利率异常匹配自身单边数据
         matchSingleData.matchSingleDataList(type, true);
         // 5.在result2中将单边数据匹配毛利率较高数据
         reMatchResultSideData.run(type);
+
+        tabSideData.putDownFlag1(type);
         // 9.设置替换标记
         initData.flagErrData(type);
         // 6.将剩下的单边数据标记下放

@@ -91,7 +91,8 @@ select id,s_id,c_id,sum_fee  as fee,
        `42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`
 from result_#_2
 where handle_sign in (0, 1, 3, 4, 6)
-  and (ifnull(0+`11-净保费`, 0)*0.7)-sum_fee > ?
+  and (abs(ifnull(0+`11-净保费`, 0))*0.7)-sum_fee > ?
+  and (abs(ifnull(0+`11-净保费`, 0))*if(`8-险种名称` = '交强险', 0, 0.12)) - sum_fee < ?
   and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') <= ?
   and `保险公司` = ?
   and `省` = ?
@@ -106,7 +107,8 @@ select id,s_id,c_id,sum_fee  as fee,
        `42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`
 from result_#_2
 where handle_sign in (0, 1, 3, 4, 6)
-  and sum_fee + ifnull(0+`11-净保费`, 0)*if(`8-险种名称` = '交强险', 0, 0.12)> ?
+  and sum_fee>0
+  and sum_fee-(ifnull(0+`11-净保费`, 0)*if(`8-险种名称` = '交强险', 0, 0.12))> ?
   and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') <= ?
   and `保险公司` = ?
   and `省` = ?
@@ -121,7 +123,8 @@ select id,s_id,c_id,sum_fee  as fee,
        `42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`
 from result_#_2
 where handle_sign in (0, 1, 3, 4, 6)
-  and (ifnull(0+`11-净保费`, 0)*0.7)-sum_commission > ?
+  and (abs(ifnull(0+`11-净保费`, 0))*0.7)-sum_commission > ?
+  and 0-sum_commission < ?
   and `40-代理人名称`=?
   and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') <= ?
   and `保险公司` = ?
@@ -137,7 +140,8 @@ select id,s_id,c_id,sum_fee  as fee,
        `42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`
 from result_#_2
 where handle_sign in (0, 1, 3, 4, 6)
-  and sum_commission + ifnull(0+`11-净保费`, 0)*if(`8-险种名称` = '交强险', 0, 0.12) > ?
+  ans sum_commission>0
+  and sum_commission-(ifnull(0+`11-净保费`, 0)*if(`8-险种名称` = '交强险', 0, 0.12)) > ?
   and `40-代理人名称`=?
   and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') <= ?
   and `保险公司` = ?
@@ -152,7 +156,7 @@ limit 100
         def fee = row.fee as double
         def commission = row.commission as double
         if (fee > 0) {
-            return baseSql.rows(getQuernSettlementUp().replace("#", type), [fee, row.'order_month', row.'保险公司', row.'省'])
+            return baseSql.rows(getQuernSettlementUp().replace("#", type), [fee, fee, row.'order_month', row.'保险公司', row.'省'])
         }
 
         if (fee < 0) {
@@ -160,7 +164,7 @@ limit 100
         }
 
         if (commission > 0) {
-            return baseSql.rows(getQuernCommissionUp().replace("#", type), [commission, row.'40-代理人名称', row.'order_month', row.'保险公司', row.'省'])
+            return baseSql.rows(getQuernCommissionUp().replace("#", type), [commission, commission, row.'40-代理人名称', row.'order_month', row.'保险公司', row.'省'])
         }
 
         if (commission < 0) {

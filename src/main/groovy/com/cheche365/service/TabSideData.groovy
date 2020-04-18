@@ -118,13 +118,11 @@ select id,s_id, c_id from result_#_2 where  handle_sign != 5 and `8-险种名称
 '''
 
     String resultSide2 = '''
-select id,s_id, c_id from result_#_2 where  handle_sign != 5 and `8-险种名称` in ('交强险','商业险') and handle_sign != 3 and date_format(`9-保单出单日期`,'%Y')='2019' and sum_fee > sum_commission and (sum_fee / `11-净保费`) < if(`8-险种名称` = '交强险', 0, 0.12)
+select id,s_id, c_id from result_#_2 where  handle_sign != 5 and `8-险种名称` in ('交强险','商业险') and handle_sign != 3 and date_format(`9-保单出单日期`,'%Y')='2019' and sum_fee > sum_commission and (sum_fee / abs(`11-净保费`)) < if(`8-险种名称` = '交强险', 0, 0.12)
 union all
-select id,s_id, c_id from result_#_2 where  handle_sign != 5 and `8-险种名称` in ('交强险','商业险') and handle_sign != 3 and date_format(`9-保单出单日期`,'%Y')='2019' and sum_fee > sum_commission and (sum_fee / `11-净保费`) > 0.7
+select id,s_id, c_id from result_#_2 where  handle_sign != 5 and `8-险种名称` in ('交强险','商业险') and handle_sign != 3 and date_format(`9-保单出单日期`,'%Y')='2019' and sum_fee > sum_commission and (sum_fee / abs(`11-净保费`)) > 0.7
 union all
-select id,s_id, c_id from result_#_2 where  handle_sign != 5 and `8-险种名称` in ('交强险','商业险') and handle_sign != 3 and date_format(`9-保单出单日期`,'%Y')='2019' and sum_fee < sum_commission and (sum_commission / `11-净保费`) < if(`8-险种名称` = '交强险', 0, 0.12)
-union all
-select id,s_id, c_id from result_#_2 where  handle_sign != 5 and `8-险种名称` in ('交强险','商业险') and handle_sign != 3 and date_format(`9-保单出单日期`,'%Y')='2019' and sum_fee < sum_commission and (sum_commission / `11-净保费`) > 0.7
+select id,s_id, c_id from result_#_2 where  handle_sign != 5 and `8-险种名称` in ('交强险','商业险') and handle_sign != 3 and date_format(`9-保单出单日期`,'%Y')='2019' and sum_fee < sum_commission and (sum_commission / abs(`11-净保费`)) > 0.7
 '''
     String downSettlement = "update settlement_# set d_id=5,handle_sign=6 where id in (:ids)"
     String downCommission = "update commission_# set d_id=5,handle_sign=6 where id in (:ids)"
