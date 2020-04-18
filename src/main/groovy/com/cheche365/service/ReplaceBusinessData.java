@@ -99,10 +99,10 @@ public class ReplaceBusinessData {
             "         ) t4\n" +
             "       on t1.id = t4.finance_id\n" +
             "       where handle_sign = 6 \n" +
-            "       and `8-险种名称` in ('交强险', '商业险') and `9-保单出单日期` >= '2019-01-01' \n" +
+            "       and `8-险种名称` in ('交强险', '商业险') and (ifnull(`sum_fee`, 0.00)) >= 0 and `9-保单出单日期` >= '2019-01-01' \n" +
             "       and t4.id is null";
 
-    private String listReplaceBusinessBySeGroup = "select id, sIds, cIds, insuranceCompany, insuranceCompanyId, province, provinceId, insuranceTypeId, financeOrderDate, orderMonth, policyNo,\n" +
+    private String listReplaceBusinessBySeGroup = "select * from ( select id, sIds, cIds, insuranceCompany, insuranceCompanyId, province, provinceId, insuranceTypeId, financeOrderDate, orderMonth, policyNo,\n" +
             "       group_concat(id) as ids, sum(sumFee) as sumFee\n" +
             "from (select t1.id,\n" +
             "                      s_id                                  as sIds,\n" +
@@ -128,7 +128,7 @@ public class ReplaceBusinessData {
             "                 and `9-保单出单日期` >= '2019-01-01'\n" +
             "                 and t4.id is null\n" +
             "              ) as temp\n" +
-            "group by policyNo, insuranceTypeId, insuranceCompanyId, province, orderMonth";
+            "group by policyNo, insuranceTypeId, insuranceCompanyId, province, orderMonth) as temp where sumFee >= 0";
 
     private String listReplaceBusinessByCo = "select t1.id,\n" +
             "       s_id                                                                                          as sids,\n" +
@@ -149,10 +149,10 @@ public class ReplaceBusinessData {
             "         ) t4\n" +
             "       on t1.id = t4.finance_id\n" +
             "       where handle_sign = 6 \n" +
-            "       and `8-险种名称` in ('交强险', '商业险') and `9-保单出单日期` >= '2019-01-01' \n" +
+            "       and `8-险种名称` in ('交强险', '商业险') and  and (ifnull(`sum_commission`, 0.00)) >= 0 and `9-保单出单日期` >= '2019-01-01' \n" +
             "       and t4.id is null";
 
-    private String listReplaceBusinessByCoGroup = "select id, sIds, cIds, insuranceCompany, insuranceCompanyId, province, provinceId, insuranceTypeId, financeOrderDate, orderMonth, policyNo, agentName,\n" +
+    private String listReplaceBusinessByCoGroup = "select * from ( select id, sIds, cIds, insuranceCompany, insuranceCompanyId, province, provinceId, insuranceTypeId, financeOrderDate, orderMonth, policyNo, agentName,\n" +
             "       group_concat(id) as ids, sum(sumFee) as sumFee\n" +
             "from (select t1.id,\n" +
             "                      s_id                                  as sIds,\n" +
@@ -179,7 +179,7 @@ public class ReplaceBusinessData {
             "                 and `9-保单出单日期` >= '2019-01-01'\n" +
             "                 and t4.id is null\n" +
             "              ) as temp\n" +
-            "group by policyNo, insuranceTypeId, insuranceCompanyId, province, orderMonth, agentName";
+            "group by policyNo, insuranceTypeId, insuranceCompanyId, province, orderMonth, agentName ) as temp where sumFee >= 0";
 
     private DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
