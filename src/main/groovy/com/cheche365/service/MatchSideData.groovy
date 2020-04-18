@@ -176,9 +176,9 @@ class MatchSideData {
                     (c.c_id as String).split(",").each {
                         StringJoiner values = new StringJoiner(",", "(", ")")
                         values.add(tableName.replace("#", type))
-                        values.add(s.id as String)
-                        values.add(sId)
-                        values.add(it)
+                        values.add("'${s.id}'")
+                        values.add("'${sId}'")
+                        values.add("'${it}'")
                         values.add(joinType)
                         valueList.add(values)
                     }
@@ -217,9 +217,9 @@ class MatchSideData {
                     (s.s_id as String).split(",").each {
                         StringJoiner values = new StringJoiner(",", "(", ")")
                         values.add(tableName.replace("#", type))
-                        values.add(c.id as String)
-                        values.add(it)
-                        values.add(cId)
+                        values.add("'${c.id}'")
+                        values.add("'${it}'")
+                        values.add("'${cId}'")
                         values.add(joinType)
                         valueList.add(values)
                     }

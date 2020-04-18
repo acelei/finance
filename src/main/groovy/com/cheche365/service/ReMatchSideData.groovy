@@ -140,7 +140,7 @@ select id,s_id,c_id,sum_fee  as fee,
        `42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`
 from result_#_2
 where handle_sign in (0, 1, 3, 4, 6)
-  ans sum_commission>0
+  and sum_commission>0
   and sum_commission > ?
   and `40-代理人名称`=?
   and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') <= ?
@@ -186,9 +186,9 @@ limit 100
         sIds.each {
             StringJoiner values = new StringJoiner(",", "(", ")")
             values.add(tableName.replace("#", type))
-            values.add(row.id as String)
-            values.add(it)
-            values.add(cId)
+            values.add("'${row.id}'")
+            values.add("'${it}'")
+            values.add("'${cId}'")
             values.add(joinType)
             valueList.add(values)
         }
@@ -214,9 +214,9 @@ limit 100
         cIds.each {
             StringJoiner values = new StringJoiner(",", "(", ")")
             values.add(tableName.replace("#", type))
-            values.add(row.id as String)
-            values.add(sId)
-            values.add(it)
+            values.add("'${row.id}'")
+            values.add("'${sId}''")
+            values.add("'${it}'")
             values.add(joinType)
             valueList.add(values)
         }
