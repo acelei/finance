@@ -18,8 +18,12 @@ class MatchSideData {
     String queryCommission = "select id,id as c_id,sum_fee as fee,sum_commission as commission,`14-手续费总额（报行内+报行外）(含税)`,`15-手续费总额（报行内+报行外）(不含税)`,`42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`,DATE_FORMAT(`9-保单出单日期`,'%Y-%m') as order_month,`保险公司`,`省`,`40-代理人名称`, null as flag from commission_# where handle_sign=6 and date_format(`9-保单出单日期`,'%Y')='2019'"
 
     void run(String type) {
+        log.info("匹配单边数据-结算(付佣使用结算业务数据):{}", type)
         processSettlement(type)
+        log.info("匹配单边数据-结算(付佣使用结算业务数据)完成:{}", type)
+        log.info("匹配单边数据-佣金(结算使用付佣业务数据):{}", type)
         processCommission(type)
+        log.info("匹配单边数据-佣金(结算使用付佣业务数据)完成:{}", type)
     }
 
     void processSettlement(String type) {
@@ -72,7 +76,6 @@ class MatchSideData {
                 }
             }
         }
-        log.info("匹配失败:{}", settlement)
     }
 
     void matchSettlement(GroovyRowResult commission, Map<String, List<GroovyRowResult>> settlementGroup, String type) {
@@ -104,7 +107,7 @@ class MatchSideData {
                 }
             }
         }
-        log.info("匹配失败:{}", commission)
+
     }
 
     private static Map<List<GroovyRowResult>, List<GroovyRowResult>> matchData(List<GroovyRowResult> settlements, List<GroovyRowResult> commissions) {
@@ -183,9 +186,11 @@ class MatchSideData {
             }
 
             baseSql.executeInsert(insertRef + valueList.join(","))
+            def cids = value*.id.join(',')
             baseSql.executeUpdate("update ${getsTable()} set handle_sign=4,`42-佣金金额（已入账）`=?,`45-支付金额`=?,`46-未计提佣金（19年底尚未入帐）`=?,sum_commission=?,gross_profit=?,c_id=? where id=?"
-                    .replace("#", type), [c42, c45, c46, sumCommission, ((row.fee as double) - sumCommission) / (row.fee as double), value*.id.join(','), row.id])
-            baseSql.executeUpdate("update ${getcTable()} set handle_sign=5 where id in (${value*.id.join(',')})".replace("#", type))
+                    .replace("#", type), [c42, c45, c46, sumCommission, ((row.fee as double) - sumCommission) / (row.fee as double), value*.c_id.join(','), row.id])
+            baseSql.executeUpdate("update ${getcTable()} set handle_sign=5 where id in (${cids})".replace("#", type))
+            log.info("匹配成功:{}:{} -> {}:{}", getcTable().replace("#", type), cids, getsTable().replace("#", type), row.id)
         }
     }
 
@@ -222,9 +227,12 @@ class MatchSideData {
             }
 
             baseSql.executeInsert(insertRef + valueList.join(","))
-            baseSql.executeUpdate("update ${getsTable()} set handle_sign=5 where id in (${key*.s_id.join(',')})".replace("#", type))
+            def sids = key*.id.join(',')
+            baseSql.executeUpdate("update ${getsTable()} set handle_sign=5 where id in (${sids})".replace("#", type))
             baseSql.executeUpdate("update ${getcTable()} set handle_sign=4,`14-手续费总额（报行内+报行外）(含税)`=?,`15-手续费总额（报行内+报行外）(不含税)`=?,sum_fee=?,gross_profit=?,s_id=? where id=?"
                     .replace("#", type), [s14, s15, sumFee, (sumFee - (row.commission as double)) / sumFee, key*.s_id.join(','), row.id])
+
+            log.info("匹配成功:{}:{} -> {}:{}", getsTable().replace("#", type), sids, getcTable().replace("#", type), row.id)
         }
     }
 }

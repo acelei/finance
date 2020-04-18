@@ -132,10 +132,14 @@ select id,s_id, c_id from result_#_2 where  handle_sign != 5 and `8-险种名称
     String updateResult = "update result_#_2 set handle_sign=7 where id=?"
 
     void putDownFlag1(String type) {
+        log.info("下放收入成本为负数的标志位:{}",type)
         putDownFlag(type,resultSide1)
+        log.info("下放收入成本为负数的标志位完成:{}",type)
     }
     void putDownFlag2(String type) {
+        log.info("下放收入成本与保费比例异常的标志位:{}",type)
         putDownFlag(type,resultSide2)
+        log.info("下放收入成本与保费比例异常的标志位完成:{}",type)
     }
 
     void putDownFlag(String type, String sql) {

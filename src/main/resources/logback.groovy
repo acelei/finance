@@ -15,6 +15,12 @@ def configMap = [
 
 def curConfig = configMap
 
+appender("console", ConsoleAppender) {
+    encoder(PatternLayoutEncoder) {
+        pattern = patternLayout
+    }
+}
+
 appender("FILE-INFO", RollingFileAppender) {
     filter(ThresholdFilter) {
         level = INFO
@@ -51,3 +57,4 @@ appender("FILE-ERROR", RollingFileAppender) {
 }
 
 root(curConfig.level, curConfig.appenders)
+//root(DEBUG, ["console"])

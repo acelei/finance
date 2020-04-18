@@ -1,6 +1,7 @@
 package com.cheche365.service
 
-
+import com.cheche365.util.ThreadPoolUtils
+import com.google.common.collect.Lists
 import groovy.sql.GroovyRowResult
 import groovy.sql.Sql
 import groovy.util.logging.Slf4j
@@ -17,24 +18,36 @@ class ReMatchSideData {
     String errorCommissionSide = "select id,id as c_id,sum_fee as fee,sum_commission as commission,`14-手续费总额（报行内+报行外）(含税)`,`15-手续费总额（报行内+报行外）(不含税)`,`42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`,DATE_FORMAT(`9-保单出单日期`,'%Y-%m') as order_month,`保险公司`,`省`,`40-代理人名称` from commission_# where handle_sign=6 and date_format(`9-保单出单日期`,'%Y')='2019'"
 
     void run(String type) {
+        log.info("反向匹配结算单边数据:{}-{}", getsTable(), type)
         settlementMatch(type)
+        log.info("反向匹配结算单边数据完成:{}-{}", getsTable(), type)
+        log.info("反向匹配佣金单边数据:{}-{}", getcTable(), type)
         commissionMatch(type)
+        log.info("反向匹配佣金单边数据完成:{}-{}", getcTable(), type)
     }
 
     void settlementMatch(String type) {
-        List<GroovyRowResult> settlements = baseSql.rows(getErrorSettlementSide().replace("#", type))
-
-        settlements.each { row ->
-            matchSettlementResult(row, type)
+        Map<String, List<GroovyRowResult>> settlementsGroup = baseSql.rows(getErrorSettlementSide().replace("#", type)).groupBy {
+            it.'保险公司' + it.'省'
         }
+
+        ThreadPoolUtils.executeRun(Lists.newArrayList(settlementsGroup.values()), { settlements ->
+            settlements.each { row ->
+                matchSettlementResult(row, type)
+            }
+        }).await()
     }
 
     void commissionMatch(String type) {
-        List<GroovyRowResult> commissions = baseSql.rows(getErrorCommissionSide().replace("#", type))
-
-        commissions.each { row ->
-            matchCommissionResult(row, type)
+        Map<String, List<GroovyRowResult>> commissionsGroup = baseSql.rows(getErrorCommissionSide().replace("#", type)).groupBy {
+            it.'保险公司' + it.'省' + it.'40-代理人名称'
         }
+
+        ThreadPoolUtils.executeRun(Lists.newArrayList(commissionsGroup.values()), { commissions ->
+            commissions.each { row ->
+                matchCommissionResult(row, type)
+            }
+        }).await()
     }
 
     void matchSettlementResult(GroovyRowResult row, String type) {
@@ -49,10 +62,8 @@ class ReMatchSideData {
             }
         }
         if (result != null) {
-            log.info("匹配成功:{},{}", row.id, result.id)
             updateSettlement(row, result, type)
-        } else {
-            log.info("匹配失败:{}", row)
+            log.info("匹配成功:{}-{} -> {}-{}", getsTable().replace("#", type), row.id, getcTable().replace("#", type), result.id)
         }
     }
 
@@ -68,10 +79,8 @@ class ReMatchSideData {
             }
         }
         if (result != null) {
-            log.info("匹配成功:{},{}", row.id, result.id)
             updateCommission(row, result, type)
-        } else {
-            log.info("匹配失败:{}", row)
+            log.info("匹配成功:{}-{} -> {}-{}", getcTable().replace("#", type), row.id, getsTable().replace("#", type), result.id)
         }
     }
 
@@ -81,7 +90,7 @@ select id,s_id,c_id,sum_fee  as fee,
        `14-手续费总额（报行内+报行外）(含税)`,`15-手续费总额（报行内+报行外）(不含税)`,
        `42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`
 from result_#_2
-where handle_sign in (0, 1, 3, 4)
+where handle_sign in (0, 1, 3, 4, 6)
   and ifnull(0+`10-全保费`, 0)-sum_fee > ?
   and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') <= ?
   and `保险公司` = ?
@@ -96,7 +105,7 @@ select id,s_id,c_id,sum_fee  as fee,
        `14-手续费总额（报行内+报行外）(含税)`,`15-手续费总额（报行内+报行外）(不含税)`,
        `42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`
 from result_#_2
-where handle_sign in (0, 1, 3, 4)
+where handle_sign in (0, 1, 3, 4, 6)
   and sum_fee > ?
   and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') <= ?
   and `保险公司` = ?
@@ -111,7 +120,7 @@ select id,s_id,c_id,sum_fee  as fee,
        `14-手续费总额（报行内+报行外）(含税)`,`15-手续费总额（报行内+报行外）(不含税)`,
        `42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`
 from result_#_2
-where handle_sign in (0, 1, 3, 4)
+where handle_sign in (0, 1, 3, 4, 6)
   and (2*sum_fee)-sum_commission > ?
   and `40-代理人名称`=?
   and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') <= ?
@@ -127,7 +136,7 @@ select id,s_id,c_id,sum_fee  as fee,
        `14-手续费总额（报行内+报行外）(含税)`,`15-手续费总额（报行内+报行外）(不含税)`,
        `42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`
 from result_#_2
-where handle_sign in (0, 1, 3, 4)
+where handle_sign in (0, 1, 3, 4, 6)
   and sum_commission > ?
   and `40-代理人名称`=?
   and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') <= ?
