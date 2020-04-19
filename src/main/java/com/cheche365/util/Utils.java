@@ -1,7 +1,6 @@
 package com.cheche365.util;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import lombok.NonNull;
 
 import java.util.*;
@@ -64,7 +63,7 @@ public class Utils {
                     List<List<K>> tList = combine(targets, m--);
                     for (List<K> t : tList) {
                         if (bp.test(s, t)) {
-                            Map<List<T>, List<K>> map = Maps.newHashMapWithExpectedSize(1);
+                            Map<List<T>, List<K>> map = new HashMap<>(2);
                             map.put(s, t);
                             return map;
                         }

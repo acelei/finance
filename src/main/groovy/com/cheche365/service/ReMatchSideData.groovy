@@ -246,7 +246,7 @@ limit 100
             StringJoiner values = new StringJoiner(",", "(", ")")
             values.add(tableName.replace("#", type))
             values.add("'${result.id}'")
-            values.add("'${sId}''")
+            values.add("'${sId}'")
             values.add("'${it}'")
             values.add(joinType)
             valueList.add(values)
