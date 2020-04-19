@@ -145,7 +145,6 @@ public class ApiController {
     @GetMapping("data/rollback/{type}")
     public RestResponse<String> rollback(@PathVariable String type) {
         initData.roll(type);
-        initData.fixPremium(type, "");
         return RestResponse.success(type);
     }
 
