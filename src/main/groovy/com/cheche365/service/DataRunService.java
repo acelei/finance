@@ -3,8 +3,6 @@ package com.cheche365.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.sql.SQLException;
-
 @Service
 public class DataRunService {
     @Autowired
