@@ -34,9 +34,9 @@ class TabSideData {
         log.info("根据保费与手续费调整比例比正常数据-结算:{}", type)
         List rows = baseSql.rows(errSettlementSql.replace("#", type))
 
-        ThreadPoolUtils.executeRun(rows, {
+        ThreadPoolUtils.submitRun(rows, {
             setSettlementValue(it, type)
-        }).await()
+        }).each {it.get()}
         log.info("根据保费与手续费调整比例比正常数据完成-结算:{}", type)
     }
 
@@ -74,9 +74,9 @@ class TabSideData {
         log.info("根据保费与手续费调整比例比正常数据-佣金:{}", type)
         List rows = baseSql.rows(errCommissionSql.replace("#", type))
 
-        ThreadPoolUtils.executeRun(rows, {
+        ThreadPoolUtils.submitRun(rows, {
             setCommissionValue(it, type)
-        }).await()
+        }).each {it.get()}
         log.info("根据保费与手续费调整比例比正常数据完成-佣金:{}", type)
     }
 
@@ -143,7 +143,7 @@ select id,s_id, c_id from result_#_2 where  handle_sign != 5 and `8-险种名称
 
     void putDownFlag(String type, String sql) {
         def rows = baseSql.rows(sql.replace("#", type))
-        ThreadPoolUtils.executeRun(rows, { row ->
+        ThreadPoolUtils.submitRun(rows, { row ->
             if (row.s_id != null) {
                 baseSql.executeUpdate(downSettlement.replace("#", type).replace(":ids", row.s_id as String))
             }
@@ -152,7 +152,7 @@ select id,s_id, c_id from result_#_2 where  handle_sign != 5 and `8-险种名称
             }
             baseSql.executeUpdate(updateResult.replace("#", type), [row.id])
             baseSql.executeUpdate("delete from result_gross_margin_ref where table_name=? and result_id=?", ['result_' + type + '_2', row.id])
-        })
+        }).each {it.get()}
     }
 
 }

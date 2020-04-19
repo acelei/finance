@@ -31,9 +31,9 @@ class MatchSideData {
             it.'保险公司' + it.'省' + it.'order_month' + it.'40-代理人名称'
         }
         List<GroovyRowResult> settlements = baseSql.rows(getQuerySettlement().replace("#", type))
-        ThreadPoolUtils.executeRun(settlements, { it ->
+        ThreadPoolUtils.submitRun(settlements, { it ->
             matchCommission(it, commissionGroup, type)
-        }).await()
+        }).each {it.get()}
 
     }
 
@@ -42,9 +42,9 @@ class MatchSideData {
             it.'保险公司' + it.'省' + it.'order_month'
         }
         List<GroovyRowResult> commissions = baseSql.rows(getQueryCommission().replace("#", type))
-        ThreadPoolUtils.executeRun(commissions, { it ->
+        ThreadPoolUtils.submitRun(commissions, { it ->
             matchSettlement(it, settlementGroup, type)
-        }).await()
+        }).each {it.get()}
     }
 
     void matchCommission(GroovyRowResult settlement, Map<String, List<GroovyRowResult>> commissionGroup, String type) {

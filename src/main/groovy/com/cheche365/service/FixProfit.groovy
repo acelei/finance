@@ -39,10 +39,10 @@ class FixProfit {
     void fixSettlementCommission(String type) {
         log.info("调整毛利率异常数据:{}", type)
         List<GroovyRowResult> dataList = baseSql.rows(querySql.replace("#", type))
-        ThreadPoolUtils.executeRun(dataList, {
+        ThreadPoolUtils.submitRun(dataList, {
 //            handleSettlementCommission(it, type)
             handleGrossMargin(it, type)
-        }).await()
+        }).each {it.get()}
         log.info("调整毛利率异常数据完成:{}", type)
     }
 

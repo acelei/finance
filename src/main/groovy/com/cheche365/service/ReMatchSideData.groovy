@@ -31,11 +31,11 @@ class ReMatchSideData {
             it.'保险公司' + it.'省'
         }
 
-        ThreadPoolUtils.executeRun(Lists.newArrayList(settlementsGroup.values()), { settlements ->
+        ThreadPoolUtils.submitRun(Lists.newArrayList(settlementsGroup.values()), { settlements ->
             settlements.each { row ->
                 matchSettlementResult(row, type)
             }
-        }).await()
+        }).each {it.get()}
     }
 
     void commissionMatch(String type) {
@@ -43,11 +43,11 @@ class ReMatchSideData {
             it.'保险公司' + it.'省' + it.'40-代理人名称'
         }
 
-        ThreadPoolUtils.executeRun(Lists.newArrayList(commissionsGroup.values()), { commissions ->
+        ThreadPoolUtils.submitRun(Lists.newArrayList(commissionsGroup.values()), { commissions ->
             commissions.each { row ->
                 matchCommissionResult(row, type)
             }
-        }).await()
+        }).each {it.get()}
     }
 
     void matchSettlementResult(GroovyRowResult row, String type) {

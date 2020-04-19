@@ -42,7 +42,7 @@ public class ApiController {
                         initData.run(t);
                         baseSql.executeUpdate("update table_type set flag=1 where `type`=?", new Object[]{t});
                     } catch (Exception e) {
-                        log.error("预处理错误", e);
+                        log.error("预处理错误:" + t, e);
                     }
                 });
             }
@@ -65,7 +65,7 @@ public class ApiController {
                         dataRunService.init(t);
                         baseSql.executeUpdate("update table_type set flag=2 where `type`=?", new Object[]{t});
                     } catch (Exception e) {
-                        log.error("初始化错误", e);
+                        log.error("初始化错误:" + t, e);
                     }
                 });
             }
@@ -87,7 +87,7 @@ public class ApiController {
                         dataRunService.process(t);
                         baseSql.executeUpdate("update table_type set flag=3 where `type`=?", new Object[]{t});
                     } catch (Exception e) {
-                        log.error("数据处理错误", e);
+                        log.error("数据处理错误:" + t, e);
                     }
                 });
             }
@@ -109,7 +109,7 @@ public class ApiController {
                         replaceBusinessData.replaceBusinessList(t);
                         baseSql.executeUpdate("update table_type set flag=4 where `type`=?", new Object[]{t});
                     } catch (Exception e) {
-                        log.error("数据替换错误", e);
+                        log.error("数据替换错误:" + t, e);
                     }
                 });
             }
@@ -131,7 +131,7 @@ public class ApiController {
                         dataRunService.result(t);
                         baseSql.executeUpdate("update table_type set flag=5 where `type`=?", new Object[]{t});
                     } catch (SQLException e) {
-                        log.error("结果输出错误", e);
+                        log.error("结果输出错误:" + t, e);
                     }
                 });
             }
