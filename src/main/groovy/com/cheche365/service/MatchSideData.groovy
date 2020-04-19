@@ -1,5 +1,6 @@
 package com.cheche365.service
 
+import com.cheche365.util.MatchResult
 import com.cheche365.util.ThreadPoolUtils
 import com.cheche365.util.Utils
 import groovy.sql.GroovyRowResult
@@ -110,7 +111,7 @@ class MatchSideData {
 
     }
 
-    private static Utils.MatchResult<List<GroovyRowResult>, List<GroovyRowResult>> matchData(List<GroovyRowResult> settlements, List<GroovyRowResult> commissions) {
+    private static MatchResult<List<GroovyRowResult>, List<GroovyRowResult>> matchData(List<GroovyRowResult> settlements, List<GroovyRowResult> commissions) {
         List<GroovyRowResult> commissionTmp, settlementTmp
         settlementTmp = settlements.findAll { it.flag == null }
         commissionTmp = commissions.findAll { it.flag == null }
@@ -122,7 +123,7 @@ class MatchSideData {
         })
     }
 
-    private boolean isMatch(Utils.MatchResult<List<GroovyRowResult>, List<GroovyRowResult>> matchMap, Object lock) {
+    private boolean isMatch(MatchResult<List<GroovyRowResult>, List<GroovyRowResult>> matchMap, Object lock) {
         synchronized (lock) {
             def key = matchMap.sourceList
             def value = matchMap.targetList
@@ -149,7 +150,7 @@ class MatchSideData {
     String sTable = "settlement_#"
     String cTable = "commission_#"
 
-    void updateCommissionResult(Utils.MatchResult<List<GroovyRowResult>, List<GroovyRowResult>> matchMap, String type) {
+    void updateCommissionResult(MatchResult<List<GroovyRowResult>, List<GroovyRowResult>> matchMap, String type) {
         def row
         def c42 = 0, c45 = 0, c46 = 0, sumCommission = 0
         def key = matchMap.sourceList
@@ -192,7 +193,7 @@ class MatchSideData {
         log.info("付佣匹配成功:{}:{} -> {}:{}", getcTable().replace("#", type), cids, getsTable().replace("#", type), row.id)
     }
 
-    void updateSettlementResult(Utils.MatchResult<List<GroovyRowResult>, List<GroovyRowResult>> matchMap, String type) {
+    void updateSettlementResult(MatchResult<List<GroovyRowResult>, List<GroovyRowResult>> matchMap, String type) {
         def row
         def s14 = 0, s15 = 0, sumFee = 0
 

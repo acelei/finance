@@ -1,11 +1,9 @@
 package com.cheche365.util;
 
-import com.cheche365.util.Utils;
 import lombok.extern.log4j.Log4j2;
 import org.junit.Test;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -22,7 +20,7 @@ public class UtilsTest {
         log.info(list);
         log.info(list2);
         log.info("开始");
-        Map<List<Integer>, List<Integer>> listListMap = Utils.matchCombine(list, list2, (a, b) -> {
+        MatchResult<Integer, Integer> listListMap = Utils.matchCombine(list, list2, (a, b) -> {
             Integer n = a.stream().reduce(Integer::sum).get();
             Integer m = b.stream().reduce(Integer::sum).get();
             return abs((n - m) / n) < 1;

@@ -1,5 +1,6 @@
 package com.cheche365.service
 
+import com.cheche365.util.MatchResult
 import com.cheche365.util.ThreadPoolUtils
 import com.cheche365.util.Utils
 import groovy.sql.GroovyRowResult
@@ -115,7 +116,7 @@ class FixProfit {
         List commissionList = baseSql.rows(commissionSql.replace("#", type) + "(${row.cIds})")
         def premium = row.premium as double
 
-        Utils.MatchResult map = Utils.matchCombine(settlementList, commissionList, { s, c ->
+        MatchResult map = Utils.matchCombine(settlementList, commissionList, { s, c ->
             def fee = s*.fee.collect { it as double }.sum()
             def commission = c*.commission.collect { it as double }.sum()
             def r = (fee - commission) / fee

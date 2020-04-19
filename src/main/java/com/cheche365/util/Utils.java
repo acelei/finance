@@ -3,7 +3,10 @@ package com.cheche365.util;
 import com.google.common.collect.Lists;
 import lombok.NonNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Random;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
@@ -73,12 +76,6 @@ public class Utils {
             }
         }
         return null;
-    }
-
-    static class MatchResult<T, K> {
-        public List<T> sourceList;
-        public List<K> targetList;
-
     }
 
     public static <T> List<T> getRandomList(List<T> paramList, int count) {
