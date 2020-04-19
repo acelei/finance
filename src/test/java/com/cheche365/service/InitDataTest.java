@@ -50,7 +50,7 @@ public class InitDataTest {
      */
     @Test
     public void roll() throws SQLException {
-        List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag in (0,2)");
+        List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag = 2");
 
         for (GroovyRowResult row : rows) {
             String type = row.get("type").toString();
