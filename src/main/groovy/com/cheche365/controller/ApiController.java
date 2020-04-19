@@ -3,6 +3,7 @@ package com.cheche365.controller;
 import com.cheche365.entity.RestResponse;
 import com.cheche365.service.DataRunService;
 import com.cheche365.service.InitData;
+import com.cheche365.service.ReMatchSideData;
 import com.cheche365.service.ReplaceBusinessData;
 import com.cheche365.util.ThreadPoolUtils;
 import groovy.sql.GroovyRowResult;
@@ -27,6 +28,8 @@ public class ApiController {
     private InitData initData;
     @Autowired
     private ReplaceBusinessData replaceBusinessData;
+    @Autowired
+    private ReMatchSideData reMatchSideData;
 
     @GetMapping({"data/before/{type}", "data/before"})
     public RestResponse<String> before(@PathVariable(required = false) String type) throws SQLException {
@@ -161,6 +164,12 @@ public class ApiController {
     @GetMapping("data/fixRef/{type}")
     public RestResponse<String> fixRef(@PathVariable String type) {
         initData.fixRef(type);
+        return RestResponse.success(type);
+    }
+
+    @GetMapping("data/reMatch/{type}")
+    public RestResponse<String> reMatch(@PathVariable String type) {
+        reMatchSideData.run(type);
         return RestResponse.success(type);
     }
 }

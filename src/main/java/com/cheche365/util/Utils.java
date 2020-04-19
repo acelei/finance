@@ -64,7 +64,9 @@ public class Utils {
                     for (List<K> t : tList) {
                         if (bp.test(s, t)) {
                             Map<List<T>, List<K>> map = new HashMap<>(2);
-                            map.put(s, t);
+                            synchronized (s) {
+                                map.put(s, t);
+                            }
                             return map;
                         }
                     }
