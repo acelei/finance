@@ -40,7 +40,7 @@ class FixInsuranceCompanyArea {
     }
 
     void run(String type) {
-        ThreadPoolUtils.executeTask(tables, { it ->
+        ThreadPoolUtils.executeRun(tables, { it ->
             log.info("处理开始:${it}_${type}")
             log.info("拆分保险公司名称开始:${it}_${type}")
             def list = tableRun("select `7-出单保险公司（明细至保险公司分支机构）`,`保险公司`,`市`,`省`,`保险公司id` from ${it}_${type} where `7-出单保险公司（明细至保险公司分支机构）` is not null and (`保险公司` is null or `省` is null) group by `7-出单保险公司（明细至保险公司分支机构）` ")

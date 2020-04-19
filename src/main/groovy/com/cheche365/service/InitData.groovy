@@ -15,12 +15,16 @@ class InitData {
     private FixInsuranceCompanyArea fixInsuranceCompanyArea
 
     void run(String type) {
+        // 合计收入成本
         sumSettlementCommission(type)
+        // 删除无效数据
         deleteNullData(type)
+        // 处理保单号
         fixPolicyNo(type)
+        // 处理险种
         fixInsuranceType(type)
+        // 处理保险公司及地区
         fixInsuranceCompanyArea.run(type)
-        clean(type)
     }
 
     private static final policyNoSql = '''update # set `8-险种名称`=replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(trim(`8-险种名称`),'’',''),' ',''),'‘',''),'，',''),'\''',''),',',''),',',''),CHAR(9), ''),CHAR(10), ''),CHAR(13),''),

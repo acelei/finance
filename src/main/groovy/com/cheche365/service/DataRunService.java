@@ -39,16 +39,8 @@ public class DataRunService {
      * @param type
      */
     public void init(String type) {
-        // 合计收入成本
-        initData.sumSettlementCommission(type);
-        // 删除无效数据
-        initData.deleteNullData(type);
-        // 处理保单号
-        initData.fixPolicyNo(type);
-        // 处理险种
-        initData.fixInsuranceType(type);
-        // 处理保险公司及地区
-        fixInsuranceCompanyArea.run(type);
+        // 清除之前的标志位
+        initData.clean(type);
         // 写入result表
 //        dataCombine.result(type);
         // 写入result2表
