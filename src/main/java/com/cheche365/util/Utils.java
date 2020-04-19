@@ -4,7 +4,6 @@ import com.google.common.collect.Lists;
 import lombok.NonNull;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
@@ -64,7 +63,7 @@ public class Utils {
                     List<List<K>> tList = combine(targets, m--);
                     for (List<K> t : tList) {
                         if (bp.test(s, t)) {
-                            Map<List<T>, List<K>> map = new ConcurrentHashMap<>(2);
+                            Map<List<T>, List<K>> map = new HashMap<>(2);
                             map.put(s, t);
                             return map;
                         }
