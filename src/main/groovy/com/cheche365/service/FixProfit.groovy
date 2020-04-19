@@ -42,7 +42,7 @@ class FixProfit {
         ThreadPoolUtils.submitRun(dataList, {
 //            handleSettlementCommission(it, type)
             handleGrossMargin(it, type)
-        }).each {it.get()}
+        }).each { it.get() }
         log.info("调整毛利率异常数据完成:{}", type)
     }
 
@@ -115,7 +115,7 @@ class FixProfit {
         List commissionList = baseSql.rows(commissionSql.replace("#", type) + "(${row.cIds})")
         def premium = row.premium as double
 
-        Map map = Utils.matchCombine(settlementList, commissionList, { s, c ->
+        Utils.MatchResult map = Utils.matchCombine(settlementList, commissionList, { s, c ->
             def fee = s*.fee.collect { it as double }.sum()
             def commission = c*.commission.collect { it as double }.sum()
             def r = (fee - commission) / fee
@@ -123,26 +123,26 @@ class FixProfit {
         })
 
         if (map != null) {
-            map.each { key, value ->
-                def s1 = key*.'14-手续费总额（报行内+报行外）(含税)'.collect { it as double }.sum()
-                def s2 = key*.'15-手续费总额（报行内+报行外）(不含税)'.collect { it as double }.sum()
-                def fee = key*.fee.collect { it as double }.sum()
+            def key = map.sourceList
+            def value = map.targetList
+            def s1 = key*.'14-手续费总额（报行内+报行外）(含税)'.collect { it as double }.sum()
+            def s2 = key*.'15-手续费总额（报行内+报行外）(不含税)'.collect { it as double }.sum()
+            def fee = key*.fee.collect { it as double }.sum()
 
-                def c1 = value*.'42-佣金金额（已入账）'.collect { it as double }.sum()
-                def c2 = value*.'45-支付金额'.collect { it as double }.sum()
-                def c3 = value*.'46-未计提佣金（19年底尚未入帐）'.collect { it as double }.sum()
-                def commission = value*.commission.collect { it as double }.sum()
+            def c1 = value*.'42-佣金金额（已入账）'.collect { it as double }.sum()
+            def c2 = value*.'45-支付金额'.collect { it as double }.sum()
+            def c3 = value*.'46-未计提佣金（19年底尚未入帐）'.collect { it as double }.sum()
+            def commission = value*.commission.collect { it as double }.sum()
 
-                baseSql.executeUpdate(updateResult.replace('#', type), key*.id.join(','), value*.id.join(','), s1, s2, c1, c2, c3, fee, commission, (fee - commission) / fee, row.id)
+            baseSql.executeUpdate(updateResult.replace('#', type), key*.id.join(','), value*.id.join(','), s1, s2, c1, c2, c3, fee, commission, (fee - commission) / fee, row.id)
 
-                List errorList = settlementList - key
-                if (errorList.size() > 0) {
-                    baseSql.executeUpdate(updateSettlement.replace("#", type) + "(" + errorList*.id.join(",") + ")")
-                }
-                errorList = commissionList - value
-                if (errorList.size() > 0) {
-                    baseSql.executeUpdate(updateCommission.replace("#", type) + "(" + errorList*.id.join(",") + ")")
-                }
+            List errorList = settlementList - key
+            if (errorList.size() > 0) {
+                baseSql.executeUpdate(updateSettlement.replace("#", type) + "(" + errorList*.id.join(",") + ")")
+            }
+            errorList = commissionList - value
+            if (errorList.size() > 0) {
+                baseSql.executeUpdate(updateCommission.replace("#", type) + "(" + errorList*.id.join(",") + ")")
             }
         } else {
             baseSql.executeUpdate(errFlag.replace('#', type), [row.id])

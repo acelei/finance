@@ -33,7 +33,7 @@ class MatchSideData {
         List<GroovyRowResult> settlements = baseSql.rows(getQuerySettlement().replace("#", type))
         ThreadPoolUtils.submitRun(settlements, { it ->
             matchCommission(it, commissionGroup, type)
-        }).each {it.get()}
+        }).each { it.get() }
 
     }
 
@@ -44,7 +44,7 @@ class MatchSideData {
         List<GroovyRowResult> commissions = baseSql.rows(getQueryCommission().replace("#", type))
         ThreadPoolUtils.submitRun(commissions, { it ->
             matchSettlement(it, settlementGroup, type)
-        }).each {it.get()}
+        }).each { it.get() }
     }
 
     void matchCommission(GroovyRowResult settlement, Map<String, List<GroovyRowResult>> commissionGroup, String type) {
@@ -110,7 +110,7 @@ class MatchSideData {
 
     }
 
-    private static Map<List<GroovyRowResult>, List<GroovyRowResult>> matchData(List<GroovyRowResult> settlements, List<GroovyRowResult> commissions) {
+    private static Utils.MatchResult<List<GroovyRowResult>, List<GroovyRowResult>> matchData(List<GroovyRowResult> settlements, List<GroovyRowResult> commissions) {
         List<GroovyRowResult> commissionTmp, settlementTmp
         settlementTmp = settlements.findAll { it.flag == null }
         commissionTmp = commissions.findAll { it.flag == null }
@@ -122,26 +122,24 @@ class MatchSideData {
         })
     }
 
-    private boolean isMatch(Map<List<GroovyRowResult>, List<GroovyRowResult>> matchMap, Object lock) {
+    private boolean isMatch(Utils.MatchResult<List<GroovyRowResult>, List<GroovyRowResult>> matchMap, Object lock) {
         synchronized (lock) {
-            for (def key : matchMap.keySet()) {
-                def tmp1 = key.find { i -> i.flag != null }
-                if (tmp1 != null) {
-                    return false
-                }
-                def tmp2 = matchMap.get(key).find { i -> i.flag != null }
-                if (tmp2 != null) {
-                    return false
-                }
+            def key = matchMap.sourceList
+            def value = matchMap.targetList
+            def tmp1 = key.find { i -> i.flag != null }
+            if (tmp1 != null) {
+                return false
+            }
+            def tmp2 = value.find { i -> i.flag != null }
+            if (tmp2 != null) {
+                return false
             }
 
-            matchMap.each { key, value ->
-                key.each {
-                    it.flag = 1
-                }
-                value.each {
-                    it.flag = 1
-                }
+            key.each {
+                it.flag = 1
+            }
+            value.each {
+                it.flag = 1
             }
             return true
         }
@@ -151,88 +149,90 @@ class MatchSideData {
     String sTable = "settlement_#"
     String cTable = "commission_#"
 
-    void updateCommissionResult(Map<List<GroovyRowResult>, List<GroovyRowResult>> matchMap, String type) {
+    void updateCommissionResult(Utils.MatchResult<List<GroovyRowResult>, List<GroovyRowResult>> matchMap, String type) {
         def row
         def c42 = 0, c45 = 0, c46 = 0, sumCommission = 0
-        matchMap.each { key, value ->
-            if (key.size() > 1) {
-                throw new Exception("只能对一条单边结算进行匹配")
-            }
-            List valueList = new ArrayList()
-            String tableName = "'${getsTable()}'"
-            String joinType = "1"
-            key.each { s ->
-                row = s
-                c42 += (s.'42-佣金金额（已入账）' as double)
-                c45 += (s.'45-支付金额' as double)
-                c46 += (s.'46-未计提佣金（19年底尚未入帐）' as double)
-                sumCommission += (s.'commission' as double)
-                def sId = (s.s_id as String).split(",")[0]
-                value.each { c ->
-                    c42 += (c.'42-佣金金额（已入账）' as double)
-                    c45 += (c.'45-支付金额' as double)
-                    c46 += (c.'46-未计提佣金（19年底尚未入帐）' as double)
-                    sumCommission += (c.'commission' as double)
-                    (c.c_id as String).split(",").each {
-                        StringJoiner values = new StringJoiner(",", "(", ")")
-                        values.add(tableName.replace("#", type))
-                        values.add("'${s.id}'")
-                        values.add("'${sId}'")
-                        values.add("'${it}'")
-                        values.add(joinType)
-                        valueList.add(values)
-                    }
+        def key = matchMap.sourceList
+        def value = matchMap.targetList
+        if (key.size() > 1) {
+            throw new Exception("只能对一条单边结算进行匹配")
+        }
+        List valueList = new ArrayList()
+        String tableName = "'${getsTable()}'"
+        String joinType = "1"
+        key.each { s ->
+            row = s
+            c42 += (s.'42-佣金金额（已入账）' as double)
+            c45 += (s.'45-支付金额' as double)
+            c46 += (s.'46-未计提佣金（19年底尚未入帐）' as double)
+            sumCommission += (s.'commission' as double)
+            def sId = (s.s_id as String).split(",")[0]
+            value.each { c ->
+                c42 += (c.'42-佣金金额（已入账）' as double)
+                c45 += (c.'45-支付金额' as double)
+                c46 += (c.'46-未计提佣金（19年底尚未入帐）' as double)
+                sumCommission += (c.'commission' as double)
+                (c.c_id as String).split(",").each {
+                    StringJoiner values = new StringJoiner(",", "(", ")")
+                    values.add(tableName.replace("#", type))
+                    values.add("'${s.id}'")
+                    values.add("'${sId}'")
+                    values.add("'${it}'")
+                    values.add(joinType)
+                    valueList.add(values)
                 }
             }
-
-            baseSql.executeInsert(insertRef + valueList.join(","))
-            def cids = value*.id.join(',')
-            baseSql.executeUpdate("update ${getsTable()} set handle_sign=4,`42-佣金金额（已入账）`=?,`45-支付金额`=?,`46-未计提佣金（19年底尚未入帐）`=?,sum_commission=?,gross_profit=?,c_id=? where id=?"
-                    .replace("#", type), [c42, c45, c46, sumCommission, ((row.fee as double) - sumCommission) / (row.fee as double), value*.c_id.join(','), row.id])
-            baseSql.executeUpdate("update ${getcTable()} set handle_sign=5 where id in (${cids})".replace("#", type))
-            log.info("付佣匹配成功:{}:{} -> {}:{}", getcTable().replace("#", type), cids, getsTable().replace("#", type), row.id)
         }
+
+        baseSql.executeInsert(insertRef + valueList.join(","))
+        def cids = value*.id.join(',')
+        baseSql.executeUpdate("update ${getsTable()} set handle_sign=4,`42-佣金金额（已入账）`=?,`45-支付金额`=?,`46-未计提佣金（19年底尚未入帐）`=?,sum_commission=?,gross_profit=?,c_id=? where id=?"
+                .replace("#", type), [c42, c45, c46, sumCommission, ((row.fee as double) - sumCommission) / (row.fee as double), value*.c_id.join(','), row.id])
+        baseSql.executeUpdate("update ${getcTable()} set handle_sign=5 where id in (${cids})".replace("#", type))
+        log.info("付佣匹配成功:{}:{} -> {}:{}", getcTable().replace("#", type), cids, getsTable().replace("#", type), row.id)
     }
 
-    void updateSettlementResult(Map<List<GroovyRowResult>, List<GroovyRowResult>> matchMap, String type) {
+    void updateSettlementResult(Utils.MatchResult<List<GroovyRowResult>, List<GroovyRowResult>> matchMap, String type) {
         def row
         def s14 = 0, s15 = 0, sumFee = 0
-        matchMap.each { key, value ->
-            if (value.size() > 1) {
-                throw new Exception("只能对一条单边付佣进行匹配")
-            }
-            List valueList = new ArrayList()
-            String tableName = "'${getcTable()}'"
-            String joinType = "2"
-            value.each { c ->
-                row = c
-                s14 += (c.'14-手续费总额（报行内+报行外）(含税)' as double)
-                s15 += (c.'15-手续费总额（报行内+报行外）(不含税)' as double)
-                sumFee += (c.'fee' as double)
-                def cId = (c.c_id as String).split(",")[0]
-                key.each { s ->
-                    s14 += (s.'14-手续费总额（报行内+报行外）(含税)' as double)
-                    s15 += (s.'15-手续费总额（报行内+报行外）(不含税)' as double)
-                    sumFee += (s.'fee' as double)
-                    (s.s_id as String).split(",").each {
-                        StringJoiner values = new StringJoiner(",", "(", ")")
-                        values.add(tableName.replace("#", type))
-                        values.add("'${c.id}'")
-                        values.add("'${it}'")
-                        values.add("'${cId}'")
-                        values.add(joinType)
-                        valueList.add(values)
-                    }
+
+        def key = matchMap.sourceList
+        def value = matchMap.targetList
+        if (value.size() > 1) {
+            throw new Exception("只能对一条单边付佣进行匹配")
+        }
+        List valueList = new ArrayList()
+        String tableName = "'${getcTable()}'"
+        String joinType = "2"
+        value.each { c ->
+            row = c
+            s14 += (c.'14-手续费总额（报行内+报行外）(含税)' as double)
+            s15 += (c.'15-手续费总额（报行内+报行外）(不含税)' as double)
+            sumFee += (c.'fee' as double)
+            def cId = (c.c_id as String).split(",")[0]
+            key.each { s ->
+                s14 += (s.'14-手续费总额（报行内+报行外）(含税)' as double)
+                s15 += (s.'15-手续费总额（报行内+报行外）(不含税)' as double)
+                sumFee += (s.'fee' as double)
+                (s.s_id as String).split(",").each {
+                    StringJoiner values = new StringJoiner(",", "(", ")")
+                    values.add(tableName.replace("#", type))
+                    values.add("'${c.id}'")
+                    values.add("'${it}'")
+                    values.add("'${cId}'")
+                    values.add(joinType)
+                    valueList.add(values)
                 }
             }
-
-            baseSql.executeInsert(insertRef + valueList.join(","))
-            def sids = key*.id.join(',')
-            baseSql.executeUpdate("update ${getsTable()} set handle_sign=5 where id in (${sids})".replace("#", type))
-            baseSql.executeUpdate("update ${getcTable()} set handle_sign=4,`14-手续费总额（报行内+报行外）(含税)`=?,`15-手续费总额（报行内+报行外）(不含税)`=?,sum_fee=?,gross_profit=?,s_id=? where id=?"
-                    .replace("#", type), [s14, s15, sumFee, (sumFee - (row.commission as double)) / sumFee, key*.s_id.join(','), row.id])
-
-            log.info("结算匹配成功:{}:{} -> {}:{}", getsTable().replace("#", type), sids, getcTable().replace("#", type), row.id)
         }
+
+        baseSql.executeInsert(insertRef + valueList.join(","))
+        def sids = key*.id.join(',')
+        baseSql.executeUpdate("update ${getsTable()} set handle_sign=5 where id in (${sids})".replace("#", type))
+        baseSql.executeUpdate("update ${getcTable()} set handle_sign=4,`14-手续费总额（报行内+报行外）(含税)`=?,`15-手续费总额（报行内+报行外）(不含税)`=?,sum_fee=?,gross_profit=?,s_id=? where id=?"
+                .replace("#", type), [s14, s15, sumFee, (sumFee - (row.commission as double)) / sumFee, key*.s_id.join(','), row.id])
+
+        log.info("结算匹配成功:{}:{} -> {}:{}", getsTable().replace("#", type), sids, getcTable().replace("#", type), row.id)
+
     }
 }

@@ -53,7 +53,7 @@ public class Utils {
         return null;
     }
 
-    public static <T, K> Map<List<T>, List<K>> matchCombine(@NonNull List<T> sources, @NonNull List<K> targets, @NonNull BiPredicate<List<T>, List<K>> bp) {
+    public static <T, K> MatchResult<T, K> matchCombine(@NonNull List<T> sources, @NonNull List<K> targets, @NonNull BiPredicate<List<T>, List<K>> bp) {
         int n = sources.size();
         while (n > 0) {
             List<List<T>> sList = combine(sources, n--);
@@ -63,15 +63,22 @@ public class Utils {
                     List<List<K>> tList = combine(targets, m--);
                     for (List<K> t : tList) {
                         if (bp.test(s, t)) {
-                            Map<List<T>, List<K>> map = new HashMap<>(2);
-                            map.put(s, t);
-                            return map;
+                            MatchResult<T, K> result = new MatchResult<>();
+                            result.sourceList = s;
+                            result.targetList = t;
+                            return result;
                         }
                     }
                 }
             }
         }
         return null;
+    }
+
+    static class MatchResult<T, K> {
+        public List<T> sourceList;
+        public List<K> targetList;
+
     }
 
     public static <T> List<T> getRandomList(List<T> paramList, int count) {
