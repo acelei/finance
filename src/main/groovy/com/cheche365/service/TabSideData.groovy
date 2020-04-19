@@ -112,9 +112,9 @@ class TabSideData {
     }
 
     String resultSide1 = '''
-select id,s_id, c_id from result_#_2 where  handle_sign != 5 and `8-险种名称` in ('交强险','商业险') and date_format(`9-保单出单日期`,'%Y')='2019' and sum_fee < 0
+select id,s_id, c_id from result_#_2 where  handle_sign != 5 and `8-险种名称` in ('交强险','商业险') and date_format(`9-保单出单日期`,'%Y')='2019' and round(sum_fee,2) < 0
 union all
-select id,s_id, c_id from result_#_2 where  handle_sign != 5 and `8-险种名称` in ('交强险','商业险') and date_format(`9-保单出单日期`,'%Y')='2019' and sum_commission < 0
+select id,s_id, c_id from result_#_2 where  handle_sign != 5 and `8-险种名称` in ('交强险','商业险') and date_format(`9-保单出单日期`,'%Y')='2019' and round(sum_commission,2) < 0
 '''
 
     String resultSide2 = '''
