@@ -48,7 +48,7 @@ public class ApiController {
             }
         }
 
-        return RestResponse.success();
+        return RestResponse.success(type);
     }
 
     @GetMapping({"data/init/{type}", "data/init"})
@@ -70,7 +70,7 @@ public class ApiController {
                 });
             }
         }
-        return RestResponse.success();
+        return RestResponse.success(type);
     }
 
     @GetMapping({"data/process/{type}", "data/process"})
@@ -92,7 +92,7 @@ public class ApiController {
                 });
             }
         }
-        return RestResponse.success();
+        return RestResponse.success(type);
     }
 
     @GetMapping({"data/replace/{type}", "data/replace"})
@@ -114,7 +114,7 @@ public class ApiController {
                 });
             }
         }
-        return RestResponse.success();
+        return RestResponse.success(type);
     }
 
     @GetMapping({"data/result/{type}", "data/result"})
@@ -136,19 +136,31 @@ public class ApiController {
                 });
             }
         }
-        return RestResponse.success();
+        return RestResponse.success(type);
     }
 
     @GetMapping("data/rollback/{type}")
     public RestResponse<String> rollback(@PathVariable String type) {
         initData.roll(type);
         initData.fixPremium(type, "");
-        return RestResponse.success();
+        return RestResponse.success(type);
     }
 
     @GetMapping("data/reRun/{type}")
     public RestResponse<String> reRun(@PathVariable String type) {
         dataRunService.reRun(type);
-        return RestResponse.success();
+        return RestResponse.success(type);
+    }
+
+    @GetMapping("data/clean/{type}")
+    public RestResponse<String> clean(@PathVariable String type) {
+        initData.clean(type);
+        return RestResponse.success(type);
+    }
+
+    @GetMapping("data/fixRef/{type}")
+    public RestResponse<String> fixRef(@PathVariable String type) {
+        initData.fixRef(type);
+        return RestResponse.success(type);
     }
 }

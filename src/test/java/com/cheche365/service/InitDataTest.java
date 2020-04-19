@@ -124,4 +124,18 @@ public class InitDataTest {
             baseSql.executeUpdate("delete a.* from result_gross_margin_ref a,result_#_2 b where a.table_name='result_#_2' and a.result_id=b.id and b.handle_sign=7".replace("#", type));
         }
     }
+
+    @Test
+    public void fixRef() throws SQLException {
+        List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type");
+        for (GroovyRowResult row : rows) {
+            String type = row.get("type").toString();
+            initData.fixRef(type);
+        }
+    }
+
+    @Test
+    public void fixRef2() {
+        initData.fixRef("bj");
+    }
 }

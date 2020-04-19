@@ -211,7 +211,7 @@ limit 100
         sIds.each {
             StringJoiner values = new StringJoiner(",", "(", ")")
             values.add(tableName.replace("#", type))
-            values.add("'${row.id}'")
+            values.add("'${result.id}'")
             values.add("'${it}'")
             values.add("'${cId}'")
             values.add(joinType)
@@ -245,7 +245,7 @@ limit 100
         cIds.each {
             StringJoiner values = new StringJoiner(",", "(", ")")
             values.add(tableName.replace("#", type))
-            values.add("'${row.id}'")
+            values.add("'${result.id}'")
             values.add("'${sId}''")
             values.add("'${it}'")
             values.add(joinType)
