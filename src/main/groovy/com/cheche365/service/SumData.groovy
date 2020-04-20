@@ -146,33 +146,16 @@ from result_#_3
             "union all\n" +
             "select ':type','整合表','未调整数据',count(9),sum(sum_fee),sum(sum_commission) from result_#_2 where handle_sign in (0,6)\n" +
             "union all\n" +
-            "select ':type','整合表','配对调整',count(9),sum(sum_fee),sum(sum_commission) from result_#_2 where handle_sign in (4,5)\n" +
+            "select ':type','整合表','未替换数据',count(9),sum(sum_fee),sum(sum_commission) from result_#_2 where `8-险种名称` in ('交强险','商业险') and `9-保单出单日期`>'2019' and handle_sign=3\n" +
             "union all\n" +
-            "select ':type', '整合表','毛利异常数据',count(9),sum(sum_fee),sum(sum_commission) from result_#_back where `8-险种名称` in ('交强险','商业险') and `9-保单出单日期`>'2019' and abs(gross_profit)>1\n" +
+            "select ':type','收入表','剩余收入数据',count(9),sum(sum_fee),sum(sum_commission) from settlement_# where `8-险种名称` in ('交强险','商业险') and `9-保单出单日期`>'2019' and handle_sign=6\n" +
             "union all\n" +
-            "select ':type','整合表','无法处理的毛利异常数据',count(9),sum(sum_fee),sum(sum_commission) from result_#_2 where `8-险种名称` in ('交强险','商业险') and `9-保单出单日期`>'2019' and handle_sign=2\n" +
+            "select ':type','收入表','剩余收入负数',count(9),sum(sum_fee),sum(sum_commission) from settlement_# where `8-险种名称` in ('交强险','商业险') and `9-保单出单日期`>'2019' and handle_sign=6 and sum_fee<0\n" +
             "union all\n" +
-            "select ':type','整合表','需要替换整合数据',count(9),sum(sum_fee),sum(sum_commission) from result_#_2 where `8-险种名称` in ('交强险','商业险') and `9-保单出单日期`>'2019' and handle_sign in (3,9)\n" +
+            "select ':type','成本表','剩余成本数据',count(9),sum(sum_fee),sum(sum_commission) from commission_# where `8-险种名称` in ('交强险','商业险') and `9-保单出单日期`>'2019' and handle_sign=6\n" +
             "union all\n" +
-            "select ':type','整合表','未替换整合数据',count(9),sum(sum_fee),sum(sum_commission) from result_#_2 where `8-险种名称` in ('交强险','商业险') and `9-保单出单日期`>'2019' and handle_sign=3\n" +
-            "union all\n" +
-            "select ':type','整合表','已替换整合数据',count(9),sum(sum_fee),sum(sum_commission) from result_#_2 where `8-险种名称` in ('交强险','商业险') and `9-保单出单日期`>'2019' and handle_sign=9\n" +
-            "union all\n" +
-            "select ':type','收入表','需要替换收入数据',count(9),sum(sum_fee),sum(sum_commission) from settlement_# where `8-险种名称` in ('交强险','商业险') and `9-保单出单日期`>'2019' and handle_sign in (6,9)\n" +
-            "union all\n" +
-            "select ':type','收入表','未替换收入数据',count(9),sum(sum_fee),sum(sum_commission) from settlement_# where `8-险种名称` in ('交强险','商业险') and `9-保单出单日期`>'2019' and handle_sign=6\n" +
-            "union all\n" +
-            "select ':type','收入表','未替换收入负数',count(9),sum(sum_fee),sum(sum_commission) from settlement_# where `8-险种名称` in ('交强险','商业险') and `9-保单出单日期`>'2019' and handle_sign=6 and sum_fee<0\n" +
-            "union all\n" +
-            "select ':type','收入表','已替换收入数据',count(9),sum(sum_fee),sum(sum_commission) from settlement_# where `8-险种名称` in ('交强险','商业险') and `9-保单出单日期`>'2019' and handle_sign=9\n" +
-            "union all\n" +
-            "select ':type','成本表','需要替换成本数据',count(9),sum(sum_fee),sum(sum_commission) from commission_# where `8-险种名称` in ('交强险','商业险') and `9-保单出单日期`>'2019' and handle_sign in (6,9)\n" +
-            "union all\n" +
-            "select ':type','成本表','未替换成本数据',count(9),sum(sum_fee),sum(sum_commission) from commission_# where `8-险种名称` in ('交强险','商业险') and `9-保单出单日期`>'2019' and handle_sign=6\n" +
-            "union all\n" +
-            "select ':type','成本表','未替换成本负数',count(9),sum(sum_fee),sum(sum_commission) from commission_# where `8-险种名称` in ('交强险','商业险') and `9-保单出单日期`>'2019' and handle_sign=6 and sum_commission<0\n" +
-            "union all\n" +
-            "select ':type','成本表','已替换成本数据',count(9),sum(sum_fee),sum(sum_commission) from commission_# where `8-险种名称` in ('交强险','商业险') and `9-保单出单日期`>'2019' and handle_sign=9";
+            "select ':type','成本表','剩余成本负数',count(9),sum(sum_fee),sum(sum_commission) from commission_# where `8-险种名称` in ('交强险','商业险') and `9-保单出单日期`>'2019' and handle_sign=6 and sum_commission<0"
+
     List<String> head = ["业务名称", "数据表", "描述", "条目数", "收入", "成本"]
 
     File statisticsAll(String typeSql) {

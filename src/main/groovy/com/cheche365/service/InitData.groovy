@@ -27,8 +27,8 @@ class InitData {
         fixInsuranceCompanyArea.run(type)
     }
 
-    private static final policyNoSql = '''update # set `8-险种名称`=replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(trim(`8-险种名称`),'’',''),' ',''),'‘',''),'，',''),'\''',''),',',''),',',''),CHAR(9), ''),CHAR(10), ''),CHAR(13),''),
-`6-保单单号`=replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(trim(`6-保单单号`),'’',''),' ',''),'‘',''),'，',''),'\''',''),',',''),',',''),CHAR(9), ''),CHAR(10), ''),CHAR(13),'')
+    private static final policyNoSql = '''update # set `8-险种名称`=replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(trim(`8-险种名称`),'’',''),' ',''),'‘',''),'，',''),CHAR(39),''),',',''),',',''),CHAR(9), ''),CHAR(10), ''),CHAR(13),''),
+`6-保单单号`=replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(trim(`6-保单单号`),'’',''),' ',''),'‘',''),'，',''),CHAR(39),''),',',''),',',''),CHAR(9), ''),CHAR(10), ''),CHAR(13),'')
 '''
 
     void fixPolicyNo(String type) {
