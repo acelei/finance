@@ -99,7 +99,7 @@ public class ApiController {
     }
 
     @GetMapping({"data/replace/{type}", "data/replace"})
-    public RestResponse<String> replace(@PathVariable String type) throws SQLException {
+    public RestResponse<String> replace(@PathVariable(required = false) String type) throws SQLException {
         if (type != null) {
             replaceBusinessData.replaceBusinessList(type);
         } else {
@@ -121,7 +121,7 @@ public class ApiController {
     }
 
     @GetMapping({"data/result/{type}", "data/result"})
-    public RestResponse<String> result(@PathVariable String type) throws SQLException {
+    public RestResponse<String> result(@PathVariable(required = false) String type) throws SQLException {
         if (type != null) {
             dataRunService.result(type);
         } else {
