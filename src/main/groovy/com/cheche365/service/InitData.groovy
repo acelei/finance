@@ -1,7 +1,9 @@
 package com.cheche365.service
 
+import groovy.sql.GroovyRowResult
 import groovy.sql.Sql
 import groovy.util.logging.Slf4j
+import org.apache.commons.collections.CollectionUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
@@ -13,6 +15,22 @@ class InitData {
     private Sql baseSql
     @Autowired
     private FixInsuranceCompanyArea fixInsuranceCompanyArea
+
+    private String updateHandleSignByInsPro = "update business_replace_ref t1\n" +
+            "      inner join `tableNameVal` t2\n" +
+            "      on t1.business_id = t2.id\n" +
+            "      set t2.handle_sign = 0\n" +
+            "      where t1.table_name in (\n" +
+            "       'settlementTableNameVal',\n" +
+            "       'commissionTableNameVal'\n" +
+            "      )\n" +
+            "      and t1.insurance_company_id = insuranceCompanyIdVal\n" +
+            "      and t1.province_id = provinceIdVal"
+
+    private String updateHandleSignByFinanceName = "update business_replace_ref t1 inner join das_data_pool_business t2 on t1.business_id = t2.id set t2.handle_sign = 0 where t1.table_name in ('settlementTableNameVal', 'commissionTableNameVal')"
+    private String deleteBusinessRef = "delete from business_replace_ref where table_name in ('settlementTableNameVal', 'commissionTableNameVal')"
+
+    private static final Long RENBAO = 2005L;
 
     void run(String type) {
         // 合计收入成本
@@ -131,9 +149,37 @@ where `8-险种名称` in (
         baseSql.executeUpdate("update settlement_# set d_id=null,s_id=null,c_id=null,handle_sign=0".replace("#", type))
         baseSql.executeUpdate("update commission_# set d_id=null,s_id=null,c_id=null,handle_sign=0".replace("#", type))
         baseSql.executeUpdate("delete from result_gross_margin_ref where table_name in ('result_#_2','commission_#','settlement_#')".replace("#", type))
+        cleanReplaceData(type)
         log.info("清除状态标记:${type}")
     }
 
+    void cleanReplaceData(String type) {
+        String commissionTableName = "commission_" + type
+        String settleMentTableName = "settlement_" + type
+        List<GroovyRowResult> insProList = baseSql.rows("select insurance_company_id as insuranceCompanyId, province_id as provinceId from business_replace_ref " +
+                "where table_name in ('" + commissionTableName + "','" + settleMentTableName + "') group by insurance_company_id, province_id")
+        if (CollectionUtils.isNotEmpty(insProList)) {
+            for (GroovyRowResult map : insProList) {
+                String insuranceCompanyId = map.get("insuranceCompanyId").toString()
+                String provinceId = map.get("provinceId").toString();
+                baseSql.executeUpdate(updateHandleSignByInsPro.replace("insuranceCompanyIdVal", insuranceCompanyId).replace("provinceIdVal", provinceId)
+                    .replace("commissionTableNameVal", commissionTableName).replace("settlementTableNameVal", settleMentTableName)
+                    .replace("tableNameVal", generInsuranceCompany(insuranceCompanyId, provinceId)))
+            }
+
+            baseSql.executeUpdate(updateHandleSignByFinanceName.replace("settlementTableNameVal", settleMentTableName).replace("commissionTableNameVal", commissionTableName))
+            baseSql.execute(deleteBusinessRef.replace("settlementTableNameVal", settleMentTableName).replace("commissionTableNameVal", commissionTableName))
+            log.info("resetBusinessByName success! type:{}", type)
+        }
+    }
+
+    private String generInsuranceCompany(String insuranceCompanyId, String provinceId) {
+        if (insuranceCompanyId.equals(RENBAO) && provinceId != null) {
+            return "das_data_pool_business_" + insuranceCompanyId + "_" + provinceId;
+        } else {
+            return "das_data_pool_business_" + insuranceCompanyId;
+        }
+    }
 
     private static final String backSql = '''insert into result_#_back (d_id,s_id,c_id,`2-保代机构`,`3-出单保险代理机构（车车科技适用）`,`4-发票付款方（与发票一致）`,`5-投保人名称`,`6-保单单号`,`7-出单保险公司（明细至保险公司分支机构）`,`8-险种名称`,`9-保单出单日期`,`10-全保费`,`11-净保费`,`12-手续费等级（对应点位台账）`,`13-手续费率`,
             `14-手续费总额（报行内+报行外）(含税)`,`15-手续费总额（报行内+报行外）(不含税)`,`19-手续费金额（含税）`,`20-手续费金额（不含税）`,`23-收款金额`,`27-开票金额（不含税）`,`28-开票金额（含税）`,`29-20191231应收账款（含已开票和未开票）`,`33-收款金额`,`36-开票金额（不含税）`,`37-开票金额（含税）`,`38-尚未开票金额（不含税）`,`39-尚未开票金额（含税）`,
