@@ -197,8 +197,14 @@ public class ApiController {
             List<Future<File>> futureList = ThreadPoolUtils.submitRun(rows, row -> {
                         String t = row.get("type").toString();
                         String name = row.get("name").toString();
-                        File f = new File(name + ".zip");
-                        return resultService.exportResult(t, f);
+                        File f = null;
+                        try {
+                            f = File.createTempFile(ExcelUtil2.generateExportExcelName(name), ".zip", ExcelUtil2.tmp);
+                            return resultService.exportResult(t, f);
+                        } catch (IOException e) {
+                            log.error("文件创建失败", e);
+                        }
+                        return null;
                     }
             );
 

@@ -2,7 +2,6 @@ package com.cheche365.service
 
 import com.cheche365.util.ExcelUtil2
 import groovy.util.logging.Slf4j
-import org.apache.commons.io.FileUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
@@ -208,16 +207,16 @@ from result_#_final group by  `6-保单单号`, if(`8-险种名称` in ('交强�
         rows = baseSql.rows(queryResult.replace("#", type))
         if (rows.size() > 0) {
             log.info("导出整合数据:{}", type)
-            File f = new File("处理后整合_#.xlsx".replace("#", type));
-            FileUtils.moveFile(ExcelUtil2.writeToExcel(head, rows), f)
+            File f = File.createTempFile("处理后整合_#".replace("#", type), '.xlsx', ExcelUtil2.tmp)
+            ExcelUtil2.writeToExcel(head, rows).renameTo(f)
             fileList.add f
         }
 
         rows = baseSql.rows(queryErrorSettlement.replace("#", type))
         if (rows.size() > 0) {
             log.info("导出剩余结算数据:{}", type)
-            File f = new File("结算_#.xlsx".replace("#", type));
-            FileUtils.moveFile(ExcelUtil2.writeToExcel(head, rows), f)
+            File f = File.createTempFile("结算_#".replace("#", type), '.xlsx', ExcelUtil2.tmp)
+            ExcelUtil2.writeToExcel(head, rows).renameTo(f)
             fileList.add f
         }
 
@@ -225,8 +224,8 @@ from result_#_final group by  `6-保单单号`, if(`8-险种名称` in ('交强�
         rows = baseSql.rows(queryErrorCommission.replace("#", type))
         if (rows.size() > 0) {
             log.info("导出剩余付佣数据:{}", type)
-            File f = new File("佣金_#.xlsx".replace("#", type));
-            FileUtils.moveFile(ExcelUtil2.writeToExcel(head, rows), f)
+            File f = File.createTempFile("佣金_#".replace("#", type), '.xlsx', ExcelUtil2.tmp)
+            ExcelUtil2.writeToExcel(head, rows).renameTo(f)
             fileList.add f
         }
 

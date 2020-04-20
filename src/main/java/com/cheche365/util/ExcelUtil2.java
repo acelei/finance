@@ -64,9 +64,12 @@ public class ExcelUtil2 {
      *
      * @return the 文件名称
      */
-    public static String generateExportExcelName() {
+    public static String generateExportExcelName(String name) {
+        if (name == null) {
+            name = "export_";
+        }
         String dateString = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
-        return "export_" + dateString + ".xlsx";
+        return name + dateString;
     }
 
     /**
@@ -191,7 +194,7 @@ public class ExcelUtil2 {
         Assert.notNull(dataQueue, "数据不能为空");
 
         if (file == null) {
-            file = File.createTempFile(generateExportExcelName(), ".tmp", tmp);
+            file = File.createTempFile(generateExportExcelName(null), ".tmp", tmp);
         }
         FileUtils.forceMkdirParent(file);
         SXSSFWorkbook workbook = new SXSSFWorkbook(1000);
@@ -425,11 +428,13 @@ public class ExcelUtil2 {
 
     public static File zipFiles(List<File> sourceFile, File targetZipFile) throws IOException {
         if (targetZipFile == null) {
-            targetZipFile = File.createTempFile(generateExportExcelName(), ".tmp", tmp);
+            targetZipFile = File.createTempFile(generateExportExcelName(null), ".tmp", tmp);
         }
         try (FileOutputStream fileOutputStream = new FileOutputStream(targetZipFile); ZipOutputStream outputStream = new ZipOutputStream(fileOutputStream)) {
             for (File file : sourceFile) {
-                addEntry(file, outputStream);
+                if (file != null) {
+                    addEntry(file, outputStream);
+                }
             }
         } finally {
             for (File file : sourceFile) {
