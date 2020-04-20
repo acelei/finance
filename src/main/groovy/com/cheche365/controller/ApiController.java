@@ -2,6 +2,7 @@ package com.cheche365.controller;
 
 import com.cheche365.entity.RestResponse;
 import com.cheche365.service.*;
+import com.cheche365.util.ExcelUtil2;
 import com.cheche365.util.ThreadPoolUtils;
 import groovy.sql.GroovyRowResult;
 import groovy.sql.Sql;
@@ -16,8 +17,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.File;
+import java.io.IOException;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 @RestController
 @Log4j2
@@ -176,10 +181,37 @@ public class ApiController {
         return RestResponse.success(type);
     }
 
-    @GetMapping("data/exportResult/{type}")
-    public ResponseEntity exportResult(@PathVariable String type) {
-        File file = resultService.exportResult(type);
-        return downloadFile("export_#.zip".replace("#", type), file);
+    @GetMapping({"data/exportResult/{type}", "data/exportResult"})
+    public ResponseEntity exportResult(@PathVariable(required = false) String type) throws SQLException, ExecutionException, InterruptedException, IOException {
+        File file = null;
+        try {
+            if (type != null) {
+                file = resultService.exportResult(type);
+            } else {
+                List<GroovyRowResult> rows = baseSql.rows("select `type`,`name` from table_type where flag=5");
+
+                List<Future<File>> futureList = ThreadPoolUtils.submitRun(rows, row -> {
+                            String t = row.get("type").toString();
+                            String name = row.get("name").toString();
+                            File f = new File(name + ".zip");
+                            return resultService.exportResult(t, f);
+                        }
+                );
+
+                List<File> fileList = new ArrayList<>();
+                for (Future<File> future : futureList) {
+                    fileList.add(future.get());
+                }
+                file = ExcelUtil2.zipFiles(fileList, null);
+                type = "all";
+            }
+
+            return downloadFile("export_#.zip".replace("#", type), file);
+        } finally {
+            if (file != null) {
+                file.delete();
+            }
+        }
     }
 
     protected ResponseEntity downloadFile(String fileName, File file) {
