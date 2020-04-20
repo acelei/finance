@@ -42,9 +42,15 @@ import java.util.zip.ZipOutputStream;
 @Log4j2
 public class ExcelUtil2 {
     public static Map EMPTY_MAP = Maps.newHashMapWithExpectedSize(1);
+    public static final File tmp = new File("tmp");
 
     static {
         EMPTY_MAP.put("$RUN_END$", true);
+        try {
+            FileUtils.forceMkdir(tmp);
+        } catch (IOException e) {
+            log.error("创建临时文件夹失败", e);
+        }
     }
 
     /**
@@ -185,7 +191,7 @@ public class ExcelUtil2 {
         Assert.notNull(dataQueue, "数据不能为空");
 
         if (file == null) {
-            file = File.createTempFile(generateExportExcelName(), ".tmp");
+            file = File.createTempFile(generateExportExcelName(), ".tmp", tmp);
         }
         FileUtils.forceMkdirParent(file);
         SXSSFWorkbook workbook = new SXSSFWorkbook(1000);
@@ -419,7 +425,7 @@ public class ExcelUtil2 {
 
     public static File zipFiles(List<File> sourceFile, File targetZipFile) throws IOException {
         if (targetZipFile == null) {
-            targetZipFile = File.createTempFile(generateExportExcelName(), ".tmp");
+            targetZipFile = File.createTempFile(generateExportExcelName(), ".tmp", tmp);
         }
         try (FileOutputStream fileOutputStream = new FileOutputStream(targetZipFile); ZipOutputStream outputStream = new ZipOutputStream(fileOutputStream)) {
             for (File file : sourceFile) {

@@ -7,6 +7,8 @@ import com.cheche365.util.ThreadPoolUtils;
 import groovy.sql.GroovyRowResult;
 import groovy.sql.Sql;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpHeaders;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +42,8 @@ public class ApiController {
     private ReMatchSideData reMatchSideData;
     @Autowired
     private ResultService resultService;
+    @Autowired
+    private SumData sumData;
 
     @GetMapping({"data/before/{type}", "data/before"})
     public RestResponse<String> before(@PathVariable(required = false) String type) throws SQLException {
@@ -184,40 +189,56 @@ public class ApiController {
     @GetMapping({"data/exportResult/{type}", "data/exportResult"})
     public ResponseEntity exportResult(@PathVariable(required = false) String type) throws SQLException, ExecutionException, InterruptedException, IOException {
         File file = null;
-        try {
-            if (type != null) {
-                file = resultService.exportResult(type);
-            } else {
-                List<GroovyRowResult> rows = baseSql.rows("select `type`,`name` from table_type where flag=5");
+        if (type != null) {
+            file = resultService.exportResult(type);
+        } else {
+            List<GroovyRowResult> rows = baseSql.rows("select `type`,`name` from table_type where flag=5");
 
-                List<Future<File>> futureList = ThreadPoolUtils.submitRun(rows, row -> {
-                            String t = row.get("type").toString();
-                            String name = row.get("name").toString();
-                            File f = new File(name + ".zip");
-                            return resultService.exportResult(t, f);
-                        }
-                );
+            List<Future<File>> futureList = ThreadPoolUtils.submitRun(rows, row -> {
+                        String t = row.get("type").toString();
+                        String name = row.get("name").toString();
+                        File f = new File(name + ".zip");
+                        return resultService.exportResult(t, f);
+                    }
+            );
 
-                List<File> fileList = new ArrayList<>();
-                for (Future<File> future : futureList) {
-                    fileList.add(future.get());
-                }
-                file = ExcelUtil2.zipFiles(fileList, null);
-                type = "all";
+            List<File> fileList = new ArrayList<>();
+            for (Future<File> future : futureList) {
+                fileList.add(future.get());
             }
-
-            return downloadFile("export_#.zip".replace("#", type), file);
-        } finally {
-            if (file != null) {
-                file.delete();
-            }
+            file = ExcelUtil2.zipFiles(fileList, null);
+            type = "all";
         }
+
+        return downloadFile("export_#.zip".replace("#", type), file);
+    }
+
+    @GetMapping({"data/tj/{type}", "data/tj"})
+    public ResponseEntity statistics(@PathVariable(required = false) String type) throws SQLException, ExecutionException, InterruptedException, IOException {
+        File file = null;
+        if (type != null) {
+            GroovyRowResult row = baseSql.firstRow("select `type`,`name` from table_type where type=?", new String[]{type});
+            file = sumData.statistics(MapUtils.getString(row, "type"), MapUtils.getString(row, "name"));
+        } else {
+
+            file = sumData.statisticsAll("select `type`,`name` from table_type where flag=5");
+            type = "all";
+        }
+        return downloadFile("统计_#.xlsx".replace("#", type), file);
+    }
+
+    @GetMapping("data/delTmp")
+    public RestResponse<String> delTmp(@PathVariable String type) throws IOException {
+        FileUtils.deleteDirectory(ExcelUtil2.tmp);
+        FileUtils.forceMkdir(ExcelUtil2.tmp);
+        return RestResponse.success(type);
     }
 
     protected ResponseEntity downloadFile(String fileName, File file) {
+        String tmpFileName = new String(fileName.getBytes(StandardCharsets.UTF_8), StandardCharsets.ISO_8859_1);
         HttpHeaders headers = new HttpHeaders();
         headers.add("Cache-Control", "no-cache, no-store, must-revalidate");
-        headers.add("Content-Disposition", "attachment; filename=" + fileName + "; filename*=utf-8''" + fileName);
+        headers.add("Content-Disposition", "attachment; filename=" + tmpFileName + "; filename*=utf-8''" + tmpFileName);
         headers.add("Pragma", "no-cache");
         headers.add("Expires", "0");
         return ResponseEntity

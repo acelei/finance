@@ -17,7 +17,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -89,49 +88,15 @@ public class SumDataTest {
         FileUtils.moveFile(file, new File("统计_科技.xlsx"));
     }
 
-    String errTjSql = "select ':type' as '业务名称', '整合表' as '数据表','毛利异常数据' as '描述',count(9) as '条目数',sum(sum_fee) '收入',sum(sum_commission) as '成本' from result_#_back where `8-险种名称` in ('交强险','商业险') and `9-保单出单日期`>'2019' and abs(gross_profit)>1\n" +
-            "union all\n" +
-            "select ':type','整合表','无法处理的毛利异常数据',count(9),sum(sum_fee),sum(sum_commission) from result_#_2 where `8-险种名称` in ('交强险','商业险') and `9-保单出单日期`>'2019' and handle_sign=2\n" +
-            "union all\n" +
-            "select ':type','整合表','需要替换整合数据',count(9),sum(sum_fee),sum(sum_commission) from result_#_2 where `8-险种名称` in ('交强险','商业险') and `9-保单出单日期`>'2019' and handle_sign in (3,9)\n" +
-            "union all\n" +
-            "select ':type','整合表','未替换整合数据',count(9),sum(sum_fee),sum(sum_commission) from result_#_2 where `8-险种名称` in ('交强险','商业险') and `9-保单出单日期`>'2019' and handle_sign=3\n" +
-            "union all\n" +
-            "select ':type','整合表','已替换整合数据',count(9),sum(sum_fee),sum(sum_commission) from result_#_2 where `8-险种名称` in ('交强险','商业险') and `9-保单出单日期`>'2019' and handle_sign=9\n" +
-            "union all\n" +
-            "select ':type','收入表','需要替换收入数据',count(9),sum(sum_fee),sum(sum_commission) from settlement_# where `8-险种名称` in ('交强险','商业险') and `9-保单出单日期`>'2019' and handle_sign in (6,9)\n" +
-            "union all\n" +
-            "select ':type','收入表','未替换收入数据',count(9),sum(sum_fee),sum(sum_commission) from settlement_# where `8-险种名称` in ('交强险','商业险') and `9-保单出单日期`>'2019' and handle_sign=6\n" +
-            "union all\n" +
-            "select ':type','收入表','已替换收入数据',count(9),sum(sum_fee),sum(sum_commission) from settlement_# where `8-险种名称` in ('交强险','商业险') and `9-保单出单日期`>'2019' and handle_sign=9\n" +
-            "union all\n" +
-            "select ':type','成本表','需要替换成本数据',count(9),sum(sum_fee),sum(sum_commission) from commission_# where `8-险种名称` in ('交强险','商业险') and `9-保单出单日期`>'2019' and handle_sign in (6,9)\n" +
-            "union all\n" +
-            "select ':type','成本表','未替换成本数据',count(9),sum(sum_fee),sum(sum_commission) from commission_# where `8-险种名称` in ('交强险','商业险') and `9-保单出单日期`>'2019' and handle_sign=6\n" +
-            "union all\n" +
-            "select ':type','成本表','已替换成本数据',count(9),sum(sum_fee),sum(sum_commission) from commission_# where `8-险种名称` in ('交强险','商业险') and `9-保单出单日期`>'2019' and handle_sign=9";
-
+    @Test
+    public void exportErrTj() throws IOException {
+        File file = sumData.statisticsAll("select `type`,`name` from table_type where flag=5");
+        FileUtils.moveFile(file, new File("错误统计.xlsx"));
+    }
 
     @Test
-    public void exportErrTj() throws SQLException, IOException, InterruptedException {
-        List<String> head = Lists.newArrayList(
-                "业务名称",
-                "数据表",
-                "描述",
-                "条目数",
-                "收入",
-                "成本"
-        );
-        List<GroovyRowResult> rows = baseSql.rows("select `name`,`type` from table_type where flag=5");
-        List<Map> list = new ArrayList<>();
-        for (GroovyRowResult row : rows) {
-            String typeName = MapUtils.getString(row, "name");
-            String type = MapUtils.getString(row, "type");
-            List<GroovyRowResult> dataList = baseSql.rows(errTjSql.replace(":type", typeName).replace("#", type));
-            list.addAll(dataList);
-        }
-
-        File file = ExcelUtil2.writeToExcel(head, list);
+    public void exportErrTjSign() throws SQLException, IOException, InterruptedException {
+        File file = sumData.statistics("bj","北京");
         FileUtils.moveFile(file, new File("错误统计.xlsx"));
     }
 }
