@@ -19,10 +19,7 @@ import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.springframework.util.Assert;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -33,6 +30,8 @@ import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * Excel util 2
@@ -42,7 +41,11 @@ import java.util.regex.Pattern;
  */
 @Log4j2
 public class ExcelUtil2 {
-    public static Map EMPTY_MAP = Maps.newHashMapWithExpectedSize(0);
+    public static Map EMPTY_MAP = Maps.newHashMapWithExpectedSize(1);
+
+    static {
+        EMPTY_MAP.put("$RUN_END$", true);
+    }
 
     /**
      * excel的最大行
@@ -181,15 +184,13 @@ public class ExcelUtil2 {
         Assert.isTrue(MapUtils.isNotEmpty(headMap), "表头信息不能为空");
         Assert.notNull(dataQueue, "数据不能为空");
 
-        SXSSFWorkbook workbook = new SXSSFWorkbook(1000);
-        SXSSFSheet sheet = workbook.createSheet();
-
         if (file == null) {
-            file = File.createTempFile(generateExportExcelName(), ".xlsx");
+            file = File.createTempFile(generateExportExcelName(), ".tmp");
         }
         FileUtils.forceMkdirParent(file);
-
+        SXSSFWorkbook workbook = new SXSSFWorkbook(1000);
         try (FileOutputStream fos = new FileOutputStream(file)) {
+            SXSSFSheet sheet = workbook.createSheet();
             // 写入表头
             int rowNum = 0;
 
@@ -209,7 +210,7 @@ public class ExcelUtil2 {
                 while (true) {
                     Map data = dataQueue.take();
 
-                    if (data == EMPTY_MAP || Thread.currentThread().isInterrupted()) {
+                    if (data == EMPTY_MAP || data.containsKey("$RUN_END$") || Thread.currentThread().isInterrupted()) {
                         break;
                     }
 
@@ -240,8 +241,8 @@ public class ExcelUtil2 {
         } finally {
             // 处理SXSSFWorkbook导出excel时，产生的临时文件
             workbook.dispose();
+            workbook.close();
         }
-
         return file;
     }
 
@@ -340,7 +341,7 @@ public class ExcelUtil2 {
      * @param firstRow 一行数据map
      * @return the hash map
      */
-    private static HashMap<String, String> initHeadMap(Map<String, Object> firstRow) {
+    public static HashMap<String, String> initHeadMap(Map<String, Object> firstRow) {
         HashMap<String, String> headList = Maps.newHashMapWithExpectedSize(firstRow.size());
         for (String key : firstRow.keySet()) {
             headList.put(key, key);
@@ -354,7 +355,7 @@ public class ExcelUtil2 {
      * @param head 表头list配置
      * @return the linked hash map
      */
-    private static LinkedHashMap<String, String> initHeadMap(List<String> head) {
+    public static LinkedHashMap<String, String> initHeadMap(List<String> head) {
         LinkedHashMap<String, String> headList = Maps.newLinkedHashMapWithExpectedSize(head.size());
         for (String key : head) {
             headList.put(key, key);
@@ -413,5 +414,37 @@ public class ExcelUtil2 {
             return false;
         }
         return NUMBER_PATTERN.matcher(str).matches();
+    }
+
+
+    public static File zipFiles(List<File> sourceFile, File targetZipFile) throws IOException {
+        if (targetZipFile == null) {
+            targetZipFile = File.createTempFile(generateExportExcelName(), ".tmp");
+        }
+        try (FileOutputStream fileOutputStream = new FileOutputStream(targetZipFile); ZipOutputStream outputStream = new ZipOutputStream(fileOutputStream)) {
+            for (File file : sourceFile) {
+                addEntry(file, outputStream);
+            }
+        } finally {
+            for (File file : sourceFile) {
+                file.delete();
+            }
+        }
+        return targetZipFile;
+    }
+
+    private static void addEntry(File source, ZipOutputStream outputstream)
+            throws IOException {
+
+        try (FileInputStream is = FileUtils.openInputStream(source)) {
+            outputstream.putNextEntry(new ZipEntry(source.getName()));
+            int len;
+            byte[] buffer = new byte[10 * 1024];
+            while ((len = is.read(buffer)) > 0) {
+                outputstream.write(buffer, 0, len);
+                outputstream.flush();
+            }
+            outputstream.closeEntry();
+        }
     }
 }

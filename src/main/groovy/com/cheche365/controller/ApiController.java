@@ -1,19 +1,21 @@
 package com.cheche365.controller;
 
 import com.cheche365.entity.RestResponse;
-import com.cheche365.service.DataRunService;
-import com.cheche365.service.InitData;
-import com.cheche365.service.ReMatchSideData;
-import com.cheche365.service.ReplaceBusinessData;
+import com.cheche365.service.*;
 import com.cheche365.util.ThreadPoolUtils;
 import groovy.sql.GroovyRowResult;
 import groovy.sql.Sql;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.File;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -30,6 +32,8 @@ public class ApiController {
     private ReplaceBusinessData replaceBusinessData;
     @Autowired
     private ReMatchSideData reMatchSideData;
+    @Autowired
+    private ResultService resultService;
 
     @GetMapping({"data/before/{type}", "data/before"})
     public RestResponse<String> before(@PathVariable(required = false) String type) throws SQLException {
@@ -170,5 +174,25 @@ public class ApiController {
     public RestResponse<String> reMatch(@PathVariable String type) {
         reMatchSideData.run(type);
         return RestResponse.success(type);
+    }
+
+    @GetMapping("data/exportResult/{type}")
+    public ResponseEntity exportResult(@PathVariable String type) {
+        File file = resultService.exportResult(type);
+        return downloadFile("export_#.zip".replace("#", type), file);
+    }
+
+    protected ResponseEntity downloadFile(String fileName, File file) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Cache-Control", "no-cache, no-store, must-revalidate");
+        headers.add("Content-Disposition", "attachment; filename=" + fileName + "; filename*=utf-8''" + fileName);
+        headers.add("Pragma", "no-cache");
+        headers.add("Expires", "0");
+        return ResponseEntity
+                .ok()
+                .headers(headers)
+                .contentLength(file.length())
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(new FileSystemResource(file));
     }
 }

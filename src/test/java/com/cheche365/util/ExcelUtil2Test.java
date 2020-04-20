@@ -41,9 +41,7 @@ public class ExcelUtil2Test {
 
         log.info("文件已经输出完成");
 
-        FileUtils.copyFile(file, new File("123.xlsx"));
-        file.delete();
-
+        FileUtils.moveFile(file, new File("123.xlsx"));
         log.info("结束");
     }
 
@@ -63,8 +61,7 @@ public class ExcelUtil2Test {
 
         File file = ExcelUtil2.writeToExcel(dataList);
 
-        FileUtils.copyFile(file, new File("123.xlsx"));
-        file.delete();
+        FileUtils.moveFile(file, new File("123.xlsx"));
         log.info("结束");
     }
 

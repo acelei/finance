@@ -97,7 +97,7 @@ public class DataRunTest {
                 log.error("获取文件失败", e);
             }
             try {
-                FileUtils.copyFile(file, new File(type + "_合并2.xlsx"));
+                FileUtils.moveFile(file, new File(type + "_合并2.xlsx"));
             } catch (IOException e) {
                 log.error("文件拷贝失败", e);
             }
@@ -135,7 +135,7 @@ public class DataRunTest {
                 log.error("获取文件失败", e);
             }
             try {
-                FileUtils.copyFile(file, new File(it + "_sbt.xlsx"));
+                FileUtils.moveFile(file, new File(it + "_sbt.xlsx"));
             } catch (IOException e) {
                 log.error("文件拷贝失败", e);
             }
@@ -187,7 +187,7 @@ public class DataRunTest {
     @Test
     public void exportSignFile() throws InterruptedException, ExecutionException, SQLException, IOException {
         File f = exportFile(type, "select * from result_sbt_3 where `省` is null");
-        FileUtils.copyFile(f, new File("空_sbt.xlsx"));
+        FileUtils.moveFile(f, new File("空_sbt.xlsx"));
     }
 
     @Test
@@ -273,7 +273,7 @@ public class DataRunTest {
         List<GroovyRowResult> rows = baseSql.rows(tjSql.replace("#", type));
         List<Map> list = Lists.newArrayList(rows);
         File file = ExcelUtil2.writeToExcel(head, list);
-        FileUtils.copyFile(file, new File("统计_sbt.xlsx"));
+        FileUtils.moveFile(file, new File("统计_sbt.xlsx"));
     }
 
     @Test

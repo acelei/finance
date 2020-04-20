@@ -86,7 +86,7 @@ public class SumDataTest {
         List<GroovyRowResult> rows = baseSql.rows(tjSql);
         List<Map> list = Lists.newArrayList(rows);
         File file = ExcelUtil2.writeToExcel(head, list);
-        FileUtils.copyFile(file, new File("统计_科技.xlsx"));
+        FileUtils.moveFile(file, new File("统计_科技.xlsx"));
     }
 
     String errTjSql = "select ':type' as '业务名称', '整合表' as '数据表','毛利异常数据' as '描述',count(9) as '条目数',sum(sum_fee) '收入',sum(sum_commission) as '成本' from result_#_back where `8-险种名称` in ('交强险','商业险') and `9-保单出单日期`>'2019' and abs(gross_profit)>1\n" +
@@ -122,7 +122,7 @@ public class SumDataTest {
                 "收入",
                 "成本"
         );
-        List<GroovyRowResult> rows = baseSql.rows("select `name`,`type` from table_type where flag=3");
+        List<GroovyRowResult> rows = baseSql.rows("select `name`,`type` from table_type where flag=5");
         List<Map> list = new ArrayList<>();
         for (GroovyRowResult row : rows) {
             String typeName = MapUtils.getString(row, "name");
@@ -132,6 +132,6 @@ public class SumDataTest {
         }
 
         File file = ExcelUtil2.writeToExcel(head, list);
-        FileUtils.copyFile(file, new File("错误统计.xlsx"));
+        FileUtils.moveFile(file, new File("错误统计.xlsx"));
     }
 }
