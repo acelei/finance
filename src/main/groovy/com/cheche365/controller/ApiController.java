@@ -228,10 +228,10 @@ public class ApiController {
     }
 
     @GetMapping("data/delTmp")
-    public RestResponse<String> delTmp(@PathVariable String type) throws IOException {
+    public RestResponse<String> delTmp() throws IOException {
         FileUtils.deleteDirectory(ExcelUtil2.tmp);
         FileUtils.forceMkdir(ExcelUtil2.tmp);
-        return RestResponse.success(type);
+        return RestResponse.success();
     }
 
     protected ResponseEntity downloadFile(String fileName, File file) {
