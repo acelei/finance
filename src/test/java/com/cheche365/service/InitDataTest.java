@@ -78,19 +78,32 @@ public class InitDataTest {
 
     @Test
     public void modifyTable() throws SQLException {
-        List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type");
+        List<String> types = Lists.newArrayList("anhui_2","dongguan_2","foshan_2","fujian_2","guangdong_2","guangxi_2","jiangsu_2","liaoning_2","shandong_2","sichuan_2","zhejiang_2","zongbu_2");
 
-        for (GroovyRowResult row : rows) {
-            String type = row.get("type").toString();
+        for (String type : types) {
             try {
-                baseSql.execute("ALTER TABLE `settlement_#` MODIFY COLUMN `s_id` varchar(255) NULL DEFAULT NULL,MODIFY COLUMN `c_id` varchar(255) NULL DEFAULT NULL".replace("#", type));
-                baseSql.execute("ALTER TABLE `commission_#` MODIFY COLUMN `s_id` varchar(255) NULL DEFAULT NULL,MODIFY COLUMN `c_id` varchar(255) NULL DEFAULT NULL".replace("#", type));
-
+                baseSql.executeUpdate("ALTER TABLE commission_# ADD COLUMN `flag` tinyint(255) NULL DEFAULT 0,ADD COLUMN `type_id` int(11) NULL".replace("#", type));
+                baseSql.executeUpdate("ALTER TABLE settlement_# ADD COLUMN `flag` tinyint(255) NULL DEFAULT 0,ADD COLUMN `type_id` int(11) NULL".replace("#", type));
             } catch (Exception e) {
                 log.error(type);
             }
         }
     }
+
+    @Test
+    public void modifyTable2() throws SQLException {
+        List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where org='保代-广管'");
+        for (GroovyRowResult row : rows) {
+            String type = row.get("type").toString();
+            log.info(type);
+            baseSql.executeInsert("truncate settlement_#_back".replace("#",type));
+            baseSql.executeInsert("truncate commission_#_back".replace("#",type));
+            baseSql.executeInsert("insert into settlement_#_back select * from settlement_#".replace("#",type));
+            baseSql.executeInsert("insert into commission_#_back select * from commission_#".replace("#",type));
+        }
+    }
+
+
 
     @Test
     public void clean() throws SQLException {
@@ -134,7 +147,10 @@ public class InitDataTest {
     }
 
     @Test
-    public void fixRef2() {
-        initData.fixRef("bj");
+    public void fixRef2() throws SQLException {
+//        initData.fixRef("bj");
+
+        baseSql.executeUpdate("ALTER TABLE commission_baodai_2 ADD COLUMN `flag` tinyint(255) NULL DEFAULT 0,ADD COLUMN `type_id` int(11) NULL");
+        baseSql.executeUpdate("ALTER TABLE settlement_baodai_2 ADD COLUMN `flag` tinyint(255) NULL DEFAULT 0,ADD COLUMN `type_id` int(11) NULL");
     }
 }
