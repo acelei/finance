@@ -22,7 +22,7 @@ class FixProfit {
         select id,
        s_id                                                as sIds,
        c_id                                                as cIds,
-       ifnull(`11-净保费`,0) as premium,
+       `11-净保费` as premium,
        sum_fee                            as sumFee,
        sum_commission as sumCommission,
        gross_profit
