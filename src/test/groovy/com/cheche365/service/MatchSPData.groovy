@@ -39,6 +39,16 @@ class MatchSPData {
         baseSql.executeUpdate("update commission_zongbu_2 a,settlement_zongbu b set a.flag=1,a.type_id=47 where a.`6-保单单号`=b.`6-保单单号` and a.`8-险种名称`=b.`8-险种名称` and a.flag=0");
     }
 
+    //导出未匹配总部数据
+    @Test
+    void step1_2() {
+        def rows = baseSql.rows("select * from commission_zongbu_2 where flag=0")
+        if (rows.size() > 0) {
+            log.info("总部-{}", rows.size())
+            FileUtils.moveFile(ExcelUtil2.writeToExcel(head, rows), new File("总部.xlsx"))
+        }
+    }
+
     //匹配超自律数据
     @Test
     void step2() {
@@ -67,11 +77,11 @@ class MatchSPData {
         }).await()
     }
 
-    // 导出为匹配超自律数据
+    // 导出未匹配超自律数据
     List<String> head = ["id", "s_id", "d_id", "c_id", "source_file", "1-序号", "2-保代机构", "3-出单保险代理机构（车车科技适用）", "4-发票付款方（与发票一致）", "5-投保人名称", "6-保单单号", "7-出单保险公司（明细至保险公司分支机构）", "8-险种名称", "9-保单出单日期", "10-全保费", "11-净保费", "12-手续费等级（对应点位台账）", "13-手续费率", "14-手续费总额（报行内+报行外）(含税)", "15-手续费总额（报行内+报行外）(不含税)", "16-收入入账月度", "17-凭证号", "18-手续费比例", "19-手续费金额（含税）", "20-手续费金额（不含税）", "21-回款月度", "22-凭证号", "23-收款金额", "24-开票单位", "25-开票日期", "26-手续费比例", "27-开票金额（不含税）", "28-开票金额（含税）", "29-20191231应收账款（含已开票和未开票）", "30-开票日期", "31-应收回款月度", "32-收款凭证号", "33-收款金额", "34-开票单位", "35-开票日期", "36-开票金额（不含税）", "37-开票金额（含税）", "38-尚未开票金额（不含税）", "39-尚未开票金额（含税）", "40-代理人名称", "41-佣金比例", "42-佣金金额（已入账）", "43-支付主体", "44-支付比例", "45-支付金额", "46-未计提佣金（19年底尚未入帐）", "保险公司", "省", "市", "保险公司id", "handle_sign", "sum_fee", "sum_commission", "gross_profit"]
 
     @Test
-    void step3() {
+    void step2_2() {
         List<String> types = ["anhui_2", "dongguan_2", "foshan_2", "fujian_2", "guangdong_2", "guangxi_2", "jiangsu_2", "shandong_2", "zhejiang_2", "liaoning_2", "sichuan_2"]
         ThreadPoolUtils.executeRun(types, { type ->
             def r1 = baseSql.rows("select * from settlement_${type} where flag=0" as String)
@@ -88,7 +98,7 @@ class MatchSPData {
 
     // 匹配科技付佣数据
     @Test
-    void step4() {
+    void step3() {
         def rows = baseSql.rows("select `id`,`type` from table_type where flag>=0")
         rows.each { type ->
             baseSql.executeUpdate("update commission_all_2 a,commission_${type.type} b set a.flag=1,a.type_id=${type.id} where a.`6-保单单号`=b.`6-保单单号` and a.`8-险种名称`=b.`8-险种名称` and a.flag=0" as String)
@@ -98,7 +108,7 @@ class MatchSPData {
 
     // 导出未匹配科技付佣数据
     @Test
-    void step5() {
+    void step3_2() {
         def rows = baseSql.rows("select * from commission_all_2 where flag=0")
         if (rows.size() > 0) {
             log.info("科技付佣-{}", rows.size())
@@ -108,7 +118,7 @@ class MatchSPData {
 
     // 匹配总部计算数据
     @Test
-    void step6() {
+    void step4() {
         def rows = baseSql.rows("select `id`,`type` from table_type where org='保代-广管'")
         rows.each { type ->
             baseSql.executeUpdate("update settlement_baodai_2 a,commission_${type.type} b set a.flag=1,a.type_id=${type.id} where a.`6-保单单号`=b.`6-保单单号` and a.`8-险种名称`=b.`8-险种名称` and a.flag=0" as String)
@@ -118,7 +128,7 @@ class MatchSPData {
 
     // 导出未匹配总部计算数据
     @Test
-    void step7() {
+    void step4_2() {
         def rows = baseSql.rows("select * from settlement_baodai_2 where flag=0")
         if (rows.size() > 0) {
             FileUtils.moveFile(ExcelUtil2.writeToExcel(head, rows), new File("总部结算.xlsx"))
