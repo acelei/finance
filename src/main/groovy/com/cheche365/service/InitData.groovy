@@ -30,7 +30,7 @@ class InitData {
     private String updateHandleSignByFinanceName = "update business_replace_ref t1 inner join das_data_pool_business t2 on t1.business_id = t2.id set t2.handle_sign = 0 where t1.table_name in ('settlementTableNameVal', 'commissionTableNameVal')"
     private String deleteBusinessRef = "delete from business_replace_ref where table_name in ('settlementTableNameVal', 'commissionTableNameVal')"
 
-    private static final Long RENBAO = 2005L;
+    private static final String RENBAO = "2005";
 
     void run(String type) {
         // 合计收入成本
