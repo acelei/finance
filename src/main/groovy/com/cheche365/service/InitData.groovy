@@ -135,7 +135,7 @@ where `8-险种名称` in (
 
 
     private static final String settlementSql = "DELETE FROM settlement_# WHERE `14-手续费总额（报行内+报行外）(含税)`=0 AND `19-手续费金额（含税）` AND `23-收款金额`=0 AND `28-开票金额（含税）`=0 AND `29-20191231应收账款（含已开票和未开票）`=0 AND `33-收款金额`=0 AND `37-开票金额（含税）`=0 AND `39-尚未开票金额（含税）`=0"
-    private static final String commissionSql = "DELETE FROM commission_bj WHERE `42-佣金金额（已入账）`=0 AND `45-支付金额`=0 AND `46-未计提佣金（19年底尚未入帐）`=0"
+    private static final String commissionSql = "DELETE FROM commission_# WHERE `42-佣金金额（已入账）`=0 AND `45-支付金额`=0 AND `46-未计提佣金（19年底尚未入帐）`=0"
 
     void deleteNullData(String type) {
         log.info("删除无效数据:{}", type)
