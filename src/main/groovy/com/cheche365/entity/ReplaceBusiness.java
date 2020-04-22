@@ -43,4 +43,6 @@ public class ReplaceBusiness {
 
     private String agentName;
 
+    private String policyNo;
+
 }

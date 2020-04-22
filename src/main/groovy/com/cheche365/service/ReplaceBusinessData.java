@@ -3,11 +3,13 @@ package com.cheche365.service;
 import com.cheche365.entity.DataPool;
 import com.cheche365.entity.ReplaceBusiness;
 import com.cheche365.util.ThreadPoolUtils;
+import com.google.common.base.Joiner;
 import groovy.sql.GroovyRowResult;
 import groovy.sql.Sql;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -41,6 +43,7 @@ public class ReplaceBusinessData {
     private static final BigDecimal JQ_MAX_FEE_RATE = new BigDecimal(0.08);
     private static final BigDecimal SY_MIN_FEE_RATE = new BigDecimal(0.12);
     private static final BigDecimal SY_MAX_FEE_RATE = new BigDecimal(0.70);
+    private static final BigDecimal[] SY_PREMIUM_RATE = new BigDecimal[]{new BigDecimal(0.1887), new BigDecimal(0.1698), new BigDecimal(0.1415)};
     //人保  财险
     private static final Long RENBAO = 2005L;
 
@@ -51,6 +54,7 @@ public class ReplaceBusinessData {
             "      group by insurance_company_id, province_id";
 
     private String updateTableType = "update table_type set flag = 3 where type = 'typeVal'";
+    private String updateEigntHandleSign = "update `tableNameVal` set handle_sign = 8 where id in (idListVal)";
     private String updateBusinessDataHandleSign = "update `tableName` set handle_sign = '2' where id = idVal";
     private String updateFinishHandleSign = "update `tableName` set handle_sign = 9 where id in (idList)";
     private String listReplaceBusiness = "select t1.id,\n" +
@@ -62,7 +66,8 @@ public class ReplaceBusinessData {
             "       t3.id                                                                                         as provinceId,\n" +
             "       if (`8-险种名称` = '交强险', 1, 2)                                                              as insuranceTypeId,\n" +
             "       `9-保单出单日期`                                                                                as financeOrderDate,\n" +
-            "       left(`9-保单出单日期`, 7)                                                                       as orderMonth,\n" +
+            "       left(`9-保单出单日期`, 7)                                                                       as orderMonth, \n" +
+            "       `6-保单单号` as policyNo, `5-投保人名称` as applicant, \n" +
             "       if(t1.s_id is not null,\n" +
             "          ifnull(`sum_fee`, 0.00),\n" +
             "          ifnull(`sum_commission`, 0.00)\n" +
@@ -90,6 +95,7 @@ public class ReplaceBusinessData {
             "       if (`8-险种名称` = '交强险', 1, 2)                                                              as insuranceTypeId,\n" +
             "       `9-保单出单日期`                                                                                as financeOrderDate,\n" +
             "       left(`9-保单出单日期`, 7)                                                                       as orderMonth,\n" +
+            "       `6-保单单号` as policyNo, `5-投保人名称` as applicant, \n" +
             "       ifnull(`sum_fee`, 0.00)                                              as sumFee\n" +
             "        from `resultTableNameVal` t1\n" +
             "       left join area t3\n" +
@@ -115,6 +121,7 @@ public class ReplaceBusinessData {
             "                      `9-保单出单日期`                            as financeOrderDate,\n" +
             "                      left(`9-保单出单日期`, 7)                   as orderMonth,\n" +
             "                      `6-保单单号`                                as policyNo,\n" +
+            "                      `5-投保人名称` as applicant, \n" +
             "                      ifnull(sum_fee, 0.00) as sumFee\n" +
             "               from `resultTableNameVal` t1\n" +
             "                      left join area t3\n" +
@@ -140,6 +147,7 @@ public class ReplaceBusinessData {
             "       if (`8-险种名称` = '交强险', 1, 2)                                                              as insuranceTypeId,\n" +
             "       `9-保单出单日期`                                                                                as financeOrderDate,\n" +
             "       left(`9-保单出单日期`, 7)                                                                       as orderMonth,\n" +
+            "       `6-保单单号` as policyNo, `5-投保人名称` as applicant, \n" +
             "       ifnull(`sum_commission`, 0.00)          as sumFee\n" +
             "        from `resultTableNameVal` t1\n" +
             "       left join area t3\n" +
@@ -165,6 +173,7 @@ public class ReplaceBusinessData {
             "                      `9-保单出单日期`                            as financeOrderDate,\n" +
             "                      left(`9-保单出单日期`, 7)                   as orderMonth,\n" +
             "                      `6-保单单号`                                as policyNo,\n" +
+            "                      `5-投保人名称` as applicant, \n" +
             "                      `40-代理人名称`                             as agentName,\n" +
             "                      ifnull(sum_commission, 0.00) as sumFee\n" +
             "               from `resultTableNameVal` t1\n" +
@@ -181,11 +190,33 @@ public class ReplaceBusinessData {
             "              ) as temp\n" +
             "group by policyNo, insuranceTypeId, insuranceCompanyId, province, orderMonth, agentName ) as temp where sumFee >= 0";
 
+    private String updateSixHandleSignSee = "select *\n" +
+            "from (\n" +
+            "       select `6-保单单号` as policyNo, count(0) as count, group_concat(id) as ids, sum(sum_fee) as sumFee\n" +
+            "       from `settlementTableNameVal`\n" +
+            "       where handle_sign = 6\n" +
+            "         and `8-险种名称` in ('交强险', '商业险')\n" +
+            "         and left(`9-保单出单日期`, 4) = '2019'\n" +
+            "       group by `6-保单单号`) as temp\n" +
+            "where sumFee = 0";
+
+    private String updateSixHandleSignCo = "select *\n" +
+            "from (\n" +
+            "       select `6-保单单号` as policyNo, count(0) as count, group_concat(id) as ids, sum(sum_commission) as sumFee\n" +
+            "       from `commissionTableNameVal`\n" +
+            "       where handle_sign = 6\n" +
+            "         and `8-险种名称` in ('交强险', '商业险')\n" +
+            "         and left(`9-保单出单日期`, 4) = '2019'\n" +
+            "       group by `6-保单单号`) as temp\n" +
+            "where sumFee = 0";
+
     private DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
 
     public void replaceBusinessList(String tableNameRef) {
         try {
+            //将散表中的收入或者成本相加为0的数据更新handle_sign=8
+            updateScatterFlag(tableNameRef);
             List<GroovyRowResult> grsInsProList = baseSql.rows(allInsPro);
             if (CollectionUtils.isEmpty(grsInsProList)) {
                 return;
@@ -203,6 +234,28 @@ public class ReplaceBusinessData {
             log.info("replaceBusiness success! tableNameRef:{}", tableNameRef);
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private void updateScatterFlag(String tableNameRef) throws SQLException {
+        String settlementTableName = "settlement_" + tableNameRef;
+        String commissionTableName = "commission_" + tableNameRef;
+        List<GroovyRowResult> sixSeeList = baseSql.rows(updateSixHandleSignSee.replace("settlementTableNameVal", settlementTableName));
+        if (CollectionUtils.isNotEmpty(sixSeeList)) {
+            List<String> idList = new ArrayList<>();
+            for (GroovyRowResult groovyRowResult : sixSeeList) {
+                idList.addAll(Arrays.asList(groovyRowResult.get("ids").toString().split(",")));
+            }
+            baseSql.executeUpdate(updateEigntHandleSign.replace("tableNameVal", settlementTableName).replace("idListVal", Joiner.on(",").join(idList)));
+        }
+
+        List<GroovyRowResult> sixCoList = baseSql.rows(updateSixHandleSignCo.replace("commissionTableNameVal", commissionTableName));
+        if (CollectionUtils.isNotEmpty(sixCoList)) {
+            List<String> idList = new ArrayList<>();
+            for (GroovyRowResult groovyRowResult : sixCoList) {
+                idList.addAll(Arrays.asList(groovyRowResult.get("ids").toString().split(",")));
+            }
+            baseSql.executeUpdate(updateEigntHandleSign.replace("tableNameVal", commissionTableName).replace("idListVal", Joiner.on(",").join(idList)));
         }
     }
 
@@ -253,29 +306,87 @@ public class ReplaceBusinessData {
                 }
                 getReplaceData += " and premium >= '" + minPremium + "' and premium <= '" + maxPremium + "' and handle_sign = 0 order by order_date desc, id desc limit 1";
                 GroovyRowResult dataPoolList = baseSql.firstRow(getReplaceData);
+                DataPool businessData;
                 if (dataPoolList == null || dataPoolList.size() == 0) {
-                    break;
-                }
-                DataPool businessData = transMap2Bean(dataPoolList);
-                String getReplaceBusinessId = "select business_id as businessId from business_replace_ref where business_id = " + businessData.getId() + " limit 1";
-                GroovyRowResult businessId = baseSql.firstRow(getReplaceBusinessId);
-                if (businessId != null && businessId.get("businessId") != null) {
-                    log.error("has use repeat businessData! financeId:{}, businessId:{}", finance.getId(), businessData.getId());
-                    continue;
-                } else {
-                    if (finance.getSumFee().compareTo(BigDecimal.ZERO) < 0) {
-                        businessData.setPremium(BigDecimal.ZERO.subtract(businessData.getPremium()));
+                    if (resultTableName.startsWith("result_")) {
+                        businessData = generDataPool(finance);
+                    } else {
+                        break;
                     }
-                    insertBusinessRef(resultTableName, finance, businessData, type);
-                    baseSql.executeUpdate(updateBusinessDataHandleSign.replace("tableName", insuranceCompanyTableName).replace("idVal", businessData.getId().toString()));
-                    baseSql.executeUpdate(updateBusinessDataHandleSign.replace("tableName", "das_data_pool_business").replace("idVal", businessData.getId().toString()));
-                    updateFinish(resultTableName, finance, type);
-                    log.info("replace success! resultTableName:{}, financeId:{}, businessId:{}", resultTableName, finance.getId(), businessData.getId());
+                } else {
+                    businessData = transMap2Bean(dataPoolList);
+                    String getReplaceBusinessId = "select business_id as businessId from business_replace_ref where business_id = " + businessData.getId() + " limit 1";
+                    GroovyRowResult businessId = baseSql.firstRow(getReplaceBusinessId);
+                    if (businessId != null && businessId.get("businessId") != null) {
+                        log.error("has use repeat businessData! financeId:{}, businessId:{}", finance.getId(), businessData.getId());
+                        continue;
+                    }
+                }
+
+                if (businessData == null) {
                     break;
                 }
+                if (finance.getSumFee().compareTo(BigDecimal.ZERO) < 0) {
+                    businessData.setPremium(BigDecimal.ZERO.subtract(businessData.getPremium()));
+                }
+                insertBusinessRef(resultTableName, finance, businessData, type);
+                baseSql.executeUpdate(updateBusinessDataHandleSign.replace("tableName", insuranceCompanyTableName).replace("idVal", businessData.getId().toString()));
+                baseSql.executeUpdate(updateBusinessDataHandleSign.replace("tableName", "das_data_pool_business").replace("idVal", businessData.getId().toString()));
+                updateFinish(resultTableName, finance, type);
+                log.info("replace success! resultTableName:{}, financeId:{}, businessId:{}", resultTableName, finance.getId(), businessData.getId());
+                break;
             }
         }
         return "success";
+    }
+
+    private DataPool generDataPool(ReplaceBusiness finance) {
+        BigDecimal premium;
+        if (finance.getInsuranceTypeId().equals(1L)) {
+            premium = finance.getSumFee().abs().divide(JQ_MIN_FEE_RATE, 2, RoundingMode.HALF_UP);
+        } else {
+            premium = finance.getSumFee().abs().divide(SY_PREMIUM_RATE[RandomUtils.nextInt(0, 3)], 2, RoundingMode.HALF_UP);
+        }
+
+        DataPool businessData = new DataPool();
+        businessData.setPolicyNo(finance.getPolicyNo());
+        businessData.setInsuranceTypeId(finance.getInsuranceTypeId());
+        businessData.setInsuranceCompany(finance.getInsuranceCompany());
+        businessData.setInsuranceCompanyId(finance.getInsuranceCompanyId());
+        businessData.setProvinceId(finance.getProvinceId());
+        businessData.setPremium(premium);
+        businessData.setApplicant(finance.getApplicant());
+        businessData.setOrderDate(finance.getFinanceOrderDate());
+        return businessData;
+    }
+
+    private void insertBusRefLists(String resultTableName, ReplaceBusiness finance, DataPool businessData) throws SQLException {
+        List<Map<String, Object>> insertMapList = new ArrayList<>();
+        if (StringUtils.isNotEmpty(finance.getSids())) {
+            for (String sId : finance.getSids().split(",")) {
+                Map<String, Object> setMap = new HashMap<>();
+                setMap.put("tableName", generateSettlementTableName(resultTableName));
+                setMap.put("resultTableName", resultTableName);
+                setMap.put("resultId", finance.getId());
+                setMap.put("financeId", sId);
+                setMap.put("businessData", businessData);
+                insertMapList.add(setMap);
+            }
+        }
+        if (StringUtils.isNotEmpty(finance.getCids())) {
+            for (String cId : finance.getCids().split(",")) {
+                Map<String, Object> setMap = new HashMap<>();
+                setMap.put("tableName", generateCommissionTableName(resultTableName));
+                setMap.put("resultTableName", resultTableName);
+                setMap.put("resultId", finance.getId());
+                setMap.put("financeId", cId);
+                setMap.put("businessData", businessData);
+                insertMapList.add(setMap);
+            }
+        }
+        if (CollectionUtils.isNotEmpty(insertMapList)) {
+            baseSql.executeInsert(insertBusinessRefList(insertMapList));
+        }
     }
 
     private void updateFinish(String resultTableName, ReplaceBusiness finance, int type) throws SQLException {
@@ -293,31 +404,7 @@ public class ReplaceBusinessData {
     private void insertBusinessRef(String resultTableName, ReplaceBusiness finance, DataPool businessData, int type) throws SQLException {
         List<Map<String, Object>> insertMapList = new ArrayList<>();
         if (resultTableName.startsWith("result_")) {
-            if (StringUtils.isNotEmpty(finance.getSids())) {
-                for (String sId : finance.getSids().split(",")) {
-                    Map<String, Object> setMap = new HashMap<>();
-                    setMap.put("tableName", generateSettlementTableName(resultTableName));
-                    setMap.put("resultTableName", resultTableName);
-                    setMap.put("resultId", finance.getId());
-                    setMap.put("financeId", sId);
-                    setMap.put("businessData", businessData);
-                    insertMapList.add(setMap);
-                }
-            }
-            if (StringUtils.isNotEmpty(finance.getCids())) {
-                for (String cId : finance.getCids().split(",")) {
-                    Map<String, Object> setMap = new HashMap<>();
-                    setMap.put("tableName", generateCommissionTableName(resultTableName));
-                    setMap.put("resultTableName", resultTableName);
-                    setMap.put("resultId", finance.getId());
-                    setMap.put("financeId", cId);
-                    setMap.put("businessData", businessData);
-                    insertMapList.add(setMap);
-                }
-            }
-            if (CollectionUtils.isNotEmpty(insertMapList)) {
-                baseSql.executeInsert(insertBusinessRefList(insertMapList));
-            }
+            insertBusRefLists(resultTableName, finance, businessData);
         } else {
             if (type == 1) {
                 Map<String, Object> setMap = new HashMap<>();
