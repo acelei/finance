@@ -25,6 +25,7 @@ class MatchSPData {
     void step0() {
         List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where org='保代-广管'")
         for (GroovyRowResult row : rows) {
+            log.info(row.type)
             baseSql.executeInsert("truncate settlement_#_back".replace("#", row.type));
             baseSql.executeInsert("truncate commission_#_back".replace("#", row.type));
             baseSql.executeInsert("insert into settlement_#_back select * from settlement_#".replace("#", row.type))
