@@ -378,8 +378,8 @@ public class ReplaceBusinessData {
                     businessData.setPremium(BigDecimal.ZERO.subtract(businessData.getPremium()));
                 }
                 insertBusinessRef(resultTableName, finance, businessData, type);
-                baseSql.executeUpdate(updateBusinessDataHandleSign.replace("tableName", insuranceCompanyTableName).replace("idVal", businessData.getId().toString()));
-                baseSql.executeUpdate(updateBusinessDataHandleSign.replace("tableName", "das_data_pool_business").replace("idVal", businessData.getId().toString()));
+                baseSql.executeUpdate(updateBusinessDataHandleSign.replace("tableName", insuranceCompanyTableName).replace("idVal", String.valueOf(businessData.getId())));
+                baseSql.executeUpdate(updateBusinessDataHandleSign.replace("tableName", "das_data_pool_business").replace("idVal", String.valueOf(businessData.getId())));
                 updateFinish(resultTableName, finance, type);
                 log.info("replace success! resultTableName:{}, financeId:{}, businessId:{}", resultTableName, finance.getId(), businessData.getId());
                 break;
