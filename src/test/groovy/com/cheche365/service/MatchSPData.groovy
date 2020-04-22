@@ -109,6 +109,28 @@ class MatchSPData {
         }).await()
     }
 
+    // 查看是否在科技边存在,错误检查
+    @Test
+    void step2_1_2() {
+        List<Map<String, String>> types = [
+                [source: "zhejiang_2", target: "zhejiang_dsf_keji", type: "75"],
+                [source: "liaoning_2", target: "liaoning_dsf_keji", type: "68"],
+                [source: "sichuan_2", target: "sichuan_dsf_keji", type: "71"],
+                [source: "jiangsu_2", target: "jiangsu_dsf_keji", type: "67"],
+                [source: "fujian_2", target: "fujian_dsf_keji", type: "61"],
+        ]
+        ThreadPoolUtils.executeRun(types, { type ->
+            def sql = ["update settlement_${type.source} a,settlement_${type.target} b set a.flag=2,a.type_id=${type.type} where a.`6-保单单号`=b.`6-保单单号` and a.`8-险种名称`=b.`8-险种名称` and a.flag=0" as String,
+                       "update settlement_${type.source} a,commission_${type.target} b set a.flag=2,a.type_id=${type.type} where a.`6-保单单号`=b.`6-保单单号` and a.`8-险种名称`=b.`8-险种名称` and a.flag=0" as String,
+                       "update commission_${type.source} a,commission_${type.target} b set a.flag=2,a.type_id=${type.type} where a.`6-保单单号`=b.`6-保单单号` and a.`8-险种名称`=b.`8-险种名称` and a.flag=0" as String,
+                       "update commission_${type.source} a,settlement_${type.target} b set a.flag=2,a.type_id=${type.type} where a.`6-保单单号`=b.`6-保单单号` and a.`8-险种名称`=b.`8-险种名称` and a.flag=0" as String]
+
+            sql.each {
+                baseSql.executeUpdate(it)
+            }
+        }).await()
+    }
+
     // 导出未匹配超自律数据
     List<String> head = ["id", "s_id", "d_id", "c_id", "source_file", "1-序号", "2-保代机构", "3-出单保险代理机构（车车科技适用）", "4-发票付款方（与发票一致）", "5-投保人名称", "6-保单单号", "7-出单保险公司（明细至保险公司分支机构）", "8-险种名称", "9-保单出单日期", "10-全保费", "11-净保费", "12-手续费等级（对应点位台账）", "13-手续费率", "14-手续费总额（报行内+报行外）(含税)", "15-手续费总额（报行内+报行外）(不含税)", "16-收入入账月度", "17-凭证号", "18-手续费比例", "19-手续费金额（含税）", "20-手续费金额（不含税）", "21-回款月度", "22-凭证号", "23-收款金额", "24-开票单位", "25-开票日期", "26-手续费比例", "27-开票金额（不含税）", "28-开票金额（含税）", "29-20191231应收账款（含已开票和未开票）", "30-开票日期", "31-应收回款月度", "32-收款凭证号", "33-收款金额", "34-开票单位", "35-开票日期", "36-开票金额（不含税）", "37-开票金额（含税）", "38-尚未开票金额（不含税）", "39-尚未开票金额（含税）", "40-代理人名称", "41-佣金比例", "42-佣金金额（已入账）", "43-支付主体", "44-支付比例", "45-支付金额", "46-未计提佣金（19年底尚未入帐）", "保险公司", "省", "市", "保险公司id", "handle_sign", "sum_fee", "sum_commission", "gross_profit"]
 
