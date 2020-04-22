@@ -516,12 +516,12 @@ public class ReplaceBusinessData {
     }
 
     private String generateSettlementTableName(String tableName) {
-        String settlementTableName = "settlement_" + tableName.substring(0, tableName.lastIndexOf("_"));
+        String settlementTableName = "settlement_" + tableName.substring(7, tableName.lastIndexOf("_"));
         return settlementTableName;
     }
 
     private String generateCommissionTableName(String tableName) {
-        String commissionTableName = "commission_" + tableName.substring(0, tableName.lastIndexOf("_"));
+        String commissionTableName = "commission_" + tableName.substring(7, tableName.lastIndexOf("_"));
         return commissionTableName;
     }
 
