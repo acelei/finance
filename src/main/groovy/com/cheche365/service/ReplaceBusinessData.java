@@ -210,6 +210,38 @@ public class ReplaceBusinessData {
             "       group by `6-保单单号`) as temp\n" +
             "where sumFee = 0";
 
+    private String updateThreeHandleSignFee = "update `settlementTableName` t1\n" +
+            "inner join `resultTableName` t2\n" +
+            "on t1.`6-保单单号` = t2.`6-保单单号`\n" +
+            "and t1.`8-险种名称` = t2.`8-险种名称`\n" +
+            "set t2.handle_sign = 3\n" +
+            "where t1.handle_sign = 6\n" +
+            "and t1.`8-险种名称` in ('交强险', '商业险')\n" +
+            "and left(t1.`9-保单出单日期`, 4) = '2019'\n" +
+            "and t1.sum_fee > 0";
+
+    private String updateThreeHandleSignCom = "update `commissionTableName` t1\n" +
+            "inner join `resultTableName` t2\n" +
+            "on t1.`6-保单单号` = t2.`6-保单单号`\n" +
+            "and t1.`8-险种名称` = t2.`8-险种名称`\n" +
+            "set t2.handle_sign = 3\n" +
+            "where t1.handle_sign = 6\n" +
+            "and t1.`8-险种名称` in ('交强险', '商业险')\n" +
+            "and left(t1.`9-保单出单日期`, 4) = '2019'\n" +
+            "and t1.sum_commission > 0";
+
+    private String updateFinishHandleSignFee = "update `settlementTableName` t1\n" +
+            "set handle_sign = 9 \n" +
+            "where t1.`8-险种名称` in ('交强险', '商业险')\n" +
+            "and left(t1.`9-保单出单日期`, 4) = '2019'\n" +
+            "and t1.sum_fee > 0";
+
+    private String updateFinishHandleSignCom = "update `commissionTableName` t1\n" +
+            "set handle_sign = 9 \n" +
+            "where t1.`8-险种名称` in ('交强险', '商业险')\n" +
+            "and left(t1.`9-保单出单日期`, 4) = '2019'\n" +
+            "and t1.sum_commission > 0";
+
     private DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
 
@@ -222,19 +254,28 @@ public class ReplaceBusinessData {
                 return;
             }
             List<String> insProList = grsInsProList.stream().map(it -> it.get("insPro").toString()).collect(Collectors.toList());
-            List<String> threeTableName = generateThreeTableNames(tableNameRef);
-            for (String tableName : threeTableName) {
-                if (tableName.startsWith("result_")) {
-                    replaceBusiness(tableName, insProList, 1);
-                } else {
-                    replaceBusiness(tableName, insProList, 2);
-                    replaceBusiness(tableName, insProList, 1);
-                }
-            }
+            String settlementTableName = "settlement_" + tableNameRef;
+            replaceBusiness(settlementTableName, insProList, 2);
+            replaceBusiness(settlementTableName, insProList, 1);
+            String commissionTableName = "commission_" + tableNameRef;
+            replaceBusiness(commissionTableName, insProList, 2);
+            replaceBusiness(commissionTableName, insProList, 1);
+            //将散表中数据推到result中设置handlesign=3
+            String resultTableName = "result_" + tableNameRef + "_2";
+            setResultThreeHs(commissionTableName, settlementTableName, resultTableName);
+            //替换handle_sign为3的数据
+            replaceBusiness(resultTableName, insProList, 1);
             log.info("replaceBusiness success! tableNameRef:{}", tableNameRef);
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private void setResultThreeHs(String commissionTableName, String settlementTableName, String resultTableName) throws SQLException {
+        baseSql.executeUpdate(updateThreeHandleSignFee.replace("settlementTableName", settlementTableName).replace("resultTableName", resultTableName));
+        baseSql.executeUpdate(updateFinishHandleSignFee.replace("settlementTableName", settlementTableName));
+        baseSql.executeUpdate(updateThreeHandleSignCom.replace("commissionTableName", commissionTableName).replace("resultTableName", resultTableName));
+        baseSql.executeUpdate(updateFinishHandleSignCom.replace("commissionTableName", commissionTableName));
     }
 
     private void updateScatterFlag(String tableNameRef) throws SQLException {
