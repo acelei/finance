@@ -32,6 +32,16 @@ class MatchSPData {
         }
     }
 
+    // 清除保代广管 24-28 34-37 45
+    @Test
+    void step0_1() {
+        List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where org='保代-广管'")
+        for (GroovyRowResult row : rows) {
+            baseSql.executeInsert("update settlement_# set `24-开票单位`=null,`25-开票日期`=null,`26-手续费比例`=null,`27-开票金额（不含税）`=0,`28-开票金额（含税）`=0,`34-开票单位`=null,`35-开票日期`=null,`36-开票金额（不含税）`=0,`37-开票金额（含税）`=0".replace("#", row.type))
+            baseSql.executeInsert("update commission_# set `45-支付金额`=0".replace("#", row.type))
+        }
+    }
+
     // 匹配总部数据
     @Test
     void step1() {
@@ -291,5 +301,21 @@ select 'settlement_baodai_2',id, `1-序号`, `2-保代机构`, `3-出单保险�
         rows.each {
             println baseSql.executeUpdate(sql.replace("#",it.type))
         }
+    }
+
+    @Test
+    void insert() {
+        insert1()
+        insert2()
+        insert3()
+        insert4()
+    }
+
+    @Test
+    void clean() {
+        clean1()
+        clean2()
+        clean3()
+        clean4()
     }
 }
