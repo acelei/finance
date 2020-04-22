@@ -46,13 +46,13 @@ public class DataRunTest {
 
     @Test
     public void init() throws SQLException {
-        List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=0");
+        List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=-1");
 
         for (GroovyRowResult row : rows) {
             String type = row.get("type").toString();
             initData.run(type);
-//            dataRunService.init(type);
-            baseSql.executeUpdate("update table_type set flag=1 where `type`=?", new Object[]{type});
+            dataRunService.init(type);
+//            baseSql.executeUpdate("update table_type set flag=1 where `type`=?", new Object[]{type});
         }
     }
 
@@ -64,7 +64,6 @@ public class DataRunTest {
 
         for (GroovyRowResult it : rows) {
             String type = it.get("type").toString();
-            dataRunService.init(type);
             dataRunService.process(type);
             baseSql.executeUpdate("update table_type set flag=2 where `type`=?", new Object[]{type});
         }
@@ -152,7 +151,7 @@ public class DataRunTest {
         }
     }
 
-    private String type = "bj";
+    private String type = "guangdong_czl_keji";
 
     @Test
     public void singRun() {
@@ -180,7 +179,7 @@ public class DataRunTest {
     }
 
     @Test
-    public void signResult() throws SQLException {
+    public void signResult() {
         dataRunService.result(type);
     }
 

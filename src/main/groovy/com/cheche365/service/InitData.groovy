@@ -145,8 +145,8 @@ where `8-险种名称` in (
 
     void clean(String type) {
         log.info("清除状态标记:${type}")
-        baseSql.executeUpdate("update settlement_# set d_id=null,s_id=null,c_id=null,handle_sign=0".replace("#", type))
-        baseSql.executeUpdate("update commission_# set d_id=null,s_id=null,c_id=null,handle_sign=0".replace("#", type))
+        baseSql.executeUpdate("update settlement_# set handle_sign=0".replace("#", type))
+        baseSql.executeUpdate("update commission_# set handle_sign=0".replace("#", type))
         baseSql.executeUpdate("delete from result_gross_margin_ref where table_name in ('result_#_2','commission_#','settlement_#')".replace("#", type))
         cleanReplaceData(type)
         log.info("清除状态标记:${type}")
