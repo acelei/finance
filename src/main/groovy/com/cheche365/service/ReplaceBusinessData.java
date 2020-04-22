@@ -68,10 +68,7 @@ public class ReplaceBusinessData {
             "       `9-保单出单日期`                                                                                as financeOrderDate,\n" +
             "       left(`9-保单出单日期`, 7)                                                                       as orderMonth, \n" +
             "       `6-保单单号` as policyNo, `5-投保人名称` as applicant, \n" +
-            "       if(t1.s_id is not null,\n" +
-            "          ifnull(`sum_fee`, 0.00),\n" +
-            "          ifnull(`sum_commission`, 0.00)\n" +
-            "         )                        as sumFee\n" +
+            "        if(ifnull(sum_fee, 0) >= ifnull(sum_commission, 0), ifnull(sum_fee, 0), ifnull(sum_commission, 0)) as sumFee\n" +
             "        from `resultTableNameVal` t1\n" +
             "       left join insurance_company t2\n" +
             "                 on t1.保险公司 = t2.name\n" +
@@ -210,25 +207,35 @@ public class ReplaceBusinessData {
             "       group by `6-保单单号`) as temp\n" +
             "where sumFee = 0";
 
-    private String updateThreeHandleSignFee = "update `settlementTableName` t1\n" +
-            "inner join `resultTableName` t2\n" +
-            "on t1.`6-保单单号` = t2.`6-保单单号`\n" +
-            "and t1.`8-险种名称` = t2.`8-险种名称`\n" +
-            "set t2.handle_sign = 3\n" +
-            "where t1.handle_sign = 6\n" +
-            "and t1.`8-险种名称` in ('交强险', '商业险')\n" +
-            "and left(t1.`9-保单出单日期`, 4) = '2019'\n" +
-            "and t1.sum_fee > 0";
+    private String updateThreeHandleSignFee = "update (select `6-保单单号`, `8-险种名称`, group_concat(id) as ids, sum(sum_commission) as sumFee\n" +
+            "        from `settlementTableName`\n" +
+            "        where handle_sign = 6\n" +
+            "          and `8-险种名称` in ('交强险', '商业险')\n" +
+            "          and left(`9-保单出单日期`, 4) = '2019'\n" +
+            "          and sum_fee > 0\n" +
+            "        group by `6-保单单号`, `8-险种名称`\n" +
+            ") t1\n" +
+            "  inner join `resultTableName` t2\n" +
+            "  on t1.`6-保单单号` = t2.`6-保单单号`\n" +
+            "    and t1.`8-险种名称` = t2.`8-险种名称`\n" +
+            "set t2.handle_sign    = 3,\n" +
+            "    t2.s_id           = concat(t2.s_id, ',', t1.ids),\n" +
+            "    t2.sum_fee = (t2.sum_fee + t1.sumFee)";
 
-    private String updateThreeHandleSignCom = "update `commissionTableName` t1\n" +
-            "inner join `resultTableName` t2\n" +
-            "on t1.`6-保单单号` = t2.`6-保单单号`\n" +
-            "and t1.`8-险种名称` = t2.`8-险种名称`\n" +
-            "set t2.handle_sign = 3\n" +
-            "where t1.handle_sign = 6\n" +
-            "and t1.`8-险种名称` in ('交强险', '商业险')\n" +
-            "and left(t1.`9-保单出单日期`, 4) = '2019'\n" +
-            "and t1.sum_commission > 0";
+    private String updateThreeHandleSignCom = "update (select `6-保单单号`, `8-险种名称`, group_concat(id) as ids, sum(sum_commission) as sumCommission\n" +
+            "        from `commissionTableName`\n" +
+            "        where handle_sign = 6\n" +
+            "          and `8-险种名称` in ('交强险', '商业险')\n" +
+            "          and left(`9-保单出单日期`, 4) = '2019'\n" +
+            "          and sum_commission > 0\n" +
+            "        group by `6-保单单号`, `8-险种名称`\n" +
+            ") t1\n" +
+            "  inner join `resultTableName` t2\n" +
+            "  on t1.`6-保单单号` = t2.`6-保单单号`\n" +
+            "    and t1.`8-险种名称` = t2.`8-险种名称`\n" +
+            "set t2.handle_sign    = 3,\n" +
+            "    t2.c_id           = concat(t2.c_id, ',', t1.ids),\n" +
+            "    t2.sum_commission = (t2.sum_commission + t1.sumCommission)";
 
     private String updateFinishHandleSignFee = "update `settlementTableName` t1\n" +
             "set handle_sign = 9 \n" +
