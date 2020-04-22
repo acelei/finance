@@ -239,13 +239,13 @@ public class ReplaceBusinessData {
 
     private String updateFinishHandleSignFee = "update `settlementTableName` t1\n" +
             "set handle_sign = 9 \n" +
-            "where t1.`8-险种名称` in ('交强险', '商业险')\n" +
+            "where t1.handle_sign = 6 and t1.`8-险种名称` in ('交强险', '商业险')\n" +
             "and left(t1.`9-保单出单日期`, 4) = '2019'\n" +
             "and t1.sum_fee > 0";
 
     private String updateFinishHandleSignCom = "update `commissionTableName` t1\n" +
             "set handle_sign = 9 \n" +
-            "where t1.`8-险种名称` in ('交强险', '商业险')\n" +
+            "where t1.handle_sign = 6 and t1.`8-险种名称` in ('交强险', '商业险')\n" +
             "and left(t1.`9-保单出单日期`, 4) = '2019'\n" +
             "and t1.sum_commission > 0";
 
