@@ -1,9 +1,6 @@
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder
 import ch.qos.logback.classic.filter.ThresholdFilter
 
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-
 statusListener OnConsoleStatusListener
 
 def patternLayout = "[%d{yyyy/MM/dd HH:mm:ss} %-5level [%thread] %class{5}:%M:%line] --  %msg]%n"
@@ -56,5 +53,5 @@ appender("FILE-ERROR", RollingFileAppender) {
     }
 }
 
-//root(curConfig.level, curConfig.appenders)
-root(DEBUG, ["console"])
+root(curConfig.level, curConfig.appenders)
+//root(DEBUG, ["console"])
