@@ -138,15 +138,15 @@ select `id`,
 from result_#_3
 '''
 
-    void sumResult3(String type, Integer id) {
-        baseSql.executeInsert(sql.replace("#", type), [id])
-    }
-
     String errTjSql = "select ':type' as '业务名称','整合表' as '数据表','总计' as '描述',count(9) as '条目数',sum(sum_fee) as '收入',sum(sum_commission) as '成本' from result_#_back\n" +
             "union all\n" +
             "select ':type','整合表','未调整数据',count(9),sum(sum_fee),sum(sum_commission) from result_#_2 where handle_sign in (0,6)\n" +
             "union all\n" +
             "select ':type','整合表','未替换数据',count(9),sum(sum_fee),sum(sum_commission) from result_#_2 where `8-险种名称` in ('交强险','商业险') and `9-保单出单日期`>'2019' and handle_sign=3\n" +
+            "union all\n" +
+            "select ':type','整合表','替换数据',count(9),sum(sum_fee),sum(sum_commission) from result_#_2 where `8-险种名称` in ('交强险','商业险') and `9-保单出单日期`>'2019' and handle_sign=9\n" +
+            "union all\n" +
+            "select ':type','整合表','硬调整数据',count(9),sum(sum_fee),sum(sum_commission) from result_#_2 where `8-险种名称` in ('交强险','商业险') and `9-保单出单日期`>'2019' and handle_sign=10\n" +
             "union all\n" +
             "select ':type','收入表','剩余收入数据',count(9),sum(sum_fee),sum(sum_commission) from settlement_# where `8-险种名称` in ('交强险','商业险') and `9-保单出单日期`>'2019' and handle_sign=6\n" +
             "union all\n" +
@@ -155,6 +155,10 @@ from result_#_3
             "select ':type','成本表','剩余成本数据',count(9),sum(sum_fee),sum(sum_commission) from commission_# where `8-险种名称` in ('交强险','商业险') and `9-保单出单日期`>'2019' and handle_sign=6\n" +
             "union all\n" +
             "select ':type','成本表','剩余成本负数',count(9),sum(sum_fee),sum(sum_commission) from commission_# where `8-险种名称` in ('交强险','商业险') and `9-保单出单日期`>'2019' and handle_sign=6 and sum_commission<0"
+
+    void sumResult3(String type, Integer id) {
+        baseSql.executeInsert(sql.replace("#", type), [id])
+    }
 
     List<String> head = ["业务名称", "数据表", "描述", "条目数", "收入", "成本"]
 
