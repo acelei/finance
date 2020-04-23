@@ -27,7 +27,7 @@ public class TypeCheckTest {
     @Autowired
     private ResultService resultService;
 
-    String type = "bj";
+    String type = "chengshuo";
 
     @Test
     public void before() {
@@ -79,4 +79,11 @@ public class TypeCheckTest {
     public void end() {
         resultService.run(type);
     }
+
+
+    @Test
+    public void type() {
+        reMatchSideData.run(type);
+    }
+
 }

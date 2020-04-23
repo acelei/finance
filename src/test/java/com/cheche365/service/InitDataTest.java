@@ -63,10 +63,10 @@ public class InitDataTest {
 
     @Test
     public void createTable() throws SQLException {
-        String type = "shandong";
+        String type = "sbt_czl";
 
-        baseSql.execute("create table settlement_# like settlement_bj".replace("#", type));
-        baseSql.execute("create table commission_# like commission_bj".replace("#", type));
+//        baseSql.execute("create table settlement_# like settlement_bj".replace("#", type));
+//        baseSql.execute("create table commission_# like commission_bj".replace("#", type));
         baseSql.execute("create table result_# like result_bj".replace("#", type));
         baseSql.execute("create table result_#_2 like result_bj_2".replace("#", type));
         baseSql.execute("create table result_#_back like result_bj_back".replace("#", type));
@@ -142,7 +142,7 @@ public class InitDataTest {
         List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type");
         for (GroovyRowResult row : rows) {
             String type = row.get("type").toString();
-            initData.fixRef(type);
+            initData.sumSettlementCommission(type);
         }
     }
 

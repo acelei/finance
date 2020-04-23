@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service
 @Slf4j
 class ReMatchSideData {
     @Autowired
-    private Sql baseSql
+    Sql baseSql
 
     String errorSettlementSide = "select group_concat(id) as id,group_concat(id) as s_id,sum(sum_fee) as fee,sum(sum_commission) as commission,sum(`14-手续费总额（报行内+报行外）(含税)`) as `14-手续费总额（报行内+报行外）(含税)`,sum(`15-手续费总额（报行内+报行外）(不含税)`) as `15-手续费总额（报行内+报行外）(不含税)`,sum(`42-佣金金额（已入账）`) as `42-佣金金额（已入账）`,sum(`45-支付金额`) as `45-支付金额`,sum(`46-未计提佣金（19年底尚未入帐）`) as `46-未计提佣金（19年底尚未入帐）`,DATE_FORMAT(`9-保单出单日期`,'%Y-%m') as order_month,`保险公司`,`省` from settlement_# where handle_sign=6 and date_format(`9-保单出单日期`,'%Y')>='2019' group by `6-保单单号`,`8-险种名称`"
     String errorCommissionSide = "select group_concat(id) as id,group_concat(id) as c_id,sum(sum_fee) as fee,sum(sum_commission) as commission,sum(`14-手续费总额（报行内+报行外）(含税)`) as `14-手续费总额（报行内+报行外）(含税)`,sum(`15-手续费总额（报行内+报行外）(不含税)`) as `15-手续费总额（报行内+报行外）(不含税)`,sum(`42-佣金金额（已入账）`) as `42-佣金金额（已入账）`,sum(`45-支付金额`) as `45-支付金额`,sum(`46-未计提佣金（19年底尚未入帐）`) as `46-未计提佣金（19年底尚未入帐）`,DATE_FORMAT(`9-保单出单日期`,'%Y-%m') as order_month,`保险公司`,`省`,`40-代理人名称` from commission_# where handle_sign=6 and date_format(`9-保单出单日期`,'%Y')>='2019' group by `6-保单单号`,`8-险种名称`,`40-代理人名称`"
@@ -272,7 +272,7 @@ limit 100
 
         baseSql.executeInsert(insertRef + valueList.join(","))
         baseSql.executeUpdate("update result_#_2 set handle_sign=4,`42-佣金金额（已入账）`=?,`45-支付金额`=?,`46-未计提佣金（19年底尚未入帐）`=?,sum_commission=?,gross_profit=?,c_id=? where id =?".replace("#", type),
-                [c1, c2, c3, commission, result.fee == 0 ? null : ((result.fee as double) - commission) / (result.fee as double), "${result.c_id},${row.c_id}".replace("null,", "").replace(",null", ""), result.id])
+                [c1, c2, c3, commission, result.fee == 0 ? null : (((result.fee as double) - commission) / (result.fee as double)), "${result.c_id},${row.c_id}".replace("null,", "").replace(",null", ""), result.id])
         baseSql.executeUpdate("update ${getcTable()} set handle_sign=5 where id in (${row.id})".replace("#", type))
     }
 }
