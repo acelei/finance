@@ -56,7 +56,7 @@ public class ReplaceBusinessData {
     private String updateTableType = "update table_type set flag = 3 where type = 'typeVal'";
     private String updateEigntHandleSign = "update `tableNameVal` set handle_sign = 8 where id in (idListVal)";
     private String updateBusinessDataHandleSign = "update `tableName` set handle_sign = '2' where id = idVal";
-    private String updateFinishHandleSign = "update `tableName` set handle_sign = 9 where id in (idList)";
+    private String updateFinishHandleSign = "update `tableName` set handle_sign = 'handleSignVal' where id in (idList)";
     private String listReplaceBusiness = "select t1.id,\n" +
             "       t1.s_id                                                                                          as sids,\n" +
             "       t1.c_id                                                                                          as cids,\n" +
@@ -355,6 +355,7 @@ public class ReplaceBusinessData {
                 getReplaceData += " and premium >= '" + minPremium + "' and premium <= '" + maxPremium + "' and handle_sign = 0 order by order_date desc, id desc limit 1";
                 GroovyRowResult dataPoolList = baseSql.firstRow(getReplaceData);
                 DataPool businessData;
+                boolean isFindBusiness = false;
                 if (dataPoolList == null || dataPoolList.size() == 0) {
                     if (resultTableName.startsWith("result_")) {
                         businessData = generDataPool(finance);
@@ -369,6 +370,7 @@ public class ReplaceBusinessData {
                         log.error("has use repeat businessData! financeId:{}, businessId:{}", finance.getId(), businessData.getId());
                         continue;
                     }
+                    isFindBusiness = true;
                 }
 
                 if (businessData == null) {
@@ -380,7 +382,7 @@ public class ReplaceBusinessData {
                 insertBusinessRef(resultTableName, finance, businessData, type);
                 baseSql.executeUpdate(updateBusinessDataHandleSign.replace("tableName", insuranceCompanyTableName).replace("idVal", String.valueOf(businessData.getId())));
                 baseSql.executeUpdate(updateBusinessDataHandleSign.replace("tableName", "das_data_pool_business").replace("idVal", String.valueOf(businessData.getId())));
-                updateFinish(resultTableName, finance, type);
+                updateFinish(resultTableName, finance, type, isFindBusiness);
                 log.info("replace success! resultTableName:{}, financeId:{}, businessId:{}", resultTableName, finance.getId(), businessData.getId());
                 break;
             }
@@ -437,14 +439,15 @@ public class ReplaceBusinessData {
         }
     }
 
-    private void updateFinish(String resultTableName, ReplaceBusiness finance, int type) throws SQLException {
+    private void updateFinish(String resultTableName, ReplaceBusiness finance, int type, boolean isFindBusiness) throws SQLException {
+        int handleSignFinish = isFindBusiness ? 9 : 10;
         if (resultTableName.startsWith("result_")) {
-            baseSql.executeUpdate(updateFinishHandleSign.replace("tableName", resultTableName).replace("idList", finance.getId().toString()));
+            baseSql.executeUpdate(updateFinishHandleSign.replace("tableName", resultTableName).replace("idList", finance.getId().toString()).replace("handleSignVal", String.valueOf(handleSignFinish)));
         } else {
             if (type == 1) {
-                baseSql.executeUpdate(updateFinishHandleSign.replace("tableName", resultTableName).replace("idList", finance.getId().toString()));
+                baseSql.executeUpdate(updateFinishHandleSign.replace("tableName", resultTableName).replace("idList", finance.getId().toString()).replace("handleSignVal", String.valueOf(handleSignFinish)));
             } else {
-                baseSql.executeUpdate(updateFinishHandleSign.replace("tableName", resultTableName).replace("idList", finance.getIds()));
+                baseSql.executeUpdate(updateFinishHandleSign.replace("tableName", resultTableName).replace("idList", finance.getIds()).replace("handleSignVal", String.valueOf(handleSignFinish)));
             }
         }
     }
