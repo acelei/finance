@@ -272,7 +272,7 @@ limit 100
 
         baseSql.executeInsert(insertRef + valueList.join(","))
         baseSql.executeUpdate("update result_#_2 set handle_sign=4,`42-佣金金额（已入账）`=?,`45-支付金额`=?,`46-未计提佣金（19年底尚未入帐）`=?,sum_commission=?,gross_profit=?,c_id=? where id =?".replace("#", type),
-                [c1, c2, c3, commission, result.fee == 0 ? null : ((result.fee as double) - commission) / (result.fee as double), "${result.c_id},${row.c_id}".replace("null,", "").replace(",null", ""), result.id])
+                [c1, c2, c3, commission, result.fee == 0 ? null : (((result.fee as double) - commission) / (result.fee as double)), "${result.c_id},${row.c_id}".replace("null,", "").replace(",null", ""), result.id])
         baseSql.executeUpdate("update ${getcTable()} set handle_sign=5 where id in (${row.id})".replace("#", type))
     }
 }

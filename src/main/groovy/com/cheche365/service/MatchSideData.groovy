@@ -113,8 +113,16 @@ class MatchSideData {
 
     private static MatchResult<List<GroovyRowResult>, List<GroovyRowResult>> matchData(List<GroovyRowResult> settlements, List<GroovyRowResult> commissions) {
         List<GroovyRowResult> commissionTmp, settlementTmp
-        settlementTmp = settlements.findAll { it.flag == null }
-        commissionTmp = commissions.findAll { it.flag == null }
+        settlementTmp = settlements.findAll {
+            synchronized (it) {
+                it.flag == null
+            }
+        }
+        commissionTmp = commissions.findAll {
+            synchronized (it) {
+                it.flag == null
+            }
+        }
         return Utils.matchCombine(settlementTmp, commissionTmp, {
             s, c ->
                 def fee = s*.fee.collect { it as double }.sum()
