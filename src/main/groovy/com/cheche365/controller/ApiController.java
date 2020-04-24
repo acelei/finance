@@ -39,8 +39,6 @@ public class ApiController {
     @Autowired
     private ReplaceBusinessData replaceBusinessData;
     @Autowired
-    private ReMatchSideData reMatchSideData;
-    @Autowired
     private ResultService resultService;
     @Autowired
     private SumData sumData;
@@ -183,14 +181,14 @@ public class ApiController {
     @GetMapping({"data/reMatch/{type}", "data/reMatch"})
     public RestResponse<String> reMatch(@PathVariable(required = false) String type) throws SQLException {
         if (type != null) {
-            reMatchSideData.run(type);
+            dataRunService.reMatch(type);
         } else {
             List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag>=4");
 
             for (GroovyRowResult row : rows) {
                 ThreadPoolUtils.getTaskPool().execute(() -> {
                     String t = row.get("type").toString();
-                    reMatchSideData.run(t);
+                    dataRunService.reMatch(t);
                 });
             }
         }

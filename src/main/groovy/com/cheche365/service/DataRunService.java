@@ -33,6 +33,10 @@ public class DataRunService {
     private ReMatchSPSideData reMatchSPSideData;
     @Autowired
     private ReMatchSideData2 reMatchSideData2;
+    @Autowired
+    private ReMatchSPSideData2 reMatchSPSideData2;
+    @Autowired
+    private ReMatchSPSideData3 reMatchSPSideData3;
 
     /**
      * 导出数据后进行初始化
@@ -88,8 +92,13 @@ public class DataRunService {
         reMatchSideData2.run(type);
         // 放弃代理人进行匹配
         reMatchSPSideData.run(type);
+        // 放弃省进行匹配
+        reMatchSPSideData2.run(type);
+        // 放弃时间匹配
+        reMatchSPSideData3.run(type);
         // 修正配对关联
         initData.fixRef(type);
+
 
         // 10.保费与收入数据比例异常的数据做数据替换
 //        replaceBusinessData.replaceBusinessList(type);
@@ -109,5 +118,18 @@ public class DataRunService {
         // 恢复result2表数据
         initData.roll(type);
         process(type);
+    }
+
+    public void reMatch(String type) {
+        reMatchSideData.run(type);
+        //放开比例匹配
+        reMatchSideData2.run(type);
+        // 放弃代理人进行匹配
+        reMatchSPSideData.run(type);
+        // 放弃省进行匹配
+        reMatchSPSideData2.run(type);
+        // 放弃时间匹配
+        reMatchSPSideData3.run(type);
+        initData.fixRef(type);
     }
 }

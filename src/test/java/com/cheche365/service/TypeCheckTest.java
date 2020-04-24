@@ -27,7 +27,13 @@ public class TypeCheckTest {
     @Autowired
     private ResultService resultService;
 
-    String type = "chengshuo";
+    String type = "zongbu";
+
+
+    @Test
+    public void roll() {
+        initData.roll(type);
+    }
 
     @Test
     public void before() {

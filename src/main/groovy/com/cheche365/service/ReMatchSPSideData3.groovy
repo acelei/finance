@@ -1,9 +1,10 @@
 package com.cheche365.service
 
+import groovy.sql.GroovyRowResult
 import org.springframework.stereotype.Service
 
-@Service("reMatchSideData2")
-class ReMatchSideData2 extends ReMatchSideData {
+@Service("reMatchSPSideData3")
+class ReMatchSPSideData3 extends ReMatchSideData {
     String quernSettlementUp = '''
 select id,s_id,c_id,sum_fee  as fee,
        sum_commission as commission,
@@ -14,9 +15,7 @@ from result_#_2
 where handle_sign in (0, 1, 3, 4, 6, 9, 10)
   and abs(0+`11-净保费`)-sum_fee > ?
   and 0 - sum_fee < ?
-  and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') <= ?
   and `保险公司` = ?
-  and `省` = ?
   and `8-险种名称` in ('交强险','商业险')
 order by gross_profit
 limit 100
@@ -30,9 +29,7 @@ select id,s_id,c_id,sum_fee  as fee,
 from result_#_2
 where handle_sign in (0, 1, 3, 4, 6, 9, 10)
   and sum_fee > ?
-  and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') <= ?
   and `保险公司` = ?
-  and `省` = ?
   and `8-险种名称` in ('交强险','商业险')
 order by sum_fee desc,
          gross_profit desc
@@ -48,10 +45,7 @@ from result_#_2
 where handle_sign in (0, 1, 3, 4, 6, 9, 10)
   and abs(0+`11-净保费`)-sum_commission > ?
   and 0-sum_commission < ?
-  and `40-代理人名称`=?
-  and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') <= ?
   and `保险公司` = ?
-  and `省` = ?
   and `8-险种名称` in ('交强险','商业险')
 order by gross_profit desc
 limit 100
@@ -65,13 +59,32 @@ select id,s_id,c_id,sum_fee  as fee,
 from result_#_2
 where handle_sign in (0, 1, 3, 4, 6, 9, 10)
   and sum_commission > ?
-  and `40-代理人名称`=?
-  and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') <= ?
   and `保险公司` = ?
-  and `省` = ?
   and `8-险种名称` in ('交强险','商业险')
 order by sum_commission desc,
          gross_profit
 limit 100
 '''
+
+    @Override
+    List<GroovyRowResult> findResult(GroovyRowResult row, String type) {
+        def fee = row.fee as double
+        def commission = row.commission as double
+        if (fee > 0) {
+            return baseSql.rows(getQuernSettlementUp().replace("#", type), [fee, fee, row.'保险公司'])
+        }
+
+        if (fee < 0) {
+            return baseSql.rows(getQuernSettlementDown().replace("#", type), [0 - fee, row.'保险公司'])
+        }
+
+        if (commission > 0) {
+            return baseSql.rows(getQuernCommissionUp().replace("#", type), [commission, commission, row.'保险公司'])
+        }
+
+        if (commission < 0) {
+            return baseSql.rows(getQuernCommissionDown().replace("#", type), [0 - commission, row.'保险公司'])
+        }
+    }
+
 }

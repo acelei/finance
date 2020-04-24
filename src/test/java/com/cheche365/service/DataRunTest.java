@@ -156,6 +156,7 @@ public class DataRunTest {
     @Test
     public void singRun() {
         initData.run(type);
+        dataRunService.init(type);
     }
 
     @Test
@@ -181,6 +182,11 @@ public class DataRunTest {
     @Test
     public void signResult() {
         dataRunService.result(type);
+    }
+
+    @Test
+    public void reMatch() {
+        dataRunService.reMatch(type);
     }
 
     @Test

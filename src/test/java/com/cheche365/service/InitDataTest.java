@@ -153,4 +153,14 @@ public class InitDataTest {
         baseSql.executeUpdate("ALTER TABLE commission_baodai_2 ADD COLUMN `flag` tinyint(255) NULL DEFAULT 0,ADD COLUMN `type_id` int(11) NULL");
         baseSql.executeUpdate("ALTER TABLE settlement_baodai_2 ADD COLUMN `flag` tinyint(255) NULL DEFAULT 0,ADD COLUMN `type_id` int(11) NULL");
     }
+
+    //
+    String[] type = new String[]{"hebei_baodai","bj","jilin_baodai","sx_baodai","shanxi_baodai","xj","yunnan_baodai","sks_baodai"};
+
+    @Test
+    public void result3() {
+        for (String t : type) {
+            initData.result3(t);
+        }
+    }
 }
