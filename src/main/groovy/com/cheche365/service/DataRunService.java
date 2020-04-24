@@ -31,6 +31,8 @@ public class DataRunService {
     private ReplaceBusinessData replaceBusinessData;
     @Autowired
     private ReMatchSPSideData reMatchSPSideData;
+    @Autowired
+    private ReMatchSideData2 reMatchSideData2;
 
     /**
      * 导出数据后进行初始化
@@ -82,6 +84,8 @@ public class DataRunService {
         matchSingleData.matchSingleDataList(type, false);
         // 8.将settlement,commission剩余单边数据匹配至result2中毛利率较高数据
         reMatchSideData.run(type);
+        //放开比例匹配
+        reMatchSideData2.run(type);
         // 放弃代理人进行匹配
         reMatchSPSideData.run(type);
         // 修正配对关联
