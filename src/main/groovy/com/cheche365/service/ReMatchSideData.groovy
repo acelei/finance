@@ -271,7 +271,7 @@ limit 100
         def commission = (result.commission as double) + (row.commission as double)
 
         def r = null
-        if (result.fee !=0) {
+        if ((result.fee as double) != 0) {
             r = (((result.fee as double) - commission) / (result.fee as double))
         }
 
