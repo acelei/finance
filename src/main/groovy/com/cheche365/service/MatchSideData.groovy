@@ -33,8 +33,10 @@ class MatchSideData {
         }
         List<GroovyRowResult> settlements = baseSql.rows(getQuerySettlement().replace("#", type))
         ThreadPoolUtils.submitRun(settlements, { it ->
-            log.info("原数据-结算数据:{}",it)
-            matchCommission(it, commissionGroup, type)
+            if((it.fee as double)>10) {
+                log.info("原数据-结算数据:{}",it)
+                matchCommission(it, commissionGroup, type)
+            }
         }).each { it.get() }
     }
 
@@ -44,8 +46,10 @@ class MatchSideData {
         }
         List<GroovyRowResult> commissions = baseSql.rows(getQueryCommission().replace("#", type))
         ThreadPoolUtils.submitRun(commissions, { it ->
-            log.info("原数据-付佣数据:{}",it)
-            matchSettlement(it, settlementGroup, type)
+            if ((it.commission as double)>10) {
+                log.info("原数据-付佣数据:{}",it)
+                matchSettlement(it, settlementGroup, type)
+            }
         }).each { it.get() }
     }
 
