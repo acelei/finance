@@ -33,9 +33,9 @@ class MatchSideData {
         }
         List<GroovyRowResult> settlements = baseSql.rows(getQuerySettlement().replace("#", type))
         ThreadPoolUtils.submitRun(settlements, { it ->
+            log.info("原数据-结算数据:{}",it)
             matchCommission(it, commissionGroup, type)
         }).each { it.get() }
-
     }
 
     void processCommission(String type) {
@@ -44,13 +44,14 @@ class MatchSideData {
         }
         List<GroovyRowResult> commissions = baseSql.rows(getQueryCommission().replace("#", type))
         ThreadPoolUtils.submitRun(commissions, { it ->
+            log.info("原数据-付佣数据:{}",it)
             matchSettlement(it, settlementGroup, type)
         }).each { it.get() }
     }
 
     void matchCommission(GroovyRowResult settlement, Map<String, List<GroovyRowResult>> commissionGroup, String type) {
         for (List<GroovyRowResult> commissions : commissionGroup.values()) {
-            if (settlement.order_month < commissions[0].order_month) {
+            if (commissions.size() == 0 || commissions[0].order_month == null || settlement.order_month < commissions[0].order_month) {
                 continue
             }
             int size = Math.ceil(commissions.size / 10)
@@ -81,7 +82,7 @@ class MatchSideData {
 
     void matchSettlement(GroovyRowResult commission, Map<String, List<GroovyRowResult>> settlementGroup, String type) {
         for (List<GroovyRowResult> settlements : settlementGroup.values()) {
-            if (settlements[0].order_month == null || commission.order_month < settlements[0].order_month) {
+            if (settlements.size() == 0 || settlements[0].order_month == null || commission.order_month < settlements[0].order_month) {
                 continue
             }
             int size = Math.ceil(settlements.size / 10)
@@ -131,8 +132,11 @@ class MatchSideData {
         })
     }
 
-    private boolean isMatch(MatchResult<List<GroovyRowResult>, List<GroovyRowResult>> matchMap, Object lock) {
+    private boolean isMatch(MatchResult<List<GroovyRowResult>, List<GroovyRowResult>> matchMap, Map<String, List<GroovyRowResult>> lock) {
         synchronized (lock) {
+            lock.each { key, value ->
+                lock.put(key, value.findAll { it.flag == null })
+            }
             def key = matchMap.sourceList
             def value = matchMap.targetList
             def tmp1 = key.find { i -> i.flag != null }

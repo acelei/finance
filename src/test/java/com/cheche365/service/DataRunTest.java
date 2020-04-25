@@ -46,11 +46,10 @@ public class DataRunTest {
 
     @Test
     public void init() throws SQLException {
-        List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=-1");
+        List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=2");
 
         for (GroovyRowResult row : rows) {
             String type = row.get("type").toString();
-            initData.run(type);
             dataRunService.init(type);
 //            baseSql.executeUpdate("update table_type set flag=1 where `type`=?", new Object[]{type});
         }
@@ -151,7 +150,7 @@ public class DataRunTest {
         }
     }
 
-    private String type = "guangdong_czl_keji";
+    private String type = "zongbu";
 
     @Test
     public void singRun() {
@@ -187,6 +186,11 @@ public class DataRunTest {
     @Test
     public void reMatch() {
         dataRunService.reMatch(type);
+    }
+
+    @Test
+    public void roll() {
+        initData.roll(type);
     }
 
     @Test

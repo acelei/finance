@@ -155,12 +155,23 @@ public class InitDataTest {
     }
 
     //
-    String[] type = new String[]{"hebei_baodai","bj","jilin_baodai","sx_baodai","shanxi_baodai","xj","yunnan_baodai","sks_baodai"};
+    String[] type = new String[]{"dongguan","liaoning","wenzhou","zhejiang","hebei_baodai","bj","yunnan_baodai"};
 
     @Test
     public void result3() {
         for (String t : type) {
             initData.result3(t);
+        }
+    }
+
+
+    String[] type2 = new String[]{"anhui","zongbu","fujian","guangdong","guangxi","hubei","jiangsu","shandong","sichuan"};
+
+    @Test
+    public void init2() {
+        for (String t : type2) {
+            initData.run(t);
+            dataRunService.init(t);
         }
     }
 }

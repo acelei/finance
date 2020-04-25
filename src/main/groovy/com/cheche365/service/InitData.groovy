@@ -149,7 +149,7 @@ where `8-险种名称` in (
         baseSql.executeUpdate("update commission_# set handle_sign=0".replace("#", type))
         baseSql.executeUpdate("delete from result_gross_margin_ref where table_name in ('result_#_2','commission_#','settlement_#')".replace("#", type))
         cleanReplaceData(type)
-        log.info("清除状态标记:${type}")
+        log.info("清除状态标记完成:${type}")
     }
 
     void cleanReplaceData(String type) {
