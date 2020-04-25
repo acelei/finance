@@ -90,7 +90,7 @@ public class SumDataTest {
 
     @Test
     public void exportErrTj() throws IOException {
-        File file = sumData.statisticsAll("select `type`,`name` from table_type where flag=5");
+        File file = sumData.statisticsAll("select `type`,`name` from table_type where flag>=4");
         FileUtils.moveFile(file, new File("错误统计.xlsx"));
     }
 

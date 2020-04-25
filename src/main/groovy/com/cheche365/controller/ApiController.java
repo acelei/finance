@@ -140,15 +140,13 @@ public class ApiController {
             List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=4");
 
             for (GroovyRowResult row : rows) {
-                ThreadPoolUtils.getTaskPool().execute(() -> {
-                    String t = row.get("type").toString();
-                    try {
-                        dataRunService.result(t);
-                        baseSql.executeUpdate("update table_type set flag=5 where `type`=?", new Object[]{t});
-                    } catch (SQLException e) {
-                        log.error("结果输出错误:" + t, e);
-                    }
-                });
+                String t = row.get("type").toString();
+                try {
+                    dataRunService.result(t);
+                    baseSql.executeUpdate("update table_type set flag=5 where `type`=?", new Object[]{t});
+                } catch (SQLException e) {
+                    log.error("结果输出错误:" + t, e);
+                }
             }
         }
         return RestResponse.success(type);
