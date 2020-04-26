@@ -181,7 +181,7 @@ public class ApiController {
         if (type != null) {
             dataRunService.reMatch(type);
         } else {
-            List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag>=4");
+            List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag>=3");
 
             for (GroovyRowResult row : rows) {
                 ThreadPoolUtils.getTaskPool().execute(() -> {
@@ -234,7 +234,7 @@ public class ApiController {
             file = sumData.statistics(MapUtils.getString(row, "type"), MapUtils.getString(row, "name"));
         } else {
 
-            file = sumData.statisticsAll("select `type`,`name` from table_type where flag=5");
+            file = sumData.statisticsAll("select `type`,`name` from table_type where flag>=3");
             type = "all";
         }
         return downloadFile("统计_#.xlsx".replace("#", type), file);

@@ -187,9 +187,11 @@ select group_concat(id) d_id,group_concat(s_id) as s_id,group_concat(c_id) as c_
 from result_#_final group by  `6-保单单号`, if(`8-险种名称` in ('交强险','商业险'),`8-险种名称`,'ODS')'''
 
     void run(String type) {
+        log.info("输出final result:{}", type)
         result(type)
         result2(type)
         initData.fixPremium(type, "_final")
+        log.info("输出final result完成:{}", type)
     }
 
     String queryResult = "select * from result_#_2_final"

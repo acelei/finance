@@ -110,7 +110,6 @@ public class DataRunService {
      * @param type
      */
     public void result(String type) {
-
         resultService.run(type);
     }
 
