@@ -68,7 +68,7 @@ public class ReplaceBusinessData {
             "       `9-保单出单日期`                                                                                as financeOrderDate,\n" +
             "       left(`9-保单出单日期`, 7)                                                                       as orderMonth, \n" +
             "       `6-保单单号` as policyNo, `5-投保人名称` as applicant, \n" +
-            "        if(ifnull(sum_fee, 0) >= ifnull(sum_commission, 0), ifnull(sum_fee, 0), ifnull(sum_commission, 0)) as sumFee\n" +
+            "        if((sum_fee + 0) >= (0 + sum_commission), (0+sum_fee), (0+sum_commission)) as sumFee\n" +
             "        from `resultTableNameVal` t1\n" +
             "       left join insurance_company t2\n" +
             "                 on t1.保险公司 = t2.name\n" +
