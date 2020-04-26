@@ -68,7 +68,7 @@ public class ReplaceBusinessData {
             "       `9-保单出单日期`                                                                                as financeOrderDate,\n" +
             "       left(`9-保单出单日期`, 7)                                                                       as orderMonth, \n" +
             "       `6-保单单号` as policyNo, `5-投保人名称` as applicant, \n" +
-            "        if(ifnull(sum_fee, 0) >= ifnull(sum_commission, 0), ifnull(sum_fee, 0), ifnull(sum_commission, 0)) as sumFee\n" +
+            "        if((sum_fee + 0) >= (0 + sum_commission), (0+sum_fee), (0+sum_commission)) as sumFee\n" +
             "        from `resultTableNameVal` t1\n" +
             "       left join insurance_company t2\n" +
             "                 on t1.保险公司 = t2.name\n" +
@@ -238,13 +238,13 @@ public class ReplaceBusinessData {
             "    t2.sum_commission = (t2.sum_commission + t1.sumCommission)";
 
     private String updateFinishHandleSignFee = "update `settlementTableName` t1\n" +
-            "set handle_sign = 9 \n" +
+            "set handle_sign = 10 \n" +
             "where t1.handle_sign = 6 and t1.`8-险种名称` in ('交强险', '商业险')\n" +
             "and left(t1.`9-保单出单日期`, 4) = '2019'\n" +
             "and t1.sum_fee > 0";
 
     private String updateFinishHandleSignCom = "update `commissionTableName` t1\n" +
-            "set handle_sign = 9 \n" +
+            "set handle_sign = 10 \n" +
             "where t1.handle_sign = 6 and t1.`8-险种名称` in ('交强险', '商业险')\n" +
             "and left(t1.`9-保单出单日期`, 4) = '2019'\n" +
             "and t1.sum_commission > 0";
@@ -315,7 +315,7 @@ public class ReplaceBusinessData {
             if (!resultTableName.startsWith("result_") && !allInsPro.contains(insPro)) {
                 continue;
             }
-            Future future = runCompletionPool.submit(() -> updateReplaceData(finance, resultTableName, type));
+            Future future = runCompletionPool.submit(() -> updateReplaceData(finance, allInsPro, resultTableName, type));
             futureList.add(future);
         }
         for (Future future : futureList) {
@@ -331,9 +331,17 @@ public class ReplaceBusinessData {
         return "success";
     }
 
-    private String updateReplaceData(ReplaceBusiness finance, String resultTableName, int type) throws SQLException {
+    private String updateReplaceData(ReplaceBusiness finance, List<String> allInsPro, String resultTableName, int type) throws SQLException {
         synchronized (("run_thread_" + finance.getInsuranceCompanyId() + "_" + finance.getProvinceId()).intern()) {
             BigDecimal minPremium, maxPremium;
+            //保险公司id 是空
+            String insPro = finance.getInsuranceCompanyId() + "_" + finance.getProvinceId();
+            if (finance.getInsuranceCompanyId() == null || !allInsPro.contains(insPro)) {
+                if (resultTableName.startsWith("result_")) {
+                    forceReplaceBusiness(finance, resultTableName, type);
+                }
+                return null;
+            }
             String insuranceCompanyTableName = generInsuranceCompany(finance.getInsuranceCompanyId(), finance.getProvinceId());
             //交强
             if (finance.getInsuranceTypeId().equals(1L)) {
@@ -347,8 +355,11 @@ public class ReplaceBusinessData {
             while (continueLoop) {
                 LocalDate startDate = getBusinessStartDate(date2LocalDate(finance.getFinanceOrderDate()));
                 String startDateStr = startDate.format(fmt);
-                String getReplaceData = "select id, policy_no as policyNo, insurance_type_id as insuranceTypeId, insurance_company as insuranceCompany, insurance_company_id as insuranceCompanyId, province_id as provinceId, premium, applicant, order_date as orderDate from " + insuranceCompanyTableName
-                      +  " where province_id = " + finance.getProvinceId() + " and order_date > '" + startDateStr + "' ";
+                String getReplaceData = "select id, policy_no as policyNo, insurance_type_id as insuranceTypeId, insurance_company as insuranceCompany, insurance_company_id as insuranceCompanyId, province_id as provinceId, premium, applicant, order_date as orderDate from " + insuranceCompanyTableName + " where ";
+                if (finance.getProvinceId() != null) {
+                    getReplaceData += " province_id = " + finance.getProvinceId() + " and ";
+                }
+                getReplaceData += " order_date > '" + startDateStr + "' ";
                 if (finance.getFinanceOrderDate() != null) {
                     getReplaceData += " and order_date <= '" + formatter.format(finance.getFinanceOrderDate()) + "' ";
                 }
@@ -380,14 +391,23 @@ public class ReplaceBusinessData {
                     businessData.setPremium(BigDecimal.ZERO.subtract(businessData.getPremium()));
                 }
                 insertBusinessRef(resultTableName, finance, businessData, type);
-                baseSql.executeUpdate(updateBusinessDataHandleSign.replace("tableName", insuranceCompanyTableName).replace("idVal", String.valueOf(businessData.getId())));
-                baseSql.executeUpdate(updateBusinessDataHandleSign.replace("tableName", "das_data_pool_business").replace("idVal", String.valueOf(businessData.getId())));
+                if (isFindBusiness) {
+                    baseSql.executeUpdate(updateBusinessDataHandleSign.replace("tableName", insuranceCompanyTableName).replace("idVal", String.valueOf(businessData.getId())));
+                    baseSql.executeUpdate(updateBusinessDataHandleSign.replace("tableName", "das_data_pool_business").replace("idVal", String.valueOf(businessData.getId())));
+                }
                 updateFinish(resultTableName, finance, type, isFindBusiness);
                 log.info("replace success! resultTableName:{}, financeId:{}, businessId:{}", resultTableName, finance.getId(), businessData.getId());
                 break;
             }
         }
         return "success";
+    }
+
+    private void forceReplaceBusiness(ReplaceBusiness finance, String resultTableName, int type) throws SQLException {
+        DataPool businessData = generDataPool(finance);
+        insertBusinessRef(resultTableName, finance, businessData, type);
+        updateFinish(resultTableName, finance, type, false);
+        log.info("replace success! resultTableName:{}, financeId:{}, businessId:{}", resultTableName, finance.getId(), businessData.getId());
     }
 
     private DataPool generDataPool(ReplaceBusiness finance) {
