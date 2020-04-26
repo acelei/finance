@@ -312,7 +312,7 @@ public class ReplaceBusinessData {
         List<Future> futureList = new ArrayList<>();
         for (ReplaceBusiness finance : businessList) {
             String insPro = finance.getInsuranceCompanyId() + "_" + finance.getProvinceId();
-            if (!allInsPro.contains(insPro) || finance.getSumFee().compareTo(BigDecimal.ZERO) == 0) {
+            if (!resultTableName.startsWith("result_") && !allInsPro.contains(insPro)) {
                 continue;
             }
             Future future = runCompletionPool.submit(() -> updateReplaceData(finance, resultTableName, type));
