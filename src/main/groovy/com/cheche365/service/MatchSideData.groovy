@@ -15,8 +15,8 @@ class MatchSideData {
     @Autowired
     protected Sql baseSql
 
-    String querySettlement = "select id,id as s_id,sum_fee as fee,sum_commission as commission,`14-手续费总额（报行内+报行外）(含税)`,`15-手续费总额（报行内+报行外）(不含税)`,`42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`,DATE_FORMAT(`9-保单出单日期`,'%Y-%m') as order_month,`保险公司`,`省`, null as flag from settlement_# where handle_sign=6 and date_format(`9-保单出单日期`,'%Y')='2019'"
-    String queryCommission = "select id,id as c_id,sum_fee as fee,sum_commission as commission,`14-手续费总额（报行内+报行外）(含税)`,`15-手续费总额（报行内+报行外）(不含税)`,`42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`,DATE_FORMAT(`9-保单出单日期`,'%Y-%m') as order_month,`保险公司`,`省`,`40-代理人名称`, null as flag from commission_# where handle_sign=6 and date_format(`9-保单出单日期`,'%Y')='2019'"
+    String querySettlement = "select id,id as s_id,sum_fee as fee,sum_commission as commission,`14-手续费总额（报行内+报行外）(含税)`,`15-手续费总额（报行内+报行外）(不含税)`,`42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`,DATE_FORMAT(`9-保单出单日期`,'%Y-%m') as order_month,`保险公司`,`省`, null as flag from settlement_# where `8-险种名称` in ('交强险','商业险') and handle_sign=6 and date_format(`9-保单出单日期`,'%Y')='2019'"
+    String queryCommission = "select id,id as c_id,sum_fee as fee,sum_commission as commission,`14-手续费总额（报行内+报行外）(含税)`,`15-手续费总额（报行内+报行外）(不含税)`,`42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`,DATE_FORMAT(`9-保单出单日期`,'%Y-%m') as order_month,`保险公司`,`省`,`40-代理人名称`, null as flag from commission_# where `8-险种名称` in ('交强险','商业险') and handle_sign=6 and date_format(`9-保单出单日期`,'%Y')='2019'"
 
     void run(String type) {
         log.info("匹配单边数据-结算(付佣使用结算业务数据):{}", type)
