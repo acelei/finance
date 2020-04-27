@@ -39,6 +39,9 @@ public class ReplaceBusinessData {
     @Autowired
     protected Sql baseSql;
 
+    @Autowired
+    private ReplaceHisBusiness rhb;
+
     private static final BigDecimal JQ_MIN_FEE_RATE = new BigDecimal(0.04);
     private static final BigDecimal JQ_MAX_FEE_RATE = new BigDecimal(0.08);
     private static final BigDecimal SY_MIN_FEE_RATE = new BigDecimal(0.12);
@@ -250,7 +253,7 @@ public class ReplaceBusinessData {
             "and t1.sum_commission > 0";
 
     private DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+    static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
 
     public void replaceBusinessList(String tableNameRef) {
         try {
@@ -267,6 +270,8 @@ public class ReplaceBusinessData {
             String commissionTableName = "commission_" + tableNameRef;
             replaceBusiness(commissionTableName, insProList, 2);
             replaceBusiness(commissionTableName, insProList, 1);
+            //将散表中的负数替换为history中的数据
+            rhb.replaceHistoryBusiness(settlementTableName, commissionTableName);
             //将散表中数据推到result中设置handlesign=3
             String resultTableName = "result_" + tableNameRef + "_2";
             setResultThreeHs(commissionTableName, settlementTableName, resultTableName);
@@ -375,7 +380,7 @@ public class ReplaceBusinessData {
                     }
                 } else {
                     businessData = transMap2Bean(dataPoolList);
-                    String getReplaceBusinessId = "select business_id as businessId from business_replace_ref where business_id = " + businessData.getId() + " limit 1";
+                    String getReplaceBusinessId = "select business_id as businessId from business_replace_ref where business_id = " + businessData.getId() + " and business_table_name = '" + insuranceCompanyTableName + "' limit 1";
                     GroovyRowResult businessId = baseSql.firstRow(getReplaceBusinessId);
                     if (businessId != null && businessId.get("businessId") != null) {
                         log.error("has use repeat businessData! financeId:{}, businessId:{}", finance.getId(), businessData.getId());
@@ -390,7 +395,7 @@ public class ReplaceBusinessData {
                 if (finance.getSumFee().compareTo(BigDecimal.ZERO) < 0) {
                     businessData.setPremium(BigDecimal.ZERO.subtract(businessData.getPremium()));
                 }
-                insertBusinessRef(resultTableName, finance, businessData, type);
+                insertBusinessRef(resultTableName, finance, businessData, type, isFindBusiness ? insuranceCompanyTableName : null);
                 if (isFindBusiness) {
                     baseSql.executeUpdate(updateBusinessDataHandleSign.replace("tableName", insuranceCompanyTableName).replace("idVal", String.valueOf(businessData.getId())));
                     baseSql.executeUpdate(updateBusinessDataHandleSign.replace("tableName", "das_data_pool_business").replace("idVal", String.valueOf(businessData.getId())));
@@ -405,7 +410,7 @@ public class ReplaceBusinessData {
 
     private void forceReplaceBusiness(ReplaceBusiness finance, String resultTableName, int type) throws SQLException {
         DataPool businessData = generDataPool(finance);
-        insertBusinessRef(resultTableName, finance, businessData, type);
+        insertBusinessRef(resultTableName, finance, businessData, type, null);
         updateFinish(resultTableName, finance, type, false);
         log.info("replace success! resultTableName:{}, financeId:{}, businessId:{}", resultTableName, finance.getId(), businessData.getId());
     }
@@ -430,7 +435,7 @@ public class ReplaceBusinessData {
         return businessData;
     }
 
-    private void insertBusRefLists(String resultTableName, ReplaceBusiness finance, DataPool businessData) throws SQLException {
+    private void insertBusRefLists(String resultTableName, ReplaceBusiness finance, DataPool businessData, String insuranceCompanyTableName) throws SQLException {
         List<Map<String, Object>> insertMapList = new ArrayList<>();
         if (StringUtils.isNotEmpty(finance.getSids())) {
             for (String sId : finance.getSids().split(",")) {
@@ -438,6 +443,7 @@ public class ReplaceBusinessData {
                 setMap.put("tableName", generateSettlementTableName(resultTableName));
                 setMap.put("resultTableName", resultTableName);
                 setMap.put("resultId", finance.getId());
+                setMap.put("businessTableName", insuranceCompanyTableName);
                 setMap.put("financeId", sId);
                 setMap.put("businessData", businessData);
                 insertMapList.add(setMap);
@@ -449,6 +455,7 @@ public class ReplaceBusinessData {
                 setMap.put("tableName", generateCommissionTableName(resultTableName));
                 setMap.put("resultTableName", resultTableName);
                 setMap.put("resultId", finance.getId());
+                setMap.put("businessTableName", insuranceCompanyTableName);
                 setMap.put("financeId", cId);
                 setMap.put("businessData", businessData);
                 insertMapList.add(setMap);
@@ -472,15 +479,16 @@ public class ReplaceBusinessData {
         }
     }
 
-    private void insertBusinessRef(String resultTableName, ReplaceBusiness finance, DataPool businessData, int type) throws SQLException {
+    public void insertBusinessRef(String resultTableName, ReplaceBusiness finance, DataPool businessData, int type, String insuranceCompanyTableName) throws SQLException {
         List<Map<String, Object>> insertMapList = new ArrayList<>();
         if (resultTableName.startsWith("result_")) {
-            insertBusRefLists(resultTableName, finance, businessData);
+            insertBusRefLists(resultTableName, finance, businessData, insuranceCompanyTableName);
         } else {
             if (type == 1) {
                 Map<String, Object> setMap = new HashMap<>();
                 setMap.put("tableName", resultTableName);
                 setMap.put("financeId", finance.getId());
+                setMap.put("businessTableName", insuranceCompanyTableName);
                 setMap.put("businessData", businessData);
                 insertMapList.add(setMap);
                 baseSql.executeInsert(insertBusinessRefList(insertMapList));
@@ -489,6 +497,7 @@ public class ReplaceBusinessData {
                     Map<String, Object> setMap = new HashMap<>();
                     setMap.put("tableName", resultTableName);
                     setMap.put("financeId", id);
+                    setMap.put("businessTableName", insuranceCompanyTableName);
                     setMap.put("businessData", businessData);
                     insertMapList.add(setMap);
                 }
@@ -498,14 +507,15 @@ public class ReplaceBusinessData {
         }
     }
 
-    private String insertBusinessRefList(List<Map<String, Object>> insertMapList) {
-        StringBuffer sb = new StringBuffer("insert into business_replace_ref (`table_name`, result_table_name, result_id, finance_id, business_id, policy_no, insurance_type_id, insurance_company, insurance_company_id, province_id, premium, applicant, order_date) values ");
+    public static String insertBusinessRefList(List<Map<String, Object>> insertMapList) {
+        StringBuffer sb = new StringBuffer("insert into business_replace_ref (`table_name`, result_table_name, business_table_name, result_id, finance_id, business_id, policy_no, insurance_type_id, insurance_company, insurance_company_id, province_id, premium, applicant, order_date) values ");
         for (int i = 0; i < insertMapList.size(); i++) {
             Map<String, Object> map = insertMapList.get(i);
             DataPool businessData = (DataPool) map.get("businessData");
             sb.append("(").append(getMapStr(map, "tableName")).append(",");
             sb.append(getMapStr(map, "resultTableName")).append(",");
             sb.append(getMapStr(map, "resultId")).append(",");
+            sb.append(getMapStr(map, "businessTableName")).append(",");
             sb.append(getMapStr(map, "financeId")).append(",");
             sb.append(getSqlFormat(businessData.getId())).append(",");
             sb.append(getSqlFormat(businessData.getPolicyNo())).append(",");
@@ -523,7 +533,7 @@ public class ReplaceBusinessData {
         return sb.toString();
     }
 
-    private String getMapStr(Map<String, Object> map, String key) {
+    private static String getMapStr(Map<String, Object> map, String key) {
         if (map.get(key) == null || StringUtils.isEmpty(map.get(key).toString())) {
             return null;
         } else {
@@ -531,7 +541,7 @@ public class ReplaceBusinessData {
         }
     }
 
-    private String getSqlFormat(Object obj){
+    private static String getSqlFormat(Object obj){
         if (obj == null || StringUtils.isEmpty(obj.toString())) {
             return null;
         }
@@ -548,7 +558,7 @@ public class ReplaceBusinessData {
         return commissionTableName;
     }
 
-    private DataPool transMap2Bean(GroovyRowResult groovyRowResult) {
+    public static DataPool transMap2Bean(GroovyRowResult groovyRowResult) {
         DataPool dataPool = new DataPool();
         try {
             BeanUtils.populate(dataPool, groovyRowResult);
@@ -583,18 +593,18 @@ public class ReplaceBusinessData {
     private List<ReplaceBusiness> replaceBusinessListByTableName(String resultTableName, int type) throws SQLException {
         List<GroovyRowResult> groovyRowResultList;
         if (resultTableName.startsWith("result_")) {
-            groovyRowResultList = baseSql.rows(listReplaceBusiness.replace("resultTableNameVal", resultTableName));
+            groovyRowResultList = baseSql.rows(listReplaceBusiness.replaceAll("resultTableNameVal", resultTableName));
         } else if(resultTableName.startsWith("settlement_")) {
             if (type == 1) {
-                groovyRowResultList = baseSql.rows(listReplaceBusinessBySe.replace("resultTableNameVal", resultTableName));
+                groovyRowResultList = baseSql.rows(listReplaceBusinessBySe.replaceAll("resultTableNameVal", resultTableName));
             } else {
-                groovyRowResultList = baseSql.rows(listReplaceBusinessBySeGroup.replace("resultTableNameVal", resultTableName));
+                groovyRowResultList = baseSql.rows(listReplaceBusinessBySeGroup.replaceAll("resultTableNameVal", resultTableName));
             }
         } else {
             if (type == 1) {
-                groovyRowResultList = baseSql.rows(listReplaceBusinessByCo.replace("resultTableNameVal", resultTableName));
+                groovyRowResultList = baseSql.rows(listReplaceBusinessByCo.replaceAll("resultTableNameVal", resultTableName));
             } else {
-                groovyRowResultList = baseSql.rows(listReplaceBusinessByCoGroup.replace("resultTableNameVal", resultTableName));
+                groovyRowResultList = baseSql.rows(listReplaceBusinessByCoGroup.replaceAll("resultTableNameVal", resultTableName));
             }
         }
         if (CollectionUtils.isEmpty(groovyRowResultList)) {
@@ -603,7 +613,7 @@ public class ReplaceBusinessData {
         return transMapList2Bean(groovyRowResultList);
     }
 
-    private List<ReplaceBusiness> transMapList2Bean(List<GroovyRowResult> groovyRowResultList) {
+    public static List<ReplaceBusiness> transMapList2Bean(List<GroovyRowResult> groovyRowResultList) {
         List<ReplaceBusiness> replaceBusinesseList = new ArrayList<>();
         for (GroovyRowResult groovyRowResult : groovyRowResultList) {
             ReplaceBusiness replaceBusiness = new ReplaceBusiness();

@@ -45,4 +45,6 @@ public class ReplaceBusiness {
 
     private String policyNo;
 
+    private String tableName;
+
 }
