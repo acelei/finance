@@ -365,7 +365,7 @@ public class ReplaceBusinessData {
                 if (finance.getProvinceId() != null) {
                     getReplaceData += " province_id = " + finance.getProvinceId() + " and ";
                 }
-                getReplaceData += " order_date > '" + startDateStr + "' ";
+                getReplaceData += " order_date >= '" + startDateStr + "' ";
                 if (finance.getFinanceOrderDate() != null) {
                     getReplaceData += " and order_date <= '" + formatter.format(finance.getFinanceOrderDate()) + "' ";
                 }
