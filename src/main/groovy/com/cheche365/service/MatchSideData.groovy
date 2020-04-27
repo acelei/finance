@@ -45,6 +45,7 @@ class MatchSideData {
             it.'保险公司' + it.'省' + it.'order_month'
         }
         List<GroovyRowResult> commissions = baseSql.rows(getQueryCommission().replace("#", type))
+
         ThreadPoolUtils.submitRun(commissions, { it ->
             if ((it.commission as double) > 10) {
                 log.info("原数据-付佣数据:{}", it)
@@ -71,7 +72,7 @@ class MatchSideData {
                     tmp = commissions
                 }
                 n++
-                def matchMap = matchData([settlement], tmp)
+                def matchMap = matchData([settlement], tmp, commissions)
                 if (matchMap != null) {
                     if (isMatch(matchMap, commissions)) {
                         updateCommissionResult(matchMap, type)
@@ -102,7 +103,7 @@ class MatchSideData {
                     tmp = settlements
                 }
                 n++
-                def matchMap = matchData(tmp, [commission])
+                def matchMap = matchData(tmp, [commission], settlements)
                 if (matchMap != null) {
                     if (isMatch(matchMap, settlements)) {
                         updateSettlementResult(matchMap, type)
@@ -116,15 +117,13 @@ class MatchSideData {
 
     }
 
-    private static MatchResult<List<GroovyRowResult>, List<GroovyRowResult>> matchData(List<GroovyRowResult> settlements, List<GroovyRowResult> commissions) {
+    private static MatchResult<List<GroovyRowResult>, List<GroovyRowResult>> matchData(List<GroovyRowResult> settlements, List<GroovyRowResult> commissions, Object lock) {
         List<GroovyRowResult> commissionTmp, settlementTmp
-        synchronized (settlements) {
+        synchronized (lock) {
             settlementTmp = settlements.findAll {
                 it.flag == null
             }
-        }
 
-        synchronized (commissions) {
             commissionTmp = commissions.findAll {
                 it.flag == null
             }

@@ -59,7 +59,7 @@ public class DataRunTest {
 
     @Test
     public void run() throws SQLException {
-        List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=1");
+        List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=2 and id!=47");
 
         for (GroovyRowResult it : rows) {
             String type = it.get("type").toString();

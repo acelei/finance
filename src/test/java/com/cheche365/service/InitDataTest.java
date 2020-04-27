@@ -49,13 +49,13 @@ public class InitDataTest {
      * @throws SQLException
      */
     @Test
-    public void roll() throws SQLException {
-        List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag = 2");
+    public void roll() throws SQLException, InterruptedException {
+        List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag in (1,2)");
 
-        for (GroovyRowResult row : rows) {
+        ThreadPoolUtils.executeRun(rows, row -> {
             String type = row.get("type").toString();
             initData.roll(type);
-        }
+        }).await();
     }
 
 
@@ -78,7 +78,7 @@ public class InitDataTest {
 
     @Test
     public void modifyTable() throws SQLException {
-        List<String> types = Lists.newArrayList("anhui_2","dongguan_2","foshan_2","fujian_2","guangdong_2","guangxi_2","jiangsu_2","liaoning_2","shandong_2","sichuan_2","zhejiang_2","zongbu_2");
+        List<String> types = Lists.newArrayList("anhui_2", "dongguan_2", "foshan_2", "fujian_2", "guangdong_2", "guangxi_2", "jiangsu_2", "liaoning_2", "shandong_2", "sichuan_2", "zhejiang_2", "zongbu_2");
 
         for (String type : types) {
             try {
@@ -96,13 +96,12 @@ public class InitDataTest {
         for (GroovyRowResult row : rows) {
             String type = row.get("type").toString();
             log.info(type);
-            baseSql.executeInsert("truncate settlement_#_back".replace("#",type));
-            baseSql.executeInsert("truncate commission_#_back".replace("#",type));
-            baseSql.executeInsert("insert into settlement_#_back select * from settlement_#".replace("#",type));
-            baseSql.executeInsert("insert into commission_#_back select * from commission_#".replace("#",type));
+            baseSql.executeInsert("truncate settlement_#_back".replace("#", type));
+            baseSql.executeInsert("truncate commission_#_back".replace("#", type));
+            baseSql.executeInsert("insert into settlement_#_back select * from settlement_#".replace("#", type));
+            baseSql.executeInsert("insert into commission_#_back select * from commission_#".replace("#", type));
         }
     }
-
 
 
     @Test
@@ -155,7 +154,7 @@ public class InitDataTest {
     }
 
     //
-    String[] type = new String[]{"dongguan","liaoning","wenzhou","zhejiang","hebei_baodai","bj","yunnan_baodai"};
+    String[] type = new String[]{"dongguan", "liaoning", "wenzhou", "zhejiang", "hebei_baodai", "bj", "yunnan_baodai"};
 
     @Test
     public void result3() {
@@ -165,7 +164,7 @@ public class InitDataTest {
     }
 
 
-    String[] type2 = new String[]{"anhui","zongbu","fujian","guangdong","guangxi","hubei","jiangsu","shandong","sichuan"};
+    String[] type2 = new String[]{"anhui", "zongbu", "fujian", "guangdong", "guangxi", "hubei", "jiangsu", "shandong", "sichuan"};
 
     @Test
     public void init2() {

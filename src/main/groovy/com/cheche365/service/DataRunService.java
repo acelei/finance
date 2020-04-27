@@ -101,7 +101,6 @@ public class DataRunService {
         // 修正配对关联
         initData.fixRef(type);
 
-
         // 10.保费与收入数据比例异常的数据做数据替换
 //        replaceBusinessData.replaceBusinessList(type);
     }
