@@ -1,7 +1,8 @@
 package com.cheche365.util;
 
 public class ThreadConstants {
-    public static final int CORE_THREADS = 40;
+    public static final int TASK_THREADS = 100;
+    public static final int CORE_THREADS = 200;
     public static final int MAX_THREADS = 20000;
     public static final long ALIVE_TIME = 0L;
 }

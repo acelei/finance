@@ -37,13 +37,13 @@ public class ThreadPoolUtils {
     public static <T> ExecutorCompletionService<T> getCompletionRunPool() {
         return new ExecutorCompletionService<>(RunThreadPool.runPool);
     }
-    
+
     private static class TaskThreadPool {
         private static ExecutorService taskPool;
 
         static {
             ThreadFactory taskThreadFactory = new ThreadFactoryBuilder().setNameFormat("TaskManager-pool-%d").build();
-            taskPool = new ThreadPoolExecutor(ThreadConstants.CORE_THREADS, ThreadConstants.MAX_THREADS, ThreadConstants.ALIVE_TIME,
+            taskPool = new ThreadPoolExecutor(ThreadConstants.TASK_THREADS, ThreadConstants.MAX_THREADS, ThreadConstants.ALIVE_TIME,
                     TimeUnit.MINUTES, new LinkedBlockingDeque<>(),
                     taskThreadFactory, new ThreadPoolExecutor.AbortPolicy());
         }
@@ -60,7 +60,7 @@ public class ThreadPoolUtils {
         }
     }
 
-    private static <T, K> List<Future<K>> submit(List<T> list, Function<T, K> func, ExecutorService service) {
+    private static <T, K> List<Future<K>> submit(List<T> list, Function<T, K> func, ExecutorCompletionService service) {
         List<Future<K>> fList = new ArrayList<>();
         for (T o : list) {
             fList.add(service.submit(() -> func.apply(o)));
@@ -98,11 +98,11 @@ public class ThreadPoolUtils {
     }
 
     public static <T, K> List<Future<K>> submitTask(List<T> list, Function<T, K> func) {
-        return submit(list, func, getTaskPool());
+        return submit(list, func, getCompletionTaskPool());
     }
 
     public static <T, K> List<Future<K>> submitRun(List<T> list, Function<T, K> func) {
-        return submit(list, func, getRunPool());
+        return submit(list, func, getCompletionRunPool());
     }
 
     public static <T> CountDownLatch executeTask(List<T> list, Consumer<T> func) {

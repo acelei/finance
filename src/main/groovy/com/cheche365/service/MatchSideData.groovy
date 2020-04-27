@@ -33,8 +33,8 @@ class MatchSideData {
         }
         List<GroovyRowResult> settlements = baseSql.rows(getQuerySettlement().replace("#", type))
         ThreadPoolUtils.submitRun(settlements, { it ->
-            if((it.fee as double)>10) {
-                log.info("原数据-结算数据:{}",it)
+            if ((it.fee as double) > 10) {
+                log.info("原数据-结算数据:{}", it)
                 matchCommission(it, commissionGroup, type)
             }
         }).each { it.get() }
@@ -46,8 +46,8 @@ class MatchSideData {
         }
         List<GroovyRowResult> commissions = baseSql.rows(getQueryCommission().replace("#", type))
         ThreadPoolUtils.submitRun(commissions, { it ->
-            if ((it.commission as double)>10) {
-                log.info("原数据-付佣数据:{}",it)
+            if ((it.commission as double) > 10) {
+                log.info("原数据-付佣数据:{}", it)
                 matchSettlement(it, settlementGroup, type)
             }
         }).each { it.get() }
@@ -73,7 +73,7 @@ class MatchSideData {
                 n++
                 def matchMap = matchData([settlement], tmp)
                 if (matchMap != null) {
-                    if (isMatch(matchMap, commissionGroup)) {
+                    if (isMatch(matchMap, commissions)) {
                         updateCommissionResult(matchMap, type)
                         return
                     } else {
@@ -104,7 +104,7 @@ class MatchSideData {
                 n++
                 def matchMap = matchData(tmp, [commission])
                 if (matchMap != null) {
-                    if (isMatch(matchMap, settlementGroup)) {
+                    if (isMatch(matchMap, settlements)) {
                         updateSettlementResult(matchMap, type)
                         return
                     } else {
@@ -118,16 +118,18 @@ class MatchSideData {
 
     private static MatchResult<List<GroovyRowResult>, List<GroovyRowResult>> matchData(List<GroovyRowResult> settlements, List<GroovyRowResult> commissions) {
         List<GroovyRowResult> commissionTmp, settlementTmp
-        settlementTmp = settlements.findAll {
-            synchronized (it) {
+        synchronized (settlements) {
+            settlementTmp = settlements.findAll {
                 it.flag == null
             }
         }
-        commissionTmp = commissions.findAll {
-            synchronized (it) {
+
+        synchronized (commissions) {
+            commissionTmp = commissions.findAll {
                 it.flag == null
             }
         }
+
         return Utils.matchCombine(settlementTmp, commissionTmp, {
             s, c ->
                 def fee = s*.fee.collect { it as double }.sum()
@@ -136,11 +138,8 @@ class MatchSideData {
         })
     }
 
-    private boolean isMatch(MatchResult<List<GroovyRowResult>, List<GroovyRowResult>> matchMap, Map<String, List<GroovyRowResult>> lock) {
+    private boolean isMatch(MatchResult<List<GroovyRowResult>, List<GroovyRowResult>> matchMap, Object lock) {
         synchronized (lock) {
-            lock.each { key, value ->
-                lock.put(key, value.findAll { it.flag == null })
-            }
             def key = matchMap.sourceList
             def value = matchMap.targetList
             def tmp1 = key.find { i -> i.flag != null }
