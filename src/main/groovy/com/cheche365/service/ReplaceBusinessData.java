@@ -56,7 +56,7 @@ public class ReplaceBusinessData {
             "      from das_data_pool_business\n" +
             "      group by insurance_company_id, province_id";
 
-    private String updateTableType = "update table_type set flag = 3 where type = 'typeVal'";
+    private String updateTableType = "update table_type set flag = 4 where type = 'typeVal'";
     private String updateEigntHandleSign = "update `tableNameVal` set handle_sign = 8 where id in (idListVal)";
     private String updateBusinessDataHandleSign = "update `tableName` set handle_sign = '2' where id = idVal";
     private String updateFinishHandleSign = "update `tableName` set handle_sign = 'handleSignVal' where id in (idList)";
@@ -277,6 +277,7 @@ public class ReplaceBusinessData {
             setResultThreeHs(commissionTableName, settlementTableName, resultTableName);
             //替换handle_sign为3的数据
             replaceBusiness(resultTableName, insProList, 1);
+            baseSql.executeUpdate(updateTableType.replace("typeVal", tableNameRef));
             log.info("replaceBusiness success! tableNameRef:{}", tableNameRef);
         } catch (Exception e) {
             e.printStackTrace();
@@ -525,7 +526,11 @@ public class ReplaceBusinessData {
             sb.append(getSqlFormat(businessData.getProvinceId())).append(",");
             sb.append(getSqlFormat(businessData.getPremium())).append(",");
             sb.append(getSqlFormat(businessData.getApplicant())).append(",");
-            sb.append(getSqlFormat(formatter.format(businessData.getOrderDate()))).append(")");
+            if (businessData.getOrderDate() != null) {
+                sb.append(getSqlFormat(formatter.format(businessData.getOrderDate()))).append(")");
+            } else {
+                sb.append(getSqlFormat(null)).append(")");
+            }
             if (i != insertMapList.size() - 1) {
                 sb.append(",");
             }
