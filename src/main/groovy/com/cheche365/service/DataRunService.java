@@ -8,8 +8,6 @@ public class DataRunService {
     @Autowired
     private InitData initData;
     @Autowired
-    private FixInsuranceCompanyArea fixInsuranceCompanyArea;
-    @Autowired
     private DataCombine dataCombine;
     @Autowired
     private TabSideData tabSideData;

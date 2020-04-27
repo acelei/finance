@@ -8,6 +8,8 @@ import groovy.util.logging.Slf4j
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
+import java.util.concurrent.CopyOnWriteArrayList
+
 @Service
 @Slf4j
 class TabSideData {
@@ -159,6 +161,7 @@ select id,s_id, c_id from result_#_2 where  handle_sign != 5 and `8-险种名称
 
     void putDownFlag(String type, String sql) {
         def rows = baseSql.rows(sql.replace("#", type))
+        List<String> ids = new CopyOnWriteArrayList()
         ThreadPoolUtils.submitRun(rows, { row ->
             if (row.s_id != null) {
                 baseSql.executeUpdate(downSettlement.replace("#", type).replace(":ids", row.s_id as String))
@@ -167,8 +170,10 @@ select id,s_id, c_id from result_#_2 where  handle_sign != 5 and `8-险种名称
                 baseSql.executeUpdate(downCommission.replace("#", type).replace(":ids", row.c_id as String))
             }
             baseSql.executeUpdate(updateResult.replace("#", type), [row.id])
-            baseSql.executeUpdate("delete from result_gross_margin_ref where table_name=? and result_id=?", ['result_' + type + '_2', row.id])
+            ids.add("'${row.id}'" as String)
         }).each { it.get() }
+
+        baseSql.executeUpdate("delete from result_gross_margin_ref where table_name='result_${type}_2' and result_id in (${ids.join(",")})" as String)
     }
 
 }
