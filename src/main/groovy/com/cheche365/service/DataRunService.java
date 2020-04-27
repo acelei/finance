@@ -37,6 +37,8 @@ public class DataRunService {
     private ReMatchSPSideData2 reMatchSPSideData2;
     @Autowired
     private ReMatchSPSideData3 reMatchSPSideData3;
+    @Autowired
+    private ReMatchSPSideData4 reMatchSPSideData4;
 
     /**
      * 导出数据后进行初始化
@@ -90,12 +92,14 @@ public class DataRunService {
         reMatchSideData.run(type);
         //放开比例匹配
         reMatchSideData2.run(type);
+        // 付佣放弃保险公司
+        reMatchSPSideData4.run(type);
         // 放弃代理人进行匹配
         reMatchSPSideData.run(type);
         // 放弃省进行匹配
-        reMatchSPSideData2.run(type);
+//        reMatchSPSideData2.run(type);
         // 放弃时间匹配
-        reMatchSPSideData3.run(type);
+//        reMatchSPSideData3.run(type);
         // 修正配对关联
         initData.fixRef(type);
 
