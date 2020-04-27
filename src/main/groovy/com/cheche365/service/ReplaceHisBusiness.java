@@ -27,7 +27,7 @@ public class ReplaceHisBusiness {
     @Autowired
     private Sql baseSql;
 
-    private String listReplaceBusinessBySeGroup = "select * from ( select id, sIds, cIds, insuranceCompany, insuranceCompanyId, province, provinceId, insuranceTypeId, financeOrderDate, orderMonth, policyNo,\n" +
+    private String listReplaceBusinessBySeGroup = "select * from ( select id, sIds, cIds, insuranceCompany, insuranceCompanyId, province, provinceId, insuranceTypeId, financeOrderDate, orderMonth, policyNo, tableName, \n" +
             "       group_concat(id) as ids, sum(sumFee) as sumFee\n" +
             "from (select t1.id,\n" +
             "                      s_id                                  as sIds,\n" +
@@ -40,7 +40,7 @@ public class ReplaceHisBusiness {
             "                      `9-保单出单日期`                            as financeOrderDate,\n" +
             "                      left(`9-保单出单日期`, 7)                   as orderMonth,\n" +
             "                      `6-保单单号`                                as policyNo,\n" +
-            "                      `5-投保人名称` as applicant, `resultTableNameVal` as tableName, \n" +
+            "                      `5-投保人名称` as applicant, 'resultTableNameVal' as tableName, \n" +
             "                      ifnull(sum_fee, 0.00) as sumFee\n" +
             "               from `resultTableNameVal` t1\n" +
             "                      left join area t3\n" +
@@ -56,7 +56,7 @@ public class ReplaceHisBusiness {
             "              ) as temp\n" +
             "group by policyNo, insuranceTypeId, insuranceCompanyId, province) as temp where sumFee < 0";
 
-    private String listReplaceBusinessByCoGroup = "select * from ( select id, sIds, cIds, insuranceCompany, insuranceCompanyId, province, provinceId, insuranceTypeId, financeOrderDate, orderMonth, policyNo, agentName,\n" +
+    private String listReplaceBusinessByCoGroup = "select * from ( select id, sIds, cIds, insuranceCompany, insuranceCompanyId, province, provinceId, insuranceTypeId, financeOrderDate, orderMonth, policyNo, tableName, agentName,\n" +
             "       group_concat(id) as ids, sum(sumFee) as sumFee\n" +
             "from (select t1.id,\n" +
             "                      s_id                                  as sIds,\n" +
@@ -70,7 +70,7 @@ public class ReplaceHisBusiness {
             "                      left(`9-保单出单日期`, 7)                   as orderMonth,\n" +
             "                      `6-保单单号`                                as policyNo,\n" +
             "                      `5-投保人名称` as applicant, \n" +
-            "                      `40-代理人名称`                             as agentName, `resultTableNameVal` as tableName, \n" +
+            "                      `40-代理人名称`                             as agentName, 'resultTableNameVal' as tableName, \n" +
             "                      ifnull(sum_commission, 0.00) as sumFee\n" +
             "               from `resultTableNameVal` t1\n" +
             "                      left join area t3\n" +
@@ -84,7 +84,7 @@ public class ReplaceHisBusiness {
             "                 and `9-保单出单日期` >= '2019-01-01'\n" +
             "                 and t4.id is null\n" +
             "              ) as temp\n" +
-            " group by policyNo, insuranceTypeId, insuranceCompanyId, province ) as temp where sunFee < 0";
+            " group by policyNo, insuranceTypeId, insuranceCompanyId, province ) as temp where sumFee < 0";
 
     public void replaceHistoryBusiness(String settlementTableName, String commissionTableName) throws SQLException {
         List<ReplaceBusiness> replaceBusinessList = new ArrayList<>();
@@ -94,7 +94,7 @@ public class ReplaceHisBusiness {
         }
 
         List<GroovyRowResult> commissionList = baseSql.rows(listReplaceBusinessByCoGroup.replaceAll("resultTableNameVal", commissionTableName));
-        if (CollectionUtils.isNotEmpty(settlementList)) {
+        if (CollectionUtils.isNotEmpty(commissionList)) {
             replaceBusinessList.addAll(ReplaceBusinessData.transMapList2Bean(commissionList));
         }
 
@@ -124,6 +124,7 @@ public class ReplaceHisBusiness {
             }
             baseSql.executeInsert(ReplaceBusinessData.insertBusinessRefList(insertMapList));
             baseSql.executeUpdate("update " + finance.getTableName() + " set handle_sign = 9 where id in (" + finance.getIds() + ")");
+            baseSql.executeUpdate("update das_data_pool_history set handle_sign = 2 where id = " + dataPool.getId());
             log.info("replace success! resultTableName:{}, financeId:{}, businessId:{}", finance.getTableName(), finance.getId(), dataPool.getId());
         }
     }
@@ -140,7 +141,7 @@ public class ReplaceHisBusiness {
             findBusiness += " and province_id = " + finance.getProvinceId();
         }
 
-        findBusiness += " order by order_date desc limit 1";
+        findBusiness += " and handle_sign = 0 order by order_date desc limit 1";
         GroovyRowResult grr = baseSql.firstRow(findBusiness);
         return ReplaceBusinessData.transMap2Bean(grr);
     }

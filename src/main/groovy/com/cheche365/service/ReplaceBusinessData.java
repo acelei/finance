@@ -514,8 +514,8 @@ public class ReplaceBusinessData {
             DataPool businessData = (DataPool) map.get("businessData");
             sb.append("(").append(getMapStr(map, "tableName")).append(",");
             sb.append(getMapStr(map, "resultTableName")).append(",");
-            sb.append(getMapStr(map, "resultId")).append(",");
             sb.append(getMapStr(map, "businessTableName")).append(",");
+            sb.append(getMapStr(map, "resultId")).append(",");
             sb.append(getMapStr(map, "financeId")).append(",");
             sb.append(getSqlFormat(businessData.getId())).append(",");
             sb.append(getSqlFormat(businessData.getPolicyNo())).append(",");
