@@ -137,7 +137,7 @@ public class ReplaceHisBusiness {
             for (String id : finance.getIds().split(",")) {
                 Map<String, Object> setMap = new HashMap<>();
                 setMap.put("tableName", finance.getTableName());
-                setMap.put("businessTableName", "das_data_pool_history");
+                setMap.put("businessTableName", isFindHistory() ? "das_data_pool_history" : finance.getTableName());
                 setMap.put("financeId", id);
                 setMap.put("businessData", dataPool);
                 insertMapList.add(setMap);
@@ -188,7 +188,7 @@ public class ReplaceHisBusiness {
         if (isFindHistory()) {
             findBusiness += " and handle_sign = 0 order by order_date desc limit 1";
         } else {
-            findBusiness += " order by  `9-保单出单日期` desc limit 1";
+            findBusiness += " and handle_sign = 0 order by `9-保单出单日期` desc limit 1";
         }
 
         GroovyRowResult grr = baseSql.firstRow(findBusiness);
