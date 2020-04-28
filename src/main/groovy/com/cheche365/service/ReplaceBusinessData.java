@@ -277,7 +277,7 @@ public class ReplaceBusinessData {
             setResultThreeHs(commissionTableName, settlementTableName, resultTableName);
             //替换handle_sign为3的数据
             replaceBusiness(resultTableName, insProList, 1);
-            baseSql.executeUpdate(updateTableType.replace("typeVal", tableNameRef));
+            //baseSql.executeUpdate(updateTableType.replace("typeVal", tableNameRef));
             log.info("replaceBusiness success! tableNameRef:{}", tableNameRef);
         } catch (Exception e) {
             e.printStackTrace();
