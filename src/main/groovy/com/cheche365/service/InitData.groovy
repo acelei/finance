@@ -157,6 +157,8 @@ where `8-险种名称` in (
     void cleanReplaceData(String type) {
         String commissionTableName = "commission_" + type
         String settleMentTableName = "settlement_" + type
+        //处理硬调数据
+        baseSql.execute("delete from business_replace_ref where table_name in ('" + commissionTableName + "','" + settleMentTableName + "') and business_id is null");
         //更新history表数据
         List<GroovyRowResult> businessIdList = baseSql.rows("select business_id from business_replace_ref where business_table_name = 'das_data_pool_history' and business_id is not null and table_name in ('"+ commissionTableName +"', '" + settleMentTableName +"')");
         if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(businessIdList)) {
