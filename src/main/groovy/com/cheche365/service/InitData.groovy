@@ -1,5 +1,6 @@
 package com.cheche365.service
 
+import com.google.common.base.Joiner
 import groovy.sql.GroovyRowResult
 import groovy.sql.Sql
 import groovy.util.logging.Slf4j
@@ -156,6 +157,17 @@ where `8-险种名称` in (
     void cleanReplaceData(String type) {
         String commissionTableName = "commission_" + type
         String settleMentTableName = "settlement_" + type
+        //更新history表数据
+        List<GroovyRowResult> businessIdList = baseSql.rows("select business_id from business_replace_ref where business_table_name = 'das_data_pool_history' and business_id is not null and table_name in ('"+ commissionTableName +"', '" + settleMentTableName +"')");
+        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(businessIdList)) {
+            List<String> idList = new ArrayList<>();
+            for (int i = 0; i < businessIdList.size(); i++) {
+                idList.add(businessIdList.get(i).toString());
+            }
+            baseSql.executeUpdate("update das_data_pool_history set handle_sign = 0 where id in (" + Joiner.on(",").join(idList) +")");
+        }
+
+        //处理das_data_pool_business中handle_sign
         List<GroovyRowResult> insProList = baseSql.rows("select insurance_company_id as insuranceCompanyId, province_id as provinceId from business_replace_ref " +
                 "where table_name in ('" + commissionTableName + "','" + settleMentTableName + "') group by insurance_company_id, province_id")
         if (CollectionUtils.isNotEmpty(insProList)) {
