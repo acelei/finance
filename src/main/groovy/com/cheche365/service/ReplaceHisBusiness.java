@@ -105,10 +105,6 @@ public class ReplaceHisBusiness {
             }
 
             if (dataPool == null) {
-                dataPool = findReplaceData(finance, 3);
-            }
-
-            if (dataPool == null) {
                 log.info("==replace failed! resultTableName:{}, financeId:{}", finance.getTableName(), finance.getId());
                 continue;
             }
@@ -136,11 +132,8 @@ public class ReplaceHisBusiness {
             if (finance.getTableName().startsWith("commission_") && StringUtils.isNotEmpty(finance.getAgentName())) {
                 findBusiness += " and agent = '" + finance.getAgentName() + "' " ;
             }
-            findBusiness += " and province_id = " + finance.getProvinceId();
-        } else if (type == 2) {
-            findBusiness += " and province_id = " + finance.getProvinceId();
         }
-
+        findBusiness += " and province_id = " + finance.getProvinceId();
         findBusiness += " and handle_sign = 0 order by order_date desc limit 1";
         GroovyRowResult grr = baseSql.firstRow(findBusiness);
         if (grr == null || grr.size() == 0) {
