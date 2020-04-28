@@ -27,6 +27,8 @@ public class ReplaceBusiness {
 
     private Long provinceId;
 
+    private String province;
+
     private String insuranceType;
 
     private Long insuranceTypeId;

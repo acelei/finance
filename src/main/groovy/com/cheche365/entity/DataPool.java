@@ -17,6 +17,7 @@ public class DataPool {
     private Long insuranceTypeId;
     private String insuranceCompany;
     private Long insuranceCompanyId;
+    private String insuranceType;
     private Long provinceId;
     private BigDecimal premium;
     private String applicant;

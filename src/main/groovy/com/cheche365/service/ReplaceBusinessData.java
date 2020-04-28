@@ -40,7 +40,7 @@ public class ReplaceBusinessData {
     protected Sql baseSql;
 
     @Autowired
-    private ReplaceHisBusiness rhb;
+    private ReplaceHisBusiness replaceHisBusiness;
 
     private static final BigDecimal JQ_MIN_FEE_RATE = new BigDecimal(0.04);
     private static final BigDecimal JQ_MAX_FEE_RATE = new BigDecimal(0.08);
@@ -271,7 +271,7 @@ public class ReplaceBusinessData {
             replaceBusiness(commissionTableName, insProList, 2);
             replaceBusiness(commissionTableName, insProList, 1);
             //将散表中的负数替换为history中的数据
-            rhb.replaceHistoryBusiness(settlementTableName, commissionTableName);
+            replaceHisBusiness.replaceHistoryBusiness(tableNameRef);
             //将散表中数据推到result中设置handlesign=3
             String resultTableName = "result_" + tableNameRef + "_2";
             setResultThreeHs(commissionTableName, settlementTableName, resultTableName);
@@ -509,7 +509,7 @@ public class ReplaceBusinessData {
     }
 
     public static String insertBusinessRefList(List<Map<String, Object>> insertMapList) {
-        StringBuffer sb = new StringBuffer("insert into business_replace_ref (`table_name`, result_table_name, business_table_name, result_id, finance_id, business_id, policy_no, insurance_type_id, insurance_company, insurance_company_id, province_id, premium, applicant, order_date) values ");
+        StringBuffer sb = new StringBuffer("insert into business_replace_ref (`table_name`, result_table_name, business_table_name, result_id, finance_id, business_id, policy_no, insurance_type, insurance_type_id, insurance_company, insurance_company_id, province_id, premium, applicant, order_date) values ");
         for (int i = 0; i < insertMapList.size(); i++) {
             Map<String, Object> map = insertMapList.get(i);
             DataPool businessData = (DataPool) map.get("businessData");
@@ -520,6 +520,7 @@ public class ReplaceBusinessData {
             sb.append(getMapStr(map, "financeId")).append(",");
             sb.append(getSqlFormat(businessData.getId())).append(",");
             sb.append(getSqlFormat(businessData.getPolicyNo())).append(",");
+            sb.append(getSqlFormat(businessData.getInsuranceType())).append(",");
             sb.append(getSqlFormat(businessData.getInsuranceTypeId())).append(",");
             sb.append(getSqlFormat(businessData.getInsuranceCompany())).append(",");
             sb.append(getSqlFormat(businessData.getInsuranceCompanyId())).append(",");
