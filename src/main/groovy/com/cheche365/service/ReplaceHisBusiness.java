@@ -143,6 +143,9 @@ public class ReplaceHisBusiness {
 
         findBusiness += " and handle_sign = 0 order by order_date desc limit 1";
         GroovyRowResult grr = baseSql.firstRow(findBusiness);
+        if (grr == null || grr.size() == 0) {
+            return null;
+        }
         return ReplaceBusinessData.transMap2Bean(grr);
     }
 

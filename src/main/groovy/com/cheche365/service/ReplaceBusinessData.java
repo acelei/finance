@@ -564,6 +564,9 @@ public class ReplaceBusinessData {
     }
 
     public static DataPool transMap2Bean(GroovyRowResult groovyRowResult) {
+        if (groovyRowResult == null || groovyRowResult.size() == 0) {
+            return null;
+        }
         DataPool dataPool = new DataPool();
         try {
             BeanUtils.populate(dataPool, groovyRowResult);
