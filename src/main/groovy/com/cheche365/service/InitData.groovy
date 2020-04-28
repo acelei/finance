@@ -163,8 +163,8 @@ where `8-险种名称` in (
                 String insuranceCompanyId = map.get("insuranceCompanyId").toString()
                 String provinceId = map.get("provinceId").toString();
                 baseSql.executeUpdate(updateHandleSignByInsPro.replace("insuranceCompanyIdVal", insuranceCompanyId).replace("provinceIdVal", provinceId)
-                    .replace("commissionTableNameVal", commissionTableName).replace("settlementTableNameVal", settleMentTableName)
-                    .replace("tableNameVal", generInsuranceCompany(insuranceCompanyId, provinceId)))
+                        .replace("commissionTableNameVal", commissionTableName).replace("settlementTableNameVal", settleMentTableName)
+                        .replace("tableNameVal", generInsuranceCompany(insuranceCompanyId, provinceId)))
             }
 
             baseSql.executeUpdate(updateHandleSignByFinanceName.replace("settlementTableNameVal", settleMentTableName).replace("commissionTableNameVal", commissionTableName))
@@ -495,7 +495,7 @@ where handle_sign in (0, 1, 4, 6)
     ]
     String updateSql = "update result_gross_margin_ref a,result_gross_margin_ref b &str and a.table_name in ('result_#_2','settlement_#','commission_#') and b.table_name in ('result_#_2','settlement_#','commission_#')";
 
-    void fixRef(String type) {
+    synchronized void fixRef(String type) {
         log.info("修正配对关联:{}", type)
         strList.each {
             int n = 1

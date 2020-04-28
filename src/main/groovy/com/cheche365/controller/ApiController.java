@@ -42,6 +42,8 @@ public class ApiController {
     private ResultService resultService;
     @Autowired
     private SumData sumData;
+    @Autowired
+    private ReplaceHisBusiness replaceHisBusiness;
 
     @GetMapping({"data/before/{type}", "data/before"})
     public RestResponse<String> before(@PathVariable(required = false) String type) throws SQLException {
@@ -101,6 +103,8 @@ public class ApiController {
                     try {
                         dataRunService.process(t);
                         baseSql.executeUpdate("update table_type set flag=3 where `type`=?", new Object[]{t});
+                        replaceBusinessData.replaceBusinessList(t);
+                        baseSql.executeUpdate("update table_type set flag=4 where `type`=?", new Object[]{t});
                     } catch (Exception e) {
                         log.error("数据处理错误:" + t, e);
                     }
@@ -129,6 +133,12 @@ public class ApiController {
                 });
             }
         }
+        return RestResponse.success(type);
+    }
+
+    @GetMapping({"data/replaceHis/{type}"})
+    public RestResponse<String> replaceHis(@PathVariable String type) throws SQLException {
+        replaceHisBusiness.replaceHistoryBusiness("settlement_" + type, "commission_" + type);
         return RestResponse.success(type);
     }
 
