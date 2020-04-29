@@ -71,7 +71,7 @@ select a.`id`,
        a.sum_fee,
        a.sum_commission
 from settlement_# a
-         left join business_replace_ref b on a.id = b.finance_id and b.table_name = 'commission_#'
+         left join business_replace_ref b on a.id = b.finance_id and b.table_name = 'settlement_#'
          left join result_gross_margin_ref c on a.id = c.s_id and c.type in (2,3)  and c.table_name in ('result_#_2', 'settlement_#', 'commission_#')
          left join commission_# d on d.id = c.c_id and c.type = 2
          left join settlement_# e on e.id = c.c_id and c.type = 3
