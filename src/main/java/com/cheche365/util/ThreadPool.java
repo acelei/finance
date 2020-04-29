@@ -47,8 +47,24 @@ public class ThreadPool {
         return submit(list, func, getCompletionPool());
     }
 
+    public <T, K> List<K> submitWithResultByOrder(List<T> list, FunctionWithException<T, K> func) throws ExecutionException, InterruptedException {
+        return submit(list, func, pool);
+    }
+
     public <T> CountDownLatch executeWithLatch(List<T> list, Consumer<T> func) {
         return execute(list, func, getPool());
+    }
+
+    private static <T, K> List<K> submit(List<T> list, FunctionWithException<T, K> func, ExecutorService service) throws InterruptedException, ExecutionException {
+        List<Future<K>> futureList = new ArrayList<>(list.size());
+        List<K> resultList = new ArrayList<>(list.size());
+        for (T o : list) {
+            futureList.add(service.submit(() -> func.apply(o)));
+        }
+        for (Future<K> future : futureList) {
+            resultList.add(future.get());
+        }
+        return resultList;
     }
 
     private static <T, K> List<K> submit(List<T> list, FunctionWithException<T, K> func, ExecutorCompletionService<K> service) throws InterruptedException, ExecutionException {
