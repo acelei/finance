@@ -1,7 +1,7 @@
 package com.cheche365.service;
 
 import app.SpringApplicationLauncher;
-import com.cheche365.util.ThreadPoolUtils;
+import com.cheche365.util.ThreadPool;
 import groovy.sql.GroovyRowResult;
 import groovy.sql.Sql;
 import lombok.extern.log4j.Log4j2;
@@ -24,6 +24,8 @@ public class DataCombineTest {
     private InitData initData;
     @Autowired
     private Sql baseSql;
+    @Autowired
+    private ThreadPool runThreadPool;
 
     /**
      * 匹配生成result,result2及back
@@ -36,7 +38,7 @@ public class DataCombineTest {
     public void run() throws SQLException, InterruptedException {
         List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=1");
 
-        ThreadPoolUtils.executeRun(rows, (it) -> {
+        runThreadPool.executeWithLatch(rows, (it) -> {
             String type = it.get("type").toString();
             // 写入result表
             dataCombine.result(type);

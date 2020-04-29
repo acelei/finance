@@ -1,6 +1,6 @@
 package com.cheche365.service
 
-import com.cheche365.util.ThreadPoolUtils
+import com.cheche365.util.ThreadPool
 import com.cheche365.util.Utils
 import groovy.sql.GroovyRowResult
 import groovy.sql.Sql
@@ -15,6 +15,8 @@ import java.util.concurrent.CopyOnWriteArrayList
 class TabSideData {
     @Autowired
     private Sql baseSql
+    @Autowired
+    private ThreadPool runThreadPool
 
     String sideFlag = "update result_#_2 set handle_sign=6 where s_id is null or c_id is null"
 
@@ -36,9 +38,9 @@ class TabSideData {
         log.info("根据保费与手续费调整比例比正常数据-结算:{}", type)
         List rows = baseSql.rows(errSettlementSql.replace("#", type))
 
-        ThreadPoolUtils.submitRun(rows, {
+        runThreadPool.submitWithResult(rows, {
             setSettlementValue(it, type)
-        }).each { it.get() }
+        })
         log.info("根据保费与手续费调整比例比正常数据完成-结算:{}", type)
     }
 
@@ -76,9 +78,9 @@ class TabSideData {
         log.info("根据保费与手续费调整比例比正常数据-佣金:{}", type)
         List rows = baseSql.rows(errCommissionSql.replace("#", type))
 
-        ThreadPoolUtils.submitRun(rows, {
+        runThreadPool.submitWithResult(rows, {
             setCommissionValue(it, type)
-        }).each { it.get() }
+        })
         log.info("根据保费与手续费调整比例比正常数据完成-佣金:{}", type)
     }
 
@@ -145,7 +147,7 @@ select id,s_id, c_id from result_#_2 where  handle_sign != 5 and `8-险种名称
         log.info("下放收入成本为负数的标志位完成:{}", type)
     }
 
-    List<String> zTypes = ["guangxi","shanxi","yx"]
+    List<String> zTypes = ["guangxi", "shanxi", "yx"]
 
     void putDownFlag2(String type) {
         log.info("下放收入成本与保费比例异常的标志位:{}", type)
@@ -162,7 +164,7 @@ select id,s_id, c_id from result_#_2 where  handle_sign != 5 and `8-险种名称
     void putDownFlag(String type, String sql) {
         def rows = baseSql.rows(sql.replace("#", type))
         List<String> ids = new CopyOnWriteArrayList()
-        ThreadPoolUtils.submitRun(rows, { row ->
+        runThreadPool.submitWithResult(rows, { row ->
             if (row.s_id != null) {
                 baseSql.executeUpdate(downSettlement.replace("#", type).replace(":ids", row.s_id as String))
             }
@@ -171,9 +173,9 @@ select id,s_id, c_id from result_#_2 where  handle_sign != 5 and `8-险种名称
             }
             baseSql.executeUpdate(updateResult.replace("#", type), [row.id])
             ids.add("'${row.id}'" as String)
-        }).each { it.get() }
+        })
 
-        if (ids.size()>0) {
+        if (ids.size() > 0) {
             baseSql.executeUpdate("delete from result_gross_margin_ref where table_name='result_${type}_2' and result_id in (${ids.join(",")})" as String)
         }
     }

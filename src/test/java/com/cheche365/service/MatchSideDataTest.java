@@ -15,8 +15,17 @@ public class MatchSideDataTest {
     @Autowired
     private MatchSideData matchSideData;
 
+    @Autowired
+    private ReMatchSPSideData5 reMatchSPSideData5;
+
     @Test
     public void run() {
         matchSideData.run("qinqi");
     }
+
+    @Test
+    public void run2() {
+        reMatchSPSideData5.run("sbt");
+    }
+
 }

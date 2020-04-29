@@ -1,7 +1,7 @@
 package com.cheche365.service
 
 import com.cheche365.util.MatchResult
-import com.cheche365.util.ThreadPoolUtils
+import com.cheche365.util.ThreadPool
 import com.cheche365.util.Utils
 import groovy.sql.GroovyRowResult
 import groovy.sql.Sql
@@ -13,7 +13,9 @@ import org.springframework.stereotype.Service
 @Slf4j
 class FixProfit {
     @Autowired
-    Sql baseSql
+    private Sql baseSql
+    @Autowired
+    private ThreadPool runThreadPool
 
     private static final String querySql = '''
  select * ,
@@ -40,10 +42,10 @@ class FixProfit {
     void fixSettlementCommission(String type) {
         log.info("调整毛利率异常数据:{}", type)
         List<GroovyRowResult> dataList = baseSql.rows(querySql.replace("#", type))
-        ThreadPoolUtils.submitRun(dataList, {
+        runThreadPool.submitWithResult(dataList, {
 //            handleSettlementCommission(it, type)
             handleGrossMargin(it, type)
-        }).each { it.get() }
+        })
         log.info("调整毛利率异常数据完成:{}", type)
     }
 

@@ -2,7 +2,7 @@ package com.cheche365.service
 
 import app.SpringApplicationLauncher
 import com.cheche365.util.ExcelUtil2
-import com.cheche365.util.ThreadPoolUtils
+import com.cheche365.util.ThreadPool
 import groovy.sql.GroovyRowResult
 import groovy.sql.Sql
 import groovy.util.logging.Slf4j
@@ -18,7 +18,9 @@ import org.springframework.test.context.junit4.SpringRunner
 @Slf4j
 class MatchSPData {
     @Autowired
-    Sql baseSql
+    private Sql baseSql
+    @Autowired
+    private ThreadPool runThreadPool
 
     // 备份广管机构数据
     @Test
@@ -82,7 +84,7 @@ class MatchSPData {
                 [source: "liaoning_2", target: "liaoning", type: "26"],
                 [source: "sichuan_2", target: "sichuan", type: "33"]
         ]
-        ThreadPoolUtils.executeRun(types, { type ->
+        runThreadPool.executeWithLatch(types, { type ->
             def sql = ["update settlement_${type.source} a,settlement_${type.target} b set a.flag=1,a.type_id=${type.type} where a.`6-保单单号`=b.`6-保单单号` and a.`8-险种名称`=b.`8-险种名称` and a.flag=0" as String,
                        "update settlement_${type.source} a,commission_${type.target} b set a.flag=1,a.type_id=${type.type} where a.`6-保单单号`=b.`6-保单单号` and a.`8-险种名称`=b.`8-险种名称` and a.flag=0" as String,
                        "update commission_${type.source} a,commission_${type.target} b set a.flag=1,a.type_id=${type.type} where a.`6-保单单号`=b.`6-保单单号` and a.`8-险种名称`=b.`8-险种名称` and a.flag=0" as String,
@@ -108,7 +110,7 @@ class MatchSPData {
                 [source: "liaoning_2", target: "liaoning", type: "26"],
                 [source: "sichuan_2", target: "sichuan", type: "33"]
         ]
-        ThreadPoolUtils.executeRun(types, { type ->
+        runThreadPool.executeWithLatch(types, { type ->
             def sql = ["update settlement_${type.source} a,settlement_${type.target} b set a.flag=1,a.type_id=${type.type},a.`8-险种名称`=b.`8-险种名称` where a.`6-保单单号`=b.`6-保单单号` and a.flag=0" as String,
                        "update settlement_${type.source} a,commission_${type.target} b set a.flag=1,a.type_id=${type.type},a.`8-险种名称`=b.`8-险种名称` where a.`6-保单单号`=b.`6-保单单号` and a.flag=0" as String,
                        "update commission_${type.source} a,commission_${type.target} b set a.flag=1,a.type_id=${type.type},a.`8-险种名称`=b.`8-险种名称` where a.`6-保单单号`=b.`6-保单单号` and a.flag=0" as String,
@@ -130,7 +132,7 @@ class MatchSPData {
                 [source: "jiangsu_2", target: "jiangsu_dsf_keji", type: "67"],
                 [source: "fujian_2", target: "fujian_dsf_keji", type: "61"],
         ]
-        ThreadPoolUtils.executeRun(types, { type ->
+        runThreadPool.executeWithLatch(types, { type ->
             def sql = ["update settlement_${type.source} a,settlement_${type.target} b set a.flag=2,a.type_id=${type.type} where a.`6-保单单号`=b.`6-保单单号` and a.`8-险种名称`=b.`8-险种名称` and a.flag=0" as String,
                        "update settlement_${type.source} a,commission_${type.target} b set a.flag=2,a.type_id=${type.type} where a.`6-保单单号`=b.`6-保单单号` and a.`8-险种名称`=b.`8-险种名称` and a.flag=0" as String,
                        "update commission_${type.source} a,commission_${type.target} b set a.flag=2,a.type_id=${type.type} where a.`6-保单单号`=b.`6-保单单号` and a.`8-险种名称`=b.`8-险种名称` and a.flag=0" as String,
@@ -148,7 +150,7 @@ class MatchSPData {
     @Test
     void step2_2() {
         List<String> types = ["anhui_2", "dongguan_2", "foshan_2", "fujian_2", "guangdong_2", "guangxi_2", "jiangsu_2", "shandong_2", "zhejiang_2", "liaoning_2", "sichuan_2"]
-        ThreadPoolUtils.executeRun(types, { type ->
+        runThreadPool.executeWithLatch(types, { type ->
             def r1 = baseSql.rows("select * from settlement_${type} where flag=0" as String)
             def r2 = baseSql.rows("select * from commission_${type} where flag=0" as String)
             log.info("{}:settlement-{},commission-{}", type, r1.size(), r2.size())
@@ -166,7 +168,7 @@ class MatchSPData {
     void step2_3() {
         List<String> types = ["anhui_2", "dongguan_2", "foshan_2", "fujian_2", "guangdong_2", "guangxi_2", "jiangsu_2", "shandong_2", "zhejiang_2", "liaoning_2", "sichuan_2"]
         List<Map> resultList = new ArrayList<>()
-        ThreadPoolUtils.executeRun(types, { type ->
+        runThreadPool.executeWithLatch(types, { type ->
             def r1 = baseSql.rows("select '${type}-结算' as 业务,if(flag=1,'保代匹配',if(flag=2,'科技匹配','未匹配')) as 类型,count(9) as 数量,sum(sum_fee) as 金额 from settlement_${type} group by flag" as String)
             def r2 = baseSql.rows("select '${type}-付佣' as 业务,if(flag=1,'保代匹配',if(flag=2,'科技匹配','未匹配')) as 类型,count(9) as 数量,sum(sum_commission) as 金额 from commission_${type} group by flag" as String)
             synchronized (resultList) {

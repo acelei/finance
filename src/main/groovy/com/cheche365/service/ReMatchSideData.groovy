@@ -1,6 +1,6 @@
 package com.cheche365.service
 
-import com.cheche365.util.ThreadPoolUtils
+import com.cheche365.util.ThreadPool
 import com.google.common.collect.Lists
 import groovy.sql.GroovyRowResult
 import groovy.sql.Sql
@@ -12,7 +12,9 @@ import org.springframework.stereotype.Service
 @Slf4j
 class ReMatchSideData {
     @Autowired
-    Sql baseSql
+    private Sql baseSql
+    @Autowired
+    private ThreadPool runThreadPool
 
     String errorSettlementSide = "select group_concat(id) as id,group_concat(id) as s_id,sum(sum_fee) as fee,sum(sum_commission) as commission,sum(`14-手续费总额（报行内+报行外）(含税)`) as `14-手续费总额（报行内+报行外）(含税)`,sum(`15-手续费总额（报行内+报行外）(不含税)`) as `15-手续费总额（报行内+报行外）(不含税)`,sum(`42-佣金金额（已入账）`) as `42-佣金金额（已入账）`,sum(`45-支付金额`) as `45-支付金额`,sum(`46-未计提佣金（19年底尚未入帐）`) as `46-未计提佣金（19年底尚未入帐）`,DATE_FORMAT(`9-保单出单日期`,'%Y-%m') as order_month,`保险公司`,`省` from settlement_# where `8-险种名称` in ('交强险','商业险') and handle_sign=6 and date_format(`9-保单出单日期`,'%Y')>='2019' group by `6-保单单号`,`8-险种名称`"
     String errorCommissionSide = "select group_concat(id) as id,group_concat(id) as c_id,sum(sum_fee) as fee,sum(sum_commission) as commission,sum(`14-手续费总额（报行内+报行外）(含税)`) as `14-手续费总额（报行内+报行外）(含税)`,sum(`15-手续费总额（报行内+报行外）(不含税)`) as `15-手续费总额（报行内+报行外）(不含税)`,sum(`42-佣金金额（已入账）`) as `42-佣金金额（已入账）`,sum(`45-支付金额`) as `45-支付金额`,sum(`46-未计提佣金（19年底尚未入帐）`) as `46-未计提佣金（19年底尚未入帐）`,DATE_FORMAT(`9-保单出单日期`,'%Y-%m') as order_month,`保险公司`,`省`,`40-代理人名称` from commission_# where `8-险种名称` in ('交强险','商业险') and handle_sign=6 and date_format(`9-保单出单日期`,'%Y')>='2019' group by `6-保单单号`,`8-险种名称`,`40-代理人名称`"
@@ -31,11 +33,12 @@ class ReMatchSideData {
             it.'保险公司' + it.'省'
         }
 
-        ThreadPoolUtils.submitRun(Lists.newArrayList(settlementsGroup.values()), { settlements ->
+        def list = Lists.newArrayList(settlementsGroup.values())
+        runThreadPool.submitWithResult(list, { settlements ->
             settlements.each { row ->
                 matchSettlementResult(row, type)
             }
-        }).each { it.get() }
+        })
     }
 
     void commissionMatch(String type) {
@@ -43,11 +46,12 @@ class ReMatchSideData {
             it.'保险公司' + it.'省' + it.'40-代理人名称'
         }
 
-        ThreadPoolUtils.submitRun(Lists.newArrayList(commissionsGroup.values()), { commissions ->
+        def list = Lists.newArrayList(commissionsGroup.values())
+        runThreadPool.submitWithResult(list, { commissions ->
             commissions.each { row ->
                 matchCommissionResult(row, type)
             }
-        }).each { it.get() }
+        })
     }
 
     void matchSettlementResult(GroovyRowResult row, String type) {

@@ -3,7 +3,7 @@ package com.cheche365.controller;
 import com.cheche365.entity.RestResponse;
 import com.cheche365.service.*;
 import com.cheche365.util.ExcelUtil2;
-import com.cheche365.util.ThreadPoolUtils;
+import com.cheche365.util.ThreadPool;
 import groovy.sql.GroovyRowResult;
 import groovy.sql.Sql;
 import lombok.extern.log4j.Log4j2;
@@ -22,10 +22,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 @RestController
 @Log4j2
@@ -44,6 +42,8 @@ public class ApiController {
     private SumData sumData;
     @Autowired
     private ReplaceHisBusiness replaceHisBusiness;
+    @Autowired
+    private ThreadPool taskThreadPool;
 
     @GetMapping({"data/before/{type}", "data/before"})
     public RestResponse<String> before(@PathVariable(required = false) String type) throws SQLException {
@@ -53,7 +53,7 @@ public class ApiController {
             List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=0");
 
             for (GroovyRowResult row : rows) {
-                ThreadPoolUtils.getTaskPool().execute(() -> {
+                taskThreadPool.getPool().execute(() -> {
                     String t = row.get("type").toString();
                     try {
                         initData.run(t);
@@ -76,7 +76,7 @@ public class ApiController {
             List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=1");
 
             for (GroovyRowResult row : rows) {
-                ThreadPoolUtils.getTaskPool().execute(() -> {
+                taskThreadPool.getPool().execute(() -> {
                     String t = row.get("type").toString();
                     try {
                         dataRunService.init(t);
@@ -98,7 +98,7 @@ public class ApiController {
             List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=2");
 
             for (GroovyRowResult row : rows) {
-                ThreadPoolUtils.getTaskPool().execute(() -> {
+                taskThreadPool.getPool().execute(() -> {
                     String t = row.get("type").toString();
                     try {
                         dataRunService.process(t);
@@ -122,7 +122,7 @@ public class ApiController {
             List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=3");
 
             for (GroovyRowResult row : rows) {
-                ThreadPoolUtils.getTaskPool().execute(() -> {
+                taskThreadPool.getPool().execute(() -> {
                     String t = row.get("type").toString();
                     try {
                         replaceBusinessData.replaceBusinessList(t);
@@ -138,7 +138,7 @@ public class ApiController {
 
     @GetMapping({"data/replaceHis/{type}"})
     public RestResponse<String> replaceHis(@PathVariable String type) throws SQLException {
-        replaceHisBusiness.replaceHistoryBusiness("settlement_" + type, "commission_" + type);
+        replaceHisBusiness.replaceHistoryBusiness(type);
         return RestResponse.success(type);
     }
 
@@ -194,7 +194,7 @@ public class ApiController {
             List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag>=3");
 
             for (GroovyRowResult row : rows) {
-                ThreadPoolUtils.getTaskPool().execute(() -> {
+                taskThreadPool.getPool().execute(() -> {
                     String t = row.get("type").toString();
                     dataRunService.reMatch(t);
                 });
@@ -211,24 +211,19 @@ public class ApiController {
         } else {
             List<GroovyRowResult> rows = baseSql.rows("select `type`,`name` from table_type where flag=5");
 
-            List<Future<File>> futureList = ThreadPoolUtils.submitRun(rows, row -> {
-                        String t = row.get("type").toString();
-                        String name = row.get("name").toString();
-                        File f = null;
-                        try {
-                            f = File.createTempFile(ExcelUtil2.generateExportExcelName(name), ".zip", ExcelUtil2.tmp);
-                            return resultService.exportResult(t, f);
-                        } catch (IOException e) {
-                            log.error("文件创建失败", e);
-                        }
-                        return null;
-                    }
-            );
+            List<File> fileList = taskThreadPool.submitWithResult(rows, row -> {
+                String t = row.get("type").toString();
+                String name = row.get("name").toString();
+                File f = null;
+                try {
+                    f = File.createTempFile(ExcelUtil2.generateExportExcelName(name), ".zip", ExcelUtil2.tmp);
+                    return resultService.exportResult(t, f);
+                } catch (IOException e) {
+                    log.error("文件创建失败", e);
+                }
+                return null;
+            });
 
-            List<File> fileList = new ArrayList<>();
-            for (Future<File> future : futureList) {
-                fileList.add(future.get());
-            }
             file = ExcelUtil2.zipFiles(fileList, null);
             type = "all";
         }

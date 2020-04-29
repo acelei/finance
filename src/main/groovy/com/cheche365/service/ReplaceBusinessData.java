@@ -2,7 +2,7 @@ package com.cheche365.service;
 
 import com.cheche365.entity.DataPool;
 import com.cheche365.entity.ReplaceBusiness;
-import com.cheche365.util.ThreadPoolUtils;
+import com.cheche365.util.ThreadPool;
 import com.google.common.base.Joiner;
 import groovy.sql.GroovyRowResult;
 import groovy.sql.Sql;
@@ -42,6 +42,9 @@ public class ReplaceBusinessData {
     @Autowired
     private ReplaceHisBusiness replaceHisBusiness;
 
+    @Autowired
+    private ThreadPool runThreadPool;
+
     private static final BigDecimal JQ_MIN_FEE_RATE = new BigDecimal(0.04);
     private static final BigDecimal JQ_MAX_FEE_RATE = new BigDecimal(0.08);
     private static final BigDecimal SY_MIN_FEE_RATE = new BigDecimal(0.12);
@@ -49,8 +52,6 @@ public class ReplaceBusinessData {
     private static final BigDecimal[] SY_PREMIUM_RATE = new BigDecimal[]{new BigDecimal(0.1887), new BigDecimal(0.1698), new BigDecimal(0.1415)};
     //人保  财险
     private static final Long RENBAO = 2005L;
-
-    private ExecutorCompletionService runCompletionPool = ThreadPoolUtils.getCompletionRunPool();
 
     private String allInsPro = "select concat(insurance_company_id, '_', province_id) as insPro\n" +
             "      from das_data_pool_business\n" +
@@ -313,26 +314,18 @@ public class ReplaceBusinessData {
         }
     }
 
-    private String replaceBusiness(String resultTableName, List<String> allInsPro, int type) throws SQLException {
+    private String replaceBusiness(String resultTableName, List<String> allInsPro, int type) throws SQLException, ExecutionException, InterruptedException {
         List<ReplaceBusiness> businessList = replaceBusinessListByTableName(resultTableName, type);
-        List<Future> futureList = new ArrayList<>();
-        for (ReplaceBusiness finance : businessList) {
+
+        runThreadPool.submitWithResult(businessList, finance -> {
             String insPro = finance.getInsuranceCompanyId() + "_" + finance.getProvinceId();
             if (!resultTableName.startsWith("result_") && !allInsPro.contains(insPro)) {
-                continue;
+                return null;
             }
-            Future future = runCompletionPool.submit(() -> updateReplaceData(finance, allInsPro, resultTableName, type));
-            futureList.add(future);
-        }
-        for (Future future : futureList) {
-            try {
-                future.get();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            }
-        }
+            updateReplaceData(finance, allInsPro, resultTableName, type);
+            return null;
+        });
+
         log.info("replaceBusiness success! resultTableName: {}, type:{}", resultTableName, type);
         return "success";
     }
@@ -547,7 +540,7 @@ public class ReplaceBusinessData {
         }
     }
 
-    private static String getSqlFormat(Object obj){
+    private static String getSqlFormat(Object obj) {
         if (obj == null || StringUtils.isEmpty(obj.toString())) {
             return null;
         }
@@ -603,7 +596,7 @@ public class ReplaceBusinessData {
         List<GroovyRowResult> groovyRowResultList;
         if (resultTableName.startsWith("result_")) {
             groovyRowResultList = baseSql.rows(listReplaceBusiness.replaceAll("resultTableNameVal", resultTableName));
-        } else if(resultTableName.startsWith("settlement_")) {
+        } else if (resultTableName.startsWith("settlement_")) {
             if (type == 1) {
                 groovyRowResultList = baseSql.rows(listReplaceBusinessBySe.replaceAll("resultTableNameVal", resultTableName));
             } else {
@@ -639,7 +632,7 @@ public class ReplaceBusinessData {
     }
 
     public static LocalDate date2LocalDate(Date date) {
-        if(null == date) {
+        if (null == date) {
             return null;
         }
         return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();

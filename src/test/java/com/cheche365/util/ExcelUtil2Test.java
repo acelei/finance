@@ -1,6 +1,5 @@
 package com.cheche365.util;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Queues;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.FileUtils;
@@ -24,7 +23,7 @@ public class ExcelUtil2Test {
         log.info("开始");
         BlockingDeque<Map> dataList = Queues.newLinkedBlockingDeque(10000);
 
-        Future<File> f = ThreadPoolUtils.getRunPool().submit(() -> ExcelUtil2.writeToExcelByQueue(dataList));
+        Future<File> f = ThreadPool.getRunPool().submit(() -> ExcelUtil2.writeToExcelByQueue(dataList));
 
 
         for (int i = 0; i < ExcelUtil2.EXCEL_SHEET_MAX_ROWS - 2; i++) {

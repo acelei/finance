@@ -1,7 +1,7 @@
 package com.cheche365.service;
 
 import app.SpringApplicationLauncher;
-import com.cheche365.util.ThreadPoolUtils;
+import com.cheche365.util.ThreadPool;
 import com.google.common.collect.Lists;
 import groovy.sql.GroovyRowResult;
 import groovy.sql.Sql;
@@ -27,6 +27,8 @@ public class InitDataTest {
     private TabSideData tabSideData;
     @Autowired
     private DataRunService dataRunService;
+    @Autowired
+    private ThreadPool runThreadPool;
 
     /**
      * 删除无效数据
@@ -52,7 +54,7 @@ public class InitDataTest {
     public void roll() throws SQLException, InterruptedException {
         List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag in (1,2)");
 
-        ThreadPoolUtils.executeRun(rows, row -> {
+        runThreadPool.executeWithLatch(rows, row -> {
             String type = row.get("type").toString();
             initData.roll(type);
         }).await();
@@ -118,7 +120,7 @@ public class InitDataTest {
     @Test
     public void initBusiness() throws InterruptedException {
 
-        ThreadPoolUtils.executeRun(Lists.newArrayList(tables), table -> {
+        runThreadPool.executeWithLatch(Lists.newArrayList(tables), table -> {
             try {
                 baseSql.execute("update # set handle_sign=0".replace("#", table));
             } catch (SQLException e) {
@@ -141,7 +143,7 @@ public class InitDataTest {
         List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type");
         for (GroovyRowResult row : rows) {
             String type = row.get("type").toString();
-            initData.sumSettlementCommission(type);
+            initData.fixRef(type);
         }
     }
 

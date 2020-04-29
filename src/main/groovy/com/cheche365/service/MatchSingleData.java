@@ -2,7 +2,7 @@ package com.cheche365.service;
 
 import com.cheche365.entity.TwoHandleSign;
 import com.cheche365.util.CommonUtils;
-import com.cheche365.util.ThreadPoolUtils;
+import com.cheche365.util.ThreadPool;
 import com.cheche365.util.Utils;
 import groovy.sql.GroovyRowResult;
 import groovy.sql.Sql;
@@ -19,7 +19,10 @@ import java.math.RoundingMode;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.Future;
@@ -34,12 +37,12 @@ import java.util.stream.Collectors;
 public class MatchSingleData {
 
     @Autowired
-    protected Sql baseSql;
+    private Sql baseSql;
+    @Autowired
+    private ThreadPool runThreadPool;
 
     private static final BigDecimal MAX_GROSS_MARGIN = BigDecimal.ONE;
     private static final BigDecimal MIN_GROSS_MARGIN = new BigDecimal(-1);
-
-    private ExecutorCompletionService runCompletionPool = ThreadPoolUtils.getCompletionRunPool();
 
     private String listResultTwoHandleSign = "      select t1.id,\n" +
             "             s_id as sids,\n" +
@@ -115,22 +118,14 @@ public class MatchSingleData {
                 List<TwoHandleSign> allSourceDataList = transMapToBean(grsSourceDataList);
                 Map<String, List<TwoHandleSign>> thsMapList = allSourceDataList.stream()
                         .collect(Collectors.groupingBy(it -> generRateMapKey(it)));
-                List<Future> futureList = new ArrayList<>();
-                for (TwoHandleSign twoHandleSign : twoHandleSignList) {
+
+                runThreadPool.submitWithResult(twoHandleSignList, twoHandleSign -> {
                     if (thsMapList.containsKey(generRateMapKey(twoHandleSign))) {
-                        Future future = runCompletionPool.submit(() -> matchSingleDta(thsMapList, twoHandleSign, resultTableName, tTableName));
-                        futureList.add(future);
+                        matchSingleDta(thsMapList, twoHandleSign, resultTableName, tTableName);
                     }
-                }
-                for (Future future : futureList) {
-                    try {
-                        future.get();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    } catch (ExecutionException e) {
-                        e.printStackTrace();
-                    }
-                }
+                    return null;
+                });
+
                 log.info("matchSingleDataList success! tTableName:{}", tTableName);
             }
         } catch (Exception e) {
@@ -397,6 +392,7 @@ public class MatchSingleData {
 
     /**
      * 根据收入成本获取毛利率
+     *
      * @param sumFee
      * @param sumCommission
      * @return

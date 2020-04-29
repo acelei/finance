@@ -1,7 +1,7 @@
 package com.cheche365.service
 
 import com.cheche365.util.MatchResult
-import com.cheche365.util.ThreadPoolUtils
+import com.cheche365.util.ThreadPool
 import com.cheche365.util.Utils
 import groovy.sql.GroovyRowResult
 import groovy.sql.Sql
@@ -13,7 +13,9 @@ import org.springframework.stereotype.Service
 @Slf4j
 class MatchSideData {
     @Autowired
-    protected Sql baseSql
+    private Sql baseSql
+    @Autowired
+    private ThreadPool runThreadPool
 
     String querySettlement = "select id,id as s_id,sum_fee as fee,sum_commission as commission,`14-手续费总额（报行内+报行外）(含税)`,`15-手续费总额（报行内+报行外）(不含税)`,`42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`,DATE_FORMAT(`9-保单出单日期`,'%Y-%m') as order_month,`保险公司`,`省`, null as flag from settlement_# where `8-险种名称` in ('交强险','商业险') and handle_sign=6 and date_format(`9-保单出单日期`,'%Y')='2019'"
     String queryCommission = "select id,id as c_id,sum_fee as fee,sum_commission as commission,`14-手续费总额（报行内+报行外）(含税)`,`15-手续费总额（报行内+报行外）(不含税)`,`42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`,DATE_FORMAT(`9-保单出单日期`,'%Y-%m') as order_month,`保险公司`,`省`,`40-代理人名称`, null as flag from commission_# where `8-险种名称` in ('交强险','商业险') and handle_sign=6 and date_format(`9-保单出单日期`,'%Y')='2019'"
@@ -32,12 +34,12 @@ class MatchSideData {
             it.'保险公司' + it.'省' + it.'order_month' + it.'40-代理人名称'
         }
         List<GroovyRowResult> settlements = baseSql.rows(getQuerySettlement().replace("#", type))
-        ThreadPoolUtils.submitRun(settlements, { it ->
+        runThreadPool.submitWithResult(settlements, { it ->
             if ((it.fee as double) > 10) {
                 log.info("原数据-结算数据:{}", it)
                 matchCommission(it, commissionGroup, type)
             }
-        }).each { it.get() }
+        })
     }
 
     void processCommission(String type) {
@@ -46,12 +48,12 @@ class MatchSideData {
         }
         List<GroovyRowResult> commissions = baseSql.rows(getQueryCommission().replace("#", type))
 
-        ThreadPoolUtils.submitRun(commissions, { it ->
+        runThreadPool.submitWithResult(commissions, { it ->
             if ((it.commission as double) > 10) {
                 log.info("原数据-付佣数据:{}", it)
                 matchSettlement(it, settlementGroup, type)
             }
-        }).each { it.get() }
+        })
     }
 
     void matchCommission(GroovyRowResult settlement, Map<String, List<GroovyRowResult>> commissionGroup, String type) {

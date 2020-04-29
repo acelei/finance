@@ -1,18 +1,18 @@
 package com.cheche365.service
 
 import com.cheche365.util.ExcelUtil2
-import com.cheche365.util.ThreadPoolUtils
+import com.cheche365.util.ThreadPool
 import groovy.sql.GroovyRowResult
 import groovy.sql.Sql
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
-import java.util.concurrent.Future
-
 @Service
 class SumData {
     @Autowired
-    Sql baseSql
+    private Sql baseSql
+    @Autowired
+    private ThreadPool runThreadPool
 
     static final String sql = '''
 insert into result_sum_data_3 (`id`,
@@ -164,16 +164,11 @@ from result_#_3
 
     File statisticsAll(String typeSql) {
         def rows = baseSql.rows(typeSql)
-        List<Future<List<GroovyRowResult>>> futureList = ThreadPoolUtils.submitRun(rows, { row ->
+        List<GroovyRowResult> resultList = runThreadPool.submitWithResult(rows, { row ->
             def type = row.type
             def name = row.name
             baseSql.rows(errTjSql.replace("#", type).replace(":type", name))
-        })
-
-        List<GroovyRowResult> resultList = new ArrayList<>()
-        futureList.each {
-            resultList.addAll it.get()
-        }
+        }).flatten()
 
         return ExcelUtil2.writeToExcel(head, resultList)
     }

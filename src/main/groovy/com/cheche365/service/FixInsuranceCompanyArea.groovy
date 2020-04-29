@@ -1,6 +1,6 @@
 package com.cheche365.service
 
-import com.cheche365.util.ThreadPoolUtils
+import com.cheche365.util.ThreadPool
 import com.hankcs.hanlp.HanLP
 import com.hankcs.hanlp.corpus.tag.Nature
 import com.hankcs.hanlp.seg.Segment
@@ -23,7 +23,9 @@ class FixInsuranceCompanyArea {
     private Map area = new HashMap()
 
     @Autowired
-    Sql baseSql
+    private Sql baseSql
+    @Autowired
+    private ThreadPool runThreadPool
 
     @PostConstruct
     void init() {
@@ -40,7 +42,7 @@ class FixInsuranceCompanyArea {
     }
 
     void run(String type) {
-        ThreadPoolUtils.submitRun(tables, { it ->
+        runThreadPool.submitWithResult(tables, { it ->
             log.info("处理开始:${it}_${type}")
             log.info("拆分保险公司名称开始:${it}_${type}")
             def list = tableRun("select `7-出单保险公司（明细至保险公司分支机构）`,`保险公司`,`市`,`省`,`保险公司id` from ${it}_${type} where `7-出单保险公司（明细至保险公司分支机构）` is not null and (`保险公司` is null or `省` is null) group by `7-出单保险公司（明细至保险公司分支机构）` ")
@@ -49,7 +51,7 @@ class FixInsuranceCompanyArea {
             updateRun(list, "${it}_${type}")
             log.info("更新保险公司名称及ID完成:${it}_${type}")
             log.info("处理完毕:${it}_${type}")
-        }).each {it.get()}
+        })
     }
 
     void runTable(String tableName) {
@@ -65,9 +67,10 @@ class FixInsuranceCompanyArea {
 
     List<GroovyRowResult> tableRun(String sql) {
         List<GroovyRowResult> list = new CopyOnWriteArrayList<>()
-        ThreadPoolUtils.submitRun(baseSql.rows(sql), {
+        def rows = baseSql.rows(sql)
+        runThreadPool.submitWithResult(rows, {
             list.add(setInsuranceCompanyArea(it))
-        }).each {it.get()}
+        })
 
         return list
     }

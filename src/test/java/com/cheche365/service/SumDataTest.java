@@ -40,7 +40,7 @@ public class SumDataTest {
         }
     }
 
-    String tjSql = "select org,name,responsible,`3-出单保险代理机构（车车科技适用）`,`7-出单保险公司（明细至保险公司分支机构）`,\n" +
+    String tjSql = "select org,name,responsible,a.source_file,`3-出单保险代理机构（车车科技适用）`,`7-出单保险公司（明细至保险公司分支机构）`,\n" +
             "       sum(`14-手续费总额（报行内+报行外）(含税)`) as `14-手续费总额（报行内+报行外）(含税)`,\n" +
             "       sum(`15-手续费总额（报行内+报行外）(不含税)`) as `15-手续费总额（报行内+报行外）(不含税)`,\n" +
             "       sum(`19-手续费金额（含税）`) as `19-手续费金额（含税）`,\n" +
@@ -56,7 +56,7 @@ public class SumDataTest {
             "       sum(`42-佣金金额（已入账）`) as `42-佣金金额（已入账）`,\n" +
             "       sum(`45-支付金额`) as `45-支付金额`,\n" +
             "       sum(`46-未计提佣金（19年底尚未入帐）`) as `46-未计提佣金（19年底尚未入帐）`\n" +
-            "       from result_sum_data_3 a,table_type b where a.type_id=b.id group by type_id,`3-出单保险代理机构（车车科技适用）`,`7-出单保险公司（明细至保险公司分支机构）`";
+            "       from result_sum_data_3 a,table_type b where a.type_id=b.id group by type_id,a.source_file,`3-出单保险代理机构（车车科技适用）`,`7-出单保险公司（明细至保险公司分支机构）`";
 
     @Test
     public void exportFile() throws SQLException, IOException {
@@ -64,6 +64,7 @@ public class SumDataTest {
                 "org",
                 "name",
                 "responsible",
+                "source_file",
                 "3-出单保险代理机构（车车科技适用）",
                 "7-出单保险公司（明细至保险公司分支机构）",
                 "14-手续费总额（报行内+报行外）(含税)",

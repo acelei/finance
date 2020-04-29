@@ -1,6 +1,7 @@
 package app.config;
 
 import com.cheche365.util.LocalDateConverter;
+import com.cheche365.util.ThreadPool;
 import groovy.sql.Sql;
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.beanutils.converters.*;
@@ -38,4 +39,14 @@ public class AppConfig implements ApplicationRunner {
         ConvertUtils.register(new LocalDateConverter(null), LocalDate.class);
     }
 
+
+    @Bean("runThreadPool")
+    public ThreadPool getRunPool() {
+        return ThreadPool.newInstance("RunManager");
+    }
+
+    @Bean("taskThreadPool")
+    public ThreadPool getTaskPool() {
+        return ThreadPool.newInstance("TaskManager");
+    }
 }
