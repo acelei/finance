@@ -231,6 +231,50 @@ public class ApiController {
         return downloadFile("export_#.zip".replace("#", type), file);
     }
 
+    @GetMapping("data/exportResult/kj")
+    public ResponseEntity exportResult1(@PathVariable(required = false) String type) throws SQLException, ExecutionException, InterruptedException, IOException {
+        List<GroovyRowResult> rows = baseSql.rows("select `type`,`name` from table_type where flag=5 and org='科技'");
+
+        List<File> fileList = taskThreadPool.submitWithResult(rows, row -> {
+            String t = row.get("type").toString();
+            String name = row.get("name").toString();
+            File f = null;
+            try {
+                f = File.createTempFile(ExcelUtil2.generateExportExcelName("审计台账_" + name), ".xlsx", ExcelUtil2.tmp);
+                return resultService.exportResult(t, f);
+            } catch (IOException e) {
+                log.error("文件创建失败", e);
+            }
+            return null;
+        });
+
+        File file = ExcelUtil2.zipFiles(fileList, null);
+
+        return downloadFile("export_科技.zip", file);
+    }
+
+    @GetMapping("data/exportResult/bd")
+    public ResponseEntity exportResult2() throws SQLException, ExecutionException, InterruptedException, IOException {
+        List<GroovyRowResult> rows = baseSql.rows("select `type`,`name` from table_type where flag=5 and org!='科技'");
+
+        List<File> fileList = taskThreadPool.submitWithResult(rows, row -> {
+            String t = row.get("type").toString();
+            String name = row.get("name").toString();
+            File f = null;
+            try {
+                f = File.createTempFile(ExcelUtil2.generateExportExcelName("审计台账_" + name), ".xlsx", ExcelUtil2.tmp);
+                return resultService.exportResult(t, f);
+            } catch (IOException e) {
+                log.error("文件创建失败", e);
+            }
+            return null;
+        });
+
+        File file = ExcelUtil2.zipFiles(fileList, null);
+
+        return downloadFile("export_保代.zip", file);
+    }
+
     @GetMapping({"data/tj/{type}", "data/tj"})
     public ResponseEntity statistics(@PathVariable(required = false) String type) throws SQLException, ExecutionException, InterruptedException, IOException {
         File file = null;

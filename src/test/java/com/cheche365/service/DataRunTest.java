@@ -46,7 +46,7 @@ public class DataRunTest {
 
     @Test
     public void init() throws SQLException {
-        List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=2");
+        List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=-2");
 
         for (GroovyRowResult row : rows) {
             String type = row.get("type").toString();
@@ -150,7 +150,7 @@ public class DataRunTest {
         }
     }
 
-    private String type = "zongbu";
+    private String type = "kj_czl";
 
     @Test
     public void singRun() {

@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 
 @Log4j2
 public class ExcelUtil2Test {
@@ -23,8 +24,8 @@ public class ExcelUtil2Test {
         log.info("开始");
         BlockingDeque<Map> dataList = Queues.newLinkedBlockingDeque(10000);
 
-        Future<File> f = ThreadPool.getRunPool().submit(() -> ExcelUtil2.writeToExcelByQueue(dataList));
-
+        FutureTask<File> futureTask = new FutureTask<>(()-> ExcelUtil2.writeToExcelByQueue(dataList));
+        new Thread(futureTask).start();
 
         for (int i = 0; i < ExcelUtil2.EXCEL_SHEET_MAX_ROWS - 2; i++) {
             Map<String, Object> map = new HashMap<>();
@@ -36,7 +37,7 @@ public class ExcelUtil2Test {
         }
         dataList.put(ExcelUtil2.EMPTY_MAP);
 
-        File file = f.get();
+        File file = futureTask.get();
 
         log.info("文件已经输出完成");
 

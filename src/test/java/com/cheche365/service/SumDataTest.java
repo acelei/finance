@@ -31,7 +31,7 @@ public class SumDataTest {
 
     @Test
     public void sumResult3() throws SQLException {
-        List<GroovyRowResult> rows = baseSql.rows("select id,`type` from table_type where org='科技'");
+        List<GroovyRowResult> rows = baseSql.rows("select id,`type` from table_type where org!='科技' and flag>0");
         baseSql.execute("truncate result_sum_data_3");
         for (GroovyRowResult row : rows) {
             Integer id = MapUtils.getInteger(row, "id");
@@ -86,7 +86,7 @@ public class SumDataTest {
         List<GroovyRowResult> rows = baseSql.rows(tjSql);
         List<Map> list = Lists.newArrayList(rows);
         File file = ExcelUtil2.writeToExcel(head, list);
-        FileUtils.moveFile(file, new File("统计_科技.xlsx"));
+        FileUtils.moveFile(file, new File("统计_保代.xlsx"));
     }
 
     @Test

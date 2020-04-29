@@ -259,7 +259,7 @@ from (
                 0 as sum_commission
          from settlement_#
          union all
-         select null as s_ic,
+         select null as s_id,
                 id   as c_id,
                 `2-保代机构`,
                 `3-出单保险代理机构（车车科技适用）`,

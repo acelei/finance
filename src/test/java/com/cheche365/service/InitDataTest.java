@@ -65,10 +65,10 @@ public class InitDataTest {
 
     @Test
     public void createTable() throws SQLException {
-        String type = "sbt_czl";
+        String type = "sbt_czl_gg";
 
-//        baseSql.execute("create table settlement_# like settlement_bj".replace("#", type));
-//        baseSql.execute("create table commission_# like commission_bj".replace("#", type));
+        baseSql.execute("create table settlement_# like settlement_kj_czl_gg".replace("#", type));
+        baseSql.execute("create table commission_# like commission_kj_czl_gg".replace("#", type));
         baseSql.execute("create table result_# like result_bj".replace("#", type));
         baseSql.execute("create table result_#_2 like result_bj_2".replace("#", type));
         baseSql.execute("create table result_#_back like result_bj_back".replace("#", type));
@@ -155,13 +155,12 @@ public class InitDataTest {
         baseSql.executeUpdate("ALTER TABLE settlement_baodai_2 ADD COLUMN `flag` tinyint(255) NULL DEFAULT 0,ADD COLUMN `type_id` int(11) NULL");
     }
 
-    //
-    String[] type = new String[]{"dongguan", "liaoning", "wenzhou", "zhejiang", "hebei_baodai", "bj", "yunnan_baodai"};
-
     @Test
-    public void result3() {
-        for (String t : type) {
-            initData.result3(t);
+    public void result3() throws SQLException {
+        List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type");
+        for (GroovyRowResult row : rows) {
+            String type = row.get("type").toString();
+            initData.result3(type);
         }
     }
 
