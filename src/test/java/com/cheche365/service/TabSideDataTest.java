@@ -19,4 +19,9 @@ public class TabSideDataTest {
     public void tabSettlement() {
         tabSideData.tabSettlement("yx");
     }
+
+    @Test
+    public void t() {
+        tabSideData.putDownFlag1("shandong");
+    }
 }

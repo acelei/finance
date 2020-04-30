@@ -229,11 +229,7 @@ from commission_# a
 
     @Test
     void run() {
-        types.each {
-//            back(it.source)
-//            delete(it.source, it.target)
-//            getCZL(it.target)
-        }
+        getFixCZL('bj')
     }
 
     @Test

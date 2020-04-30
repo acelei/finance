@@ -23,9 +23,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 /**
@@ -76,7 +73,7 @@ public class MatchSingleData {
             "        and date_format(`9-保单出单日期`,'%Y')='2019'";
 
     private String updateHandleSignList = "update `resultTableName` set handle_sign = handleSignVal where id in (idListVal)";
-    private String updateFourHandleSignList = "update `resultTableName` set handle_sign = handleSignVal, sum_fee = 'realFeeVal', sum_commission = 'realCommissionVal', gross_profit = 'grossProfitVal' where id in (idListVal)";
+    private String updateFourHandleSignList = "update `resultTableName` set handle_sign = handleSignVal, sum_fee = 'realFeeVal', sum_commission = 'realCommissionVal', gross_profit = 'grossProfitVal',c_id='cIds',s_id='sIds' where id in (idListVal)";
 
     private String insertResultRefList = "insert into result_gross_margin_ref (`table_name`, result_id, s_id, c_id, `type`, real_fee, real_commission) values ";
     private DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -283,6 +280,8 @@ public class MatchSingleData {
                         .replace("realFeeVal", sumFee.toString())
                         .replace("realCommissionVal", sumCommission.toString())
                         .replace("grossProfitVal", getFinanceGrossMargin(sumFee, sumCommission).toString())
+                        .replace("sIds", )
+                        .replace("cIds", )
                 );
                 thsListMap.put(generRateMapKey(twoHandleSign), getRemoveList(insProOrderMonthList, resultThsList));
                 log.info("matchSingleData success! twoHandleSignId:{}", twoHandleSign.getId());

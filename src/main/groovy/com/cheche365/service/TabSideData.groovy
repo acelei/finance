@@ -163,8 +163,7 @@ select id,s_id, c_id from result_#_2 where  handle_sign != 5 and `8-险种名称
 
     void putDownFlag(String type, String sql) {
         def rows = baseSql.rows(sql.replace("#", type))
-        List<String> ids = new CopyOnWriteArrayList()
-        runThreadPool.submitWithResult(rows, { row ->
+        List<String> ids = runThreadPool.submitWithResult(rows, { row ->
             if (row.s_id != null) {
                 baseSql.executeUpdate(downSettlement.replace("#", type).replace(":ids", row.s_id as String))
             }
@@ -172,7 +171,7 @@ select id,s_id, c_id from result_#_2 where  handle_sign != 5 and `8-险种名称
                 baseSql.executeUpdate(downCommission.replace("#", type).replace(":ids", row.c_id as String))
             }
             baseSql.executeUpdate(updateResult.replace("#", type), [row.id])
-            ids.add("'${row.id}'" as String)
+            return ("'${row.id}'" as String)
         })
 
         if (ids.size() > 0) {
