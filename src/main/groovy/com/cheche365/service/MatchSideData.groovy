@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service
 @Slf4j
 class MatchSideData {
     @Autowired
-    private Sql baseSql
+    Sql baseSql
     @Autowired
     private ThreadPool runThreadPool
 

@@ -150,7 +150,7 @@ public class DataRunTest {
         }
     }
 
-    private String type = "kj_czl";
+    private String type = "yx";
 
     @Test
     public void singRun() {

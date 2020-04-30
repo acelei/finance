@@ -162,9 +162,9 @@ where `8-险种名称` in (
         //更新history表数据
         List<GroovyRowResult> businessIdList = baseSql.rows("select business_id from business_replace_ref where business_table_name = 'das_data_pool_history' and business_id is not null and table_name in ('"+ commissionTableName +"', '" + settleMentTableName +"')");
         if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(businessIdList)) {
-            List<String> idList = new ArrayList<>();
-            for (int i = 0; i < businessIdList.size(); i++) {
-                idList.add(businessIdList.get(i).toString());
+            List<String> idList = new ArrayList<>()
+            businessIdList.each {
+                idList.add(it.business_id as String)
             }
             baseSql.executeUpdate("update das_data_pool_history set handle_sign = 0 where id in (" + Joiner.on(",").join(idList) +")");
         }
@@ -511,7 +511,7 @@ where handle_sign in (0, 1, 4, 6)
   and sum_commission / `11-净保费` > 0.7
   and date_format(`9-保单出单日期`,'%Y')='2019'
 '''
-    List<String> zTypes = ["guangxi", "shanxi", "yx", "hubei_czl_keji"]
+    List<String> zTypes = ["guangxi", "shanxi_baodai", "shanxi_keji", "yx", "hubei_czl_keji"]
     void flagErrData(String type) {
         log.info("设置保费比例问题标签:{}", type)
         if (zTypes.contains(type)) {

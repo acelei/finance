@@ -27,7 +27,7 @@ public class ResultServiceTest {
 
     @Test
     public void run() throws SQLException {
-        resultService.run("bj");
+        resultService.run("sbt");
     }
 
     @Test
@@ -35,7 +35,7 @@ public class ResultServiceTest {
         List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=5");
 
         for (GroovyRowResult row : rows) {
-            resultService.result2(row.get("type").toString());
+            resultService.fix(row.get("type").toString());
         }
 
     }

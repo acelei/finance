@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service
 @Slf4j
 class ReMatchSideData {
     @Autowired
-    private Sql baseSql
+    Sql baseSql
     @Autowired
     private ThreadPool runThreadPool
 

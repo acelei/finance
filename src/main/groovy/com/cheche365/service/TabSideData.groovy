@@ -147,7 +147,7 @@ select id,s_id, c_id from result_#_2 where  handle_sign != 5 and `8-险种名称
         log.info("下放收入成本为负数的标志位完成:{}", type)
     }
 
-    List<String> zTypes = ["guangxi", "shanxi", "yx", "hubei_czl_keji"]
+    List<String> zTypes = ["guangxi", "shanxi_baodai", "shanxi_keji", "yx", "hubei_czl_keji"]
 
     void putDownFlag2(String type) {
         log.info("下放收入成本与保费比例异常的标志位:{}", type)

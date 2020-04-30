@@ -23,7 +23,7 @@ import java.util.*;
 public class ReplaceHisBusiness {
 
     @Autowired
-    private Sql baseSql;
+    protected Sql baseSql;
     @Autowired
     private ReplaceUnAutoBusiness replaceUnAutoBusiness;
 
