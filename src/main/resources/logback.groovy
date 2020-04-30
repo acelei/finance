@@ -17,41 +17,41 @@ appender("console", ConsoleAppender) {
         pattern = patternLayout
     }
 }
-//
-//appender("FILE-INFO", RollingFileAppender) {
-//    filter(ThresholdFilter) {
-//        level = INFO
-//    }
-//    file = "${curConfig.path}/info-logFile.log"
-//    rollingPolicy(FixedWindowRollingPolicy) {
-//        fileNamePattern = "${curConfig.path}/info-logFile.%i.log"
-//        minIndex = 1
-//        maxIndex = 50
-//    }
-//    triggeringPolicy(SizeBasedTriggeringPolicy) {
-//        maxFileSize = "20MB"
-//    }
-//    encoder(PatternLayoutEncoder) {
-//        pattern = patternLayout
-//    }
-//}
-//appender("FILE-ERROR", RollingFileAppender) {
-//    filter(ThresholdFilter) {
-//        level = ERROR
-//    }
-//    file = "${curConfig.path}/error-logFile.log"
-//    rollingPolicy(FixedWindowRollingPolicy) {
-//        fileNamePattern = "${curConfig.path}/error-logFile.%i.log"
-//        minIndex = 1
-//        maxIndex = 20
-//    }
-//    triggeringPolicy(SizeBasedTriggeringPolicy) {
-//        maxFileSize = "20MB"
-//    }
-//    encoder(PatternLayoutEncoder) {
-//        pattern = patternLayout
-//    }
-//}
-//
-//root(curConfig.level, curConfig.appenders)
-root(DEBUG, ["console"])
+
+appender("FILE-INFO", RollingFileAppender) {
+    filter(ThresholdFilter) {
+        level = INFO
+    }
+    file = "${curConfig.path}/info-logFile.log"
+    rollingPolicy(FixedWindowRollingPolicy) {
+        fileNamePattern = "${curConfig.path}/info-logFile.%i.log"
+        minIndex = 1
+        maxIndex = 50
+    }
+    triggeringPolicy(SizeBasedTriggeringPolicy) {
+        maxFileSize = "20MB"
+    }
+    encoder(PatternLayoutEncoder) {
+        pattern = patternLayout
+    }
+}
+appender("FILE-ERROR", RollingFileAppender) {
+    filter(ThresholdFilter) {
+        level = ERROR
+    }
+    file = "${curConfig.path}/error-logFile.log"
+    rollingPolicy(FixedWindowRollingPolicy) {
+        fileNamePattern = "${curConfig.path}/error-logFile.%i.log"
+        minIndex = 1
+        maxIndex = 20
+    }
+    triggeringPolicy(SizeBasedTriggeringPolicy) {
+        maxFileSize = "20MB"
+    }
+    encoder(PatternLayoutEncoder) {
+        pattern = patternLayout
+    }
+}
+
+root(curConfig.level, curConfig.appenders)
+//root(DEBUG, ["console"])
