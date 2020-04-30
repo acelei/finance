@@ -20,7 +20,7 @@ class FixInsuranceCompanyArea {
     public Segment segment
     private Map insuranceCompany = new HashMap()
     private List tables = ["commission", "settlement"]
-    private Map area = new HashMap()
+    public Map area = new HashMap()
 
     @Autowired
     private Sql baseSql
