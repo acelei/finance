@@ -493,10 +493,35 @@ where handle_sign in (0, 1, 4, 6)
   and date_format(`9-保单出单日期`,'%Y')='2019'
 '''
 
+    private static final String errSql11 = '''
+update result_#_2
+set handle_sign=3
+where handle_sign in (0, 1, 4, 6)
+  and `8-险种名称` in ('交强险', '商业险')
+  and abs(sum_fee) > 0
+  and sum_fee / `11-净保费` > 0.7
+  and date_format(`9-保单出单日期`,'%Y')='2019'
+'''
+    private static final String errSql22 = '''
+update result_#_2
+set handle_sign=3
+where handle_sign in (0, 1, 4, 6)
+  and `8-险种名称` in ('交强险', '商业险')
+  and abs(sum_commission) > 0
+  and sum_commission / `11-净保费` > 0.7
+  and date_format(`9-保单出单日期`,'%Y')='2019'
+'''
+    List<String> zTypes = ["guangxi", "shanxi", "yx", "hubei_czl_keji"]
     void flagErrData(String type) {
         log.info("设置保费比例问题标签:{}", type)
-        baseSql.executeUpdate(errSql1.replace("#", type))
-        baseSql.executeUpdate(errSql2.replace("#", type))
+        if (zTypes.contains(type)) {
+            baseSql.executeUpdate(errSql11.replace("#", type))
+            baseSql.executeUpdate(errSql22.replace("#", type))
+        }else {
+            baseSql.executeUpdate(errSql1.replace("#", type))
+            baseSql.executeUpdate(errSql2.replace("#", type))
+        }
+
         log.info("设置保费比例问题标签完成:{}", type)
     }
 
