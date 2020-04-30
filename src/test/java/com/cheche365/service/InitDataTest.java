@@ -149,10 +149,12 @@ public class InitDataTest {
 
     @Test
     public void fixRef2() throws SQLException {
-//        initData.fixRef("bj");
-
-        baseSql.executeUpdate("ALTER TABLE commission_baodai_2 ADD COLUMN `flag` tinyint(255) NULL DEFAULT 0,ADD COLUMN `type_id` int(11) NULL");
-        baseSql.executeUpdate("ALTER TABLE settlement_baodai_2 ADD COLUMN `flag` tinyint(255) NULL DEFAULT 0,ADD COLUMN `type_id` int(11) NULL");
+        List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type");
+        for (GroovyRowResult row : rows) {
+            String type = row.get("type").toString();
+            baseSql.executeUpdate("ALTER TABLE `result_#_2` ADD COLUMN `version` int(20) NULL DEFAULT 0".replace("#",type));
+            baseSql.executeUpdate("ALTER TABLE `result_#_back` ADD COLUMN `version` int(20) NULL DEFAULT 0".replace("#",type));
+        }
     }
 
     @Test

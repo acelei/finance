@@ -17,6 +17,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -97,7 +98,73 @@ public class SumDataTest {
 
     @Test
     public void exportErrTjSign() throws SQLException, IOException, InterruptedException {
-        File file = sumData.statistics("bj","北京");
+        File file = sumData.statistics("bj", "北京");
         FileUtils.moveFile(file, new File("错误统计.xlsx"));
     }
+
+    String ftjsql = "select '#2' as `org`,'#3' as `业务`,sum(`14-手续费总额（报行内+报行外）(含税)`) as `14-手续费总额（报行内+报行外）(含税)`,\n" +
+            "       sum(`15-手续费总额（报行内+报行外）(不含税)`) as `15-手续费总额（报行内+报行外）(不含税)`,\n" +
+            "       sum(`19-手续费金额（含税）`) as `19-手续费金额（含税）`,\n" +
+            "       sum(`20-手续费金额（不含税）`) as `20-手续费金额（不含税）`,\n" +
+            "       sum(`23-收款金额`) as `23-收款金额`,\n" +
+            "       sum(`27-开票金额（不含税）`) as `27-开票金额（不含税）`,\n" +
+            "       sum(`28-开票金额（含税）`) as `28-开票金额（含税）`,\n" +
+            "       sum(`29-20191231应收账款（含已开票和未开票）`) as `29-20191231应收账款（含已开票和未开票）`,\n" +
+            "       sum(`33-收款金额`) as `33-收款金额`,\n" +
+            "       sum(`37-开票金额（含税）`) as `37-开票金额（含税）`,\n" +
+            "       sum(`38-尚未开票金额（不含税）`) as `38-尚未开票金额（不含税）`,\n" +
+            "       sum(`39-尚未开票金额（含税）`) as `39-尚未开票金额（含税）`,\n" +
+            "       sum(`42-佣金金额（已入账）`) as `42-佣金金额（已入账）`,\n" +
+            "       sum(`45-支付金额`) as `45-支付金额`,\n" +
+            "       sum(`46-未计提佣金（19年底尚未入帐）`) as `46-未计提佣金（19年底尚未入帐）`\n" +
+            "from result_#1_2_final";
+
+    List<String> sHead = Lists.newArrayList("org",
+            "业务",
+            "14-手续费总额（报行内+报行外）(含税)",
+            "15-手续费总额（报行内+报行外）(不含税)",
+            "19-手续费金额（含税）",
+            "20-手续费金额（不含税）",
+            "23-收款金额",
+            "27-开票金额（不含税）",
+            "28-开票金额（含税）",
+            "29-20191231应收账款（含已开票和未开票）",
+            "33-收款金额",
+            "37-开票金额（含税）",
+            "38-尚未开票金额（不含税）",
+            "39-尚未开票金额（含税）",
+            "42-佣金金额（已入账）",
+            "45-支付金额",
+            "46-未计提佣金（19年底尚未入帐）");
+
+    @Test
+    public void exportTjSign() throws SQLException, IOException, InterruptedException {
+        List<Map> list = new ArrayList<>();
+
+        List<GroovyRowResult> rows = baseSql.rows("select `type`,`name`,`org` from table_type where flag=5");
+        for (GroovyRowResult row : rows) {
+            String type = row.get("type").toString();
+            String name = row.get("name").toString();
+            String org = row.get("org").toString();
+            list.add(baseSql.firstRow(ftjsql.replace("#1", type).replace("#2", org).replace("#3", name)));
+        }
+
+        ExcelUtil2.writeToExcel(sHead, list).renameTo(new File("统计.xlsx"));
+    }
+
+    @Test
+    public void exportTjSign2() throws SQLException, IOException, InterruptedException {
+
+        List<GroovyRowResult> rows = baseSql.rows("select `type`,`name`,`org` from table_type where flag=5");
+        for (GroovyRowResult row : rows) {
+            String type = row.get("type").toString();
+            GroovyRowResult r = baseSql.firstRow("select count(9) c from result_#_2_final where `8-险种名称` in ('交强险','商业险') and date_format(`9-保单出单日期`,'%Y') = '2019' and (sum_fee<0 or sum_commission<0)".replace("#", type));
+            Integer c = MapUtils.getInteger(r, "c");
+            if (c > 0) {
+                log.info("{}:{}", type, c);
+            }
+        }
+
+    }
+
 }

@@ -118,6 +118,7 @@ public class DataRunService {
         // 恢复result2表数据
         initData.roll(type);
         process(type);
+        replaceBusinessData.replaceBusinessList(type);
     }
 
     public void reMatch(String type) {

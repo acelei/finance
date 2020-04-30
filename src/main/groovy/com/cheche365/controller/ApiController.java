@@ -22,6 +22,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -203,76 +205,44 @@ public class ApiController {
         return RestResponse.success(type);
     }
 
-    @GetMapping({"data/exportResult/{type}", "data/exportResult"})
-    public ResponseEntity exportResult(@PathVariable(required = false) String type) throws SQLException, ExecutionException, InterruptedException, IOException {
-        File file = null;
-        if (type != null) {
-            file = resultService.exportResult(type);
-        } else {
-            List<GroovyRowResult> rows = baseSql.rows("select `type`,`name` from table_type where flag=5");
-
-            List<File> fileList = taskThreadPool.submitWithResult(rows, row -> {
-                String t = row.get("type").toString();
-                String name = row.get("name").toString();
-                File f = null;
-                try {
-                    f = File.createTempFile(ExcelUtil2.generateExportExcelName(name), ".zip", ExcelUtil2.tmp);
-                    return resultService.exportResult(t, f);
-                } catch (IOException e) {
-                    log.error("文件创建失败", e);
-                }
-                return null;
-            });
-
-            file = ExcelUtil2.zipFiles(fileList, null);
-            type = "all";
-        }
-
+    @GetMapping({"data/exportResult/{type}"})
+    public ResponseEntity exportResult(@PathVariable String type) throws SQLException, ExecutionException, InterruptedException, IOException {
+        File file = resultService.exportResult(type);
         return downloadFile("export_#.zip".replace("#", type), file);
     }
 
-    @GetMapping("data/exportResult/kj")
+    @GetMapping("data/exportResultKj")
     public ResponseEntity exportResult1(@PathVariable(required = false) String type) throws SQLException, ExecutionException, InterruptedException, IOException {
         List<GroovyRowResult> rows = baseSql.rows("select `type`,`name` from table_type where flag=5 and org='科技'");
 
         List<File> fileList = taskThreadPool.submitWithResult(rows, row -> {
             String t = row.get("type").toString();
             String name = row.get("name").toString();
-            File f = null;
-            try {
-                f = File.createTempFile(ExcelUtil2.generateExportExcelName("审计台账_" + name), ".xlsx", ExcelUtil2.tmp);
-                return resultService.exportResult(t, f);
-            } catch (IOException e) {
-                log.error("文件创建失败", e);
-            }
-            return null;
+            String day = LocalDate.now().format(DateTimeFormatter.ofPattern("MMdd"));
+            File f = new File("tmp/2019审计台账-" + name + "(" + day + ").xlsx");
+            return resultService.exportResult(t, f);
         });
 
         File file = ExcelUtil2.zipFiles(fileList, null);
 
-        return downloadFile("export_科技.zip", file);
+        return downloadFile("车车科技.zip", file);
     }
 
-    @GetMapping("data/exportResult/bd")
+    @GetMapping("data/exportResultBd")
     public ResponseEntity exportResult2() throws SQLException, ExecutionException, InterruptedException, IOException {
         List<GroovyRowResult> rows = baseSql.rows("select `type`,`name` from table_type where flag=5 and org!='科技'");
 
         List<File> fileList = taskThreadPool.submitWithResult(rows, row -> {
             String t = row.get("type").toString();
             String name = row.get("name").toString();
-            File f = null;
-            try {
-                f = File.createTempFile(ExcelUtil2.generateExportExcelName("审计台账_" + name), ".xlsx", ExcelUtil2.tmp);
-                return resultService.exportResult(t, f);
-            } catch (IOException e) {
-                log.error("文件创建失败", e);
-            }
-            return null;
+            String day = LocalDate.now().format(DateTimeFormatter.ofPattern("MMdd"));
+            File f = new File("tmp/2019审计台账-" + name + "(" + day + ").xlsx");
+            return resultService.exportResult(t, f);
         });
 
         File file = ExcelUtil2.zipFiles(fileList, null);
 
-        return downloadFile("export_保代.zip", file);
+        return downloadFile("车车保代.zip", file);
     }
 
     @GetMapping({"data/tj/{type}", "data/tj"})

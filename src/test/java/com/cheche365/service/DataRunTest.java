@@ -150,7 +150,7 @@ public class DataRunTest {
         }
     }
 
-    private String type = "yx";
+    private String type = "shandong";
 
     @Test
     public void singRun() {
@@ -164,13 +164,13 @@ public class DataRunTest {
     }
 
     @Test
-    public void signRun() {
-        dataRunService.process(type);
+    public void roll() {
+        initData.roll(type);
     }
 
     @Test
-    public void signReRun() {
-        dataRunService.reRun(type);
+    public void signRun() {
+        dataRunService.process(type);
     }
 
     @Test
@@ -184,14 +184,16 @@ public class DataRunTest {
     }
 
     @Test
+    public void signReRun() {
+        dataRunService.reRun(type);
+    }
+
+    @Test
     public void reMatch() {
         dataRunService.reMatch(type);
     }
 
-    @Test
-    public void roll() {
-        initData.roll(type);
-    }
+
 
     @Test
     public void exportSignFile() throws InterruptedException, ExecutionException, SQLException, IOException {
