@@ -19,10 +19,7 @@ import java.math.RoundingMode;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -235,7 +232,7 @@ public class MatchSingleData {
                     sumCommission = sumCommission.add(sourceTotalVal);
                 }
                 BigDecimal grossMargin = getFinanceGrossMargin(sumFee, sumCommission);
-                if (grossMargin.abs().compareTo(BigDecimal.ONE) <= 0) {
+                if (grossMargin.abs().compareTo(BigDecimal.ONE) <= 0 && sumFee.compareTo(BigDecimal.ZERO)>0) {
                     resultThsList.addAll(sourceDataList);
                     matchSuccess = true;
                     break;
@@ -271,6 +268,27 @@ public class MatchSingleData {
             if (matchSuccess) {
                 insertResultRef(resultTableName, resultThsList, twoHandleSign, sumFee, sumCommission, type);
                 String idStrList = StringUtils.join(resultThsList.stream().map(it -> it.getId().toString()).collect(Collectors.toList()).toArray(), ",");
+
+                StringJoiner sIds = new StringJoiner(",");
+                StringJoiner cIds = new StringJoiner(",");
+                if (twoHandleSign.getSids() != null) {
+                    sIds.add(twoHandleSign.getSids());
+                }
+
+                if (twoHandleSign.getCids() != null) {
+                    cIds.add(twoHandleSign.getCids());
+                }
+
+                if (type == 1) {
+                    for (TwoHandleSign handleSign : resultThsList) {
+                        sIds.add(handleSign.getSids());
+                    }
+                } else {
+                    for (TwoHandleSign handleSign : resultThsList) {
+                        cIds.add(handleSign.getCids());
+                    }
+                }
+
                 baseSql.executeUpdate(updateHandleSignList.replace("resultTableName", tableName)
                         .replace("idListVal", idStrList)
                         .replace("handleSignVal", "5"));
@@ -280,8 +298,8 @@ public class MatchSingleData {
                         .replace("realFeeVal", sumFee.toString())
                         .replace("realCommissionVal", sumCommission.toString())
                         .replace("grossProfitVal", getFinanceGrossMargin(sumFee, sumCommission).toString())
-                        .replace("sIds", )
-                        .replace("cIds", )
+                        .replace("sIds", sIds.toString())
+                        .replace("cIds", cIds.toString())
                 );
                 thsListMap.put(generRateMapKey(twoHandleSign), getRemoveList(insProOrderMonthList, resultThsList));
                 log.info("matchSingleData success! twoHandleSignId:{}", twoHandleSign.getId());
@@ -325,7 +343,7 @@ public class MatchSingleData {
     }
 
     private boolean isNormalGrossMargin(BigDecimal sumFee, BigDecimal sumCommission) {
-        return getFinanceGrossMargin(sumFee, sumCommission).abs().compareTo(BigDecimal.ONE) <= 0;
+        return getFinanceGrossMargin(sumFee, sumCommission).abs().compareTo(BigDecimal.ONE) <= 0 && sumFee.compareTo(BigDecimal.ZERO)>0;
     }
 
     private List<TwoHandleSign> getThsByRids(List<String> rIds, Map<String, List<TwoHandleSign>> twoHandleSignMap) {
