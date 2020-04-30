@@ -147,6 +147,7 @@ from commission_# a
     String result2Sql = '''
 insert into result_#_2_final (s_id,
                                c_id,
+                               source_file,
                                `2-保代机构`,
                                `3-出单保险代理机构（车车科技适用）`,
                                `4-发票付款方（与发票一致）`,
@@ -196,6 +197,7 @@ insert into result_#_2_final (s_id,
                                gross_profit)
 select group_concat(s_id)                                  as s_id,
        group_concat(c_id)                                  as c_id,
+       source_file,
        `2-保代机构`,
        `3-出单保险代理机构（车车科技适用）`,
        `4-发票付款方（与发票一致）`,
@@ -249,6 +251,7 @@ select group_concat(s_id)                                  as s_id,
        (sum(sum_fee) - sum(sum_commission)) / sum(sum_fee) as gross_profit
 from (select a.id                                                                                     as `s_id`,
              null                                                                                     as `c_id`,
+             a.source_file,
              a.`2-保代机构`,
              a.`3-出单保险代理机构（车车科技适用）`,
              a.`4-发票付款方（与发票一致）`,
@@ -315,6 +318,7 @@ from (select a.id                                                               
       union all
       select null                                                                                     as `s_id`,
              a.id                                                                                     as `c_id`,
+             a.source_file,
              a.`2-保代机构`,
              a.`3-出单保险代理机构（车车科技适用）`,
              a.`4-发票付款方（与发票一致）`,
