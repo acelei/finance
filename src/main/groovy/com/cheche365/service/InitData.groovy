@@ -527,25 +527,29 @@ where handle_sign in (0, 1, 4, 6)
 
 
     String[] strList = [
-            "set a.s_id=b.s_id,a.type=4 where a.s_id=b.c_id and a.type=4 and b.type=4 and a.s_id<>b.s_id",
-            "set a.s_id=b.c_id,a.type=1 where a.s_id=b.s_id and a.type=1 and b.type=3 and a.s_id<>b.c_id",
-            "set a.s_id=b.s_id,a.type=1 where a.s_id=b.c_id and a.type=4 and b.type=1 and a.s_id<>b.s_id",
-            "set a.s_id=b.c_id,a.type=4 where a.s_id=b.s_id and a.type=1 and b.type=2 and a.s_id<>b.c_id",
-            "set a.c_id=b.c_id,a.type=3 where a.c_id=b.s_id and a.type=3 and b.type=3 and a.c_id<>b.c_id",
-            "set a.c_id=b.s_id,a.type=3 where a.c_id=b.c_id and a.type=2 and b.type=1 and a.c_id<>b.s_id",
-            "set a.c_id=b.c_id,a.type=2 where a.c_id=b.s_id and a.type=3 and b.type=2 and a.c_id<>b.c_id",
-            "set a.c_id=b.s_id,a.type=2 where a.c_id=b.c_id and a.type=2 and b.type=4 and a.c_id<>b.s_id"
+            "set a.s_id=b.s_id,a.type=4 where a.type_id=b.type_id and a.s_id=b.c_id and a.type=4 and b.type=4 and a.s_id<>b.s_id",
+            "set a.s_id=b.c_id,a.type=1 where a.type_id=b.type_id and a.s_id=b.s_id and a.type=1 and b.type=3 and a.s_id<>b.c_id",
+            "set a.s_id=b.s_id,a.type=1 where a.type_id=b.type_id and a.s_id=b.c_id and a.type=4 and b.type=1 and a.s_id<>b.s_id",
+            "set a.s_id=b.c_id,a.type=4 where a.type_id=b.type_id and a.s_id=b.s_id and a.type=1 and b.type=2 and a.s_id<>b.c_id",
+            "set a.c_id=b.c_id,a.type=3 where a.type_id=b.type_id and a.c_id=b.s_id and a.type=3 and b.type=3 and a.c_id<>b.c_id",
+            "set a.c_id=b.s_id,a.type=3 where a.type_id=b.type_id and a.c_id=b.c_id and a.type=2 and b.type=1 and a.c_id<>b.s_id",
+            "set a.c_id=b.c_id,a.type=2 where a.type_id=b.type_id and a.c_id=b.s_id and a.type=3 and b.type=2 and a.c_id<>b.c_id",
+            "set a.c_id=b.s_id,a.type=2 where a.type_id=b.type_id and a.c_id=b.c_id and a.type=2 and b.type=4 and a.c_id<>b.s_id"
     ]
-    String updateSql = "update result_gross_margin_ref a,result_gross_margin_ref b &str and a.table_name in ('result_#_2','settlement_#','commission_#') and b.table_name in ('result_#_2','settlement_#','commission_#')";
+    String updateSql = "update result_gross_margin_ref a,result_gross_margin_ref b &str";
 
-    synchronized void fixRef(String type) {
-        log.info("修正配对关联:{}", type)
+
+    void fixRefType(String type, String typeId) {
+        baseSql.executeUpdate("update result_gross_margin_ref set type_id=? where table_name in ('result_${type}_2','settlement_${type}','commission_${type}')" as String,[typeId])
+    }
+    void fixRef() {
+        log.info("修正配对关联")
         strList.each {
             int n = 1
             while (n > 0) {
-                n = baseSql.executeUpdate(updateSql.replace("#", type).replace("&str", it))
+                n = baseSql.executeUpdate(updateSql.replace("&str", it))
             }
         }
-        log.info("修正配对关联完成:{}", type)
+        log.info("修正配对关联完成")
     }
 }

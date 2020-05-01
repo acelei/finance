@@ -182,10 +182,17 @@ public class ApiController {
         return RestResponse.success(type);
     }
 
-    @GetMapping("data/fixRef/{type}")
-    public RestResponse<String> fixRef(@PathVariable String type) {
-        initData.fixRef(type);
-        return RestResponse.success(type);
+    @GetMapping("data/fixRef")
+    public RestResponse<String> fixRef() throws SQLException {
+        List<GroovyRowResult> rows = baseSql.rows("select `id`,`type` from table_type where flag>=3");
+        for (GroovyRowResult row : rows) {
+            String t = row.get("type").toString();
+            String id = row.get("id").toString();
+            initData.fixRefType(t,id);
+        }
+
+        initData.fixRef();
+        return RestResponse.success();
     }
 
     @GetMapping({"data/reMatch/{type}", "data/reMatch"})

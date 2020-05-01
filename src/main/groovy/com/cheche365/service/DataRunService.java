@@ -99,7 +99,7 @@ public class DataRunService {
         // 放弃时间匹配
 //        reMatchSPSideData3.run(type);
         // 修正配对关联
-        initData.fixRef(type);
+//        initData.fixRef(type);
 
         // 10.保费与收入数据比例异常的数据做数据替换
 //        replaceBusinessData.replaceBusinessList(type);
@@ -125,12 +125,10 @@ public class DataRunService {
         reMatchSideData.run(type);
         //放开比例匹配
         reMatchSideData2.run(type);
+        // 付佣放弃保险公司
+        reMatchSPSideData4.run(type);
         // 放弃代理人进行匹配
         reMatchSPSideData.run(type);
-        // 放弃省进行匹配
-        reMatchSPSideData2.run(type);
-        // 放弃时间匹配
-        reMatchSPSideData3.run(type);
-        initData.fixRef(type);
+//        initData.fixRef(type);
     }
 }
