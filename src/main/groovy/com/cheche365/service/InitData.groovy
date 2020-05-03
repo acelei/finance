@@ -160,13 +160,13 @@ where `8-险种名称` in (
         //处理硬调数据
         baseSql.execute("delete from business_replace_ref where table_name in ('" + commissionTableName + "','" + settleMentTableName + "') and business_id is null");
         //更新history表数据
-        List<GroovyRowResult> businessIdList = baseSql.rows("select business_id from business_replace_ref where business_table_name = 'das_data_pool_history' and business_id is not null and table_name in ('"+ commissionTableName +"', '" + settleMentTableName +"')");
+        List<GroovyRowResult> businessIdList = baseSql.rows("select business_id from business_replace_ref where business_table_name = 'das_data_pool_history' and business_id is not null and table_name in ('" + commissionTableName + "', '" + settleMentTableName + "')");
         if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(businessIdList)) {
             List<String> idList = new ArrayList<>()
             businessIdList.each {
                 idList.add(it.business_id as String)
             }
-            baseSql.executeUpdate("update das_data_pool_history set handle_sign = 0 where id in (" + Joiner.on(",").join(idList) +")");
+            baseSql.executeUpdate("update das_data_pool_history set handle_sign = 0 where id in (" + Joiner.on(",").join(idList) + ")");
         }
 
         //处理das_data_pool_business中handle_sign
@@ -502,6 +502,16 @@ where handle_sign in (0, 1, 4, 6)
   and sum_fee / `11-净保费` > 0.7
   and date_format(`9-保单出单日期`,'%Y')='2019'
 '''
+    String[] strList = [
+            "set a.s_id=b.s_id,a.type=4 where a.type_id=b.type_id and a.s_id=b.c_id and a.type=4 and b.type=4 and a.s_id<>b.s_id",
+            "set a.s_id=b.c_id,a.type=1 where a.type_id=b.type_id and a.s_id=b.s_id and a.type=1 and b.type=3 and a.s_id<>b.c_id",
+            "set a.s_id=b.s_id,a.type=1 where a.type_id=b.type_id and a.s_id=b.c_id and a.type=4 and b.type=1 and a.s_id<>b.s_id",
+            "set a.s_id=b.c_id,a.type=4 where a.type_id=b.type_id and a.s_id=b.s_id and a.type=1 and b.type=2 and a.s_id<>b.c_id",
+            "set a.c_id=b.s_id,a.type=3 where a.type_id=b.type_id and a.c_id=b.c_id and a.type=2 and b.type=1 and a.c_id<>b.s_id",
+            "set a.c_id=b.c_id,a.type=2 where a.type_id=b.type_id and a.c_id=b.s_id and a.type=3 and b.type=2 and a.c_id<>b.c_id",
+            "set a.c_id=b.s_id,a.type=2 where a.type_id=b.type_id and a.c_id=b.c_id and a.type=2 and b.type=4 and a.c_id<>b.s_id",
+            "set a.c_id=b.c_id,a.type=3 where a.type_id=b.type_id and a.c_id=b.s_id and a.type=3 and b.type=3 and a.c_id<>b.c_id",
+    ]
     private static final String errSql22 = '''
 update result_#_2
 set handle_sign=3
@@ -511,43 +521,36 @@ where handle_sign in (0, 1, 4, 6)
   and sum_commission / `11-净保费` > 0.7
   and date_format(`9-保单出单日期`,'%Y')='2019'
 '''
+
     List<String> zTypes = ["guangxi", "shanxi_baodai", "shanxi_keji", "yx", "hubei_czl_keji"]
+
+
     void flagErrData(String type) {
         log.info("设置保费比例问题标签:{}", type)
         if (zTypes.contains(type)) {
             baseSql.executeUpdate(errSql11.replace("#", type))
             baseSql.executeUpdate(errSql22.replace("#", type))
-        }else {
+        } else {
             baseSql.executeUpdate(errSql1.replace("#", type))
             baseSql.executeUpdate(errSql2.replace("#", type))
         }
 
         log.info("设置保费比例问题标签完成:{}", type)
     }
-
-
-    String[] strList = [
-            "set a.s_id=b.s_id,a.type=4 where a.type_id=b.type_id and a.s_id=b.c_id and a.type=4 and b.type=4 and a.s_id<>b.s_id",
-            "set a.s_id=b.c_id,a.type=1 where a.type_id=b.type_id and a.s_id=b.s_id and a.type=1 and b.type=3 and a.s_id<>b.c_id",
-            "set a.s_id=b.s_id,a.type=1 where a.type_id=b.type_id and a.s_id=b.c_id and a.type=4 and b.type=1 and a.s_id<>b.s_id",
-            "set a.s_id=b.c_id,a.type=4 where a.type_id=b.type_id and a.s_id=b.s_id and a.type=1 and b.type=2 and a.s_id<>b.c_id",
-            "set a.c_id=b.c_id,a.type=3 where a.type_id=b.type_id and a.c_id=b.s_id and a.type=3 and b.type=3 and a.c_id<>b.c_id",
-            "set a.c_id=b.s_id,a.type=3 where a.type_id=b.type_id and a.c_id=b.c_id and a.type=2 and b.type=1 and a.c_id<>b.s_id",
-            "set a.c_id=b.c_id,a.type=2 where a.type_id=b.type_id and a.c_id=b.s_id and a.type=3 and b.type=2 and a.c_id<>b.c_id",
-            "set a.c_id=b.s_id,a.type=2 where a.type_id=b.type_id and a.c_id=b.c_id and a.type=2 and b.type=4 and a.c_id<>b.s_id"
-    ]
     String updateSql = "update result_gross_margin_ref a,result_gross_margin_ref b &str";
 
 
     void fixRefType(String type, String typeId) {
-        baseSql.executeUpdate("update result_gross_margin_ref set type_id=? where table_name in ('result_${type}_2','settlement_${type}','commission_${type}')" as String,[typeId])
+        baseSql.executeUpdate("update result_gross_margin_ref set type_id=? where table_name in ('result_${type}_2','settlement_${type}','commission_${type}')" as String, [typeId])
     }
+
     void fixRef() {
         log.info("修正配对关联")
         strList.each {
             int n = 1
             while (n > 0) {
                 n = baseSql.executeUpdate(updateSql.replace("&str", it))
+                log.info("{}:{}", n, it)
             }
         }
         log.info("修正配对关联完成")

@@ -158,7 +158,7 @@ public class SumDataTest {
         List<GroovyRowResult> rows = baseSql.rows("select `type`,`name`,`org` from table_type where flag=5");
         for (GroovyRowResult row : rows) {
             String type = row.get("type").toString();
-            GroovyRowResult r = baseSql.firstRow("select count(9) c from result_#_2_final where `8-险种名称` in ('交强险','商业险') and date_format(`9-保单出单日期`,'%Y') = '2019' and (sum_fee<0 or sum_commission<0)".replace("#", type));
+            GroovyRowResult r = baseSql.firstRow("select count(9) c from result_#_2_final where `8-险种名称` in ('交强险','商业险') and date_format(`9-保单出单日期`,'%Y') = '2019' and (ROUND(sum_fee,2)<0 or ROUND(sum_commission,2)<0)".replace("#", type));
             Integer c = MapUtils.getInteger(r, "c");
             if (c > 0) {
                 log.info("{}:{}", type, c);

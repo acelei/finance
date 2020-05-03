@@ -22,7 +22,7 @@ from result_#_2
 where handle_sign in (0, 1, 3, 4, 6, 9, 10)
   and abs(0+`11-净保费`)-sum_fee > ?
   and 0 - sum_fee < ?
-  and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') = '2019-08'
+  and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') = '2019-09'
   and `保险公司` = ?
   and `省` = ?
   and `8-险种名称` in ('交强险','商业险')
@@ -39,7 +39,7 @@ select id,s_id,c_id,sum_fee  as fee,
 from result_#_2
 where handle_sign in (0, 1, 3, 4, 6, 9, 10)
   and sum_fee > ?
-  and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') = '2019-08'
+  and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') = '2019-09'
   and `保险公司` = ?
   and `省` = ?
   and `8-险种名称` in ('交强险','商业险')
@@ -57,7 +57,7 @@ from result_#_2
 where handle_sign in (0, 1, 3, 4, 6, 9, 10)
   and abs(0+`11-净保费`)-sum_commission > ?
   and 0-sum_commission < ?
-  and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') = '2019-08'
+  and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') = '2019-09'
   and `省` = ?
   and `8-险种名称` in ('交强险','商业险')
 order by rand()
@@ -73,7 +73,7 @@ select id,s_id,c_id,sum_fee  as fee,
 from result_#_2
 where handle_sign in (0, 1, 3, 4, 6, 9, 10)
   and sum_commission > ?
-  and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') = '2019-08'
+  and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') = '2019-09'
   and `省` = ?
   and `8-险种名称` in ('交强险','商业险')
 order by rand()

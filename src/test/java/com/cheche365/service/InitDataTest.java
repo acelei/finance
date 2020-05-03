@@ -139,12 +139,18 @@ public class InitDataTest {
     }
 
     @Test
-    public void fixRef() throws SQLException {
-        List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=2");
+    public void fixRefType() throws SQLException {
+        List<GroovyRowResult> rows = baseSql.rows("select `id`,`type` from table_type where flag=4");
         for (GroovyRowResult row : rows) {
             String type = row.get("type").toString();
-            initData.fixRef(type);
+            String id = row.get("id").toString();
+            initData.fixRefType(type, id);
         }
+    }
+
+    @Test
+    public void fixRef() {
+        initData.fixRef();
     }
 
     @Test
@@ -152,8 +158,8 @@ public class InitDataTest {
         List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type");
         for (GroovyRowResult row : rows) {
             String type = row.get("type").toString();
-            baseSql.executeUpdate("ALTER TABLE `result_#_2` ADD COLUMN `version` int(20) NULL DEFAULT 0".replace("#",type));
-            baseSql.executeUpdate("ALTER TABLE `result_#_back` ADD COLUMN `version` int(20) NULL DEFAULT 0".replace("#",type));
+            baseSql.executeUpdate("ALTER TABLE `result_#_2` ADD COLUMN `version` int(20) NULL DEFAULT 0".replace("#", type));
+            baseSql.executeUpdate("ALTER TABLE `result_#_back` ADD COLUMN `version` int(20) NULL DEFAULT 0".replace("#", type));
         }
     }
 

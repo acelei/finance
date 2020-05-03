@@ -174,8 +174,8 @@ select id,s_id, c_id from result_#_2 where  handle_sign != 5 and `8-险种名称
             return ("'${row.id}'" as String)
         })
 
-        if (ids.size() > 0) {
-            baseSql.executeUpdate("delete from result_gross_margin_ref where table_name='result_${type}_2' and result_id in (${ids.join(",")})" as String)
-        }
+//        if (ids.size() > 0) {
+//            baseSql.executeUpdate("delete from result_gross_margin_ref where table_name='result_${type}_2' and result_id in (${ids.join(",")})" as String)
+//        }
     }
 }
