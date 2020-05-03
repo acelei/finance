@@ -264,19 +264,71 @@ class MatchSPData {
     // 匹配sbt结算数据
     @Test
     void step5() {
-        def rows = baseSql.rows("select `id`,`type` from table_type where org='保代-广管' or id in (15,31,3)")
+        def rows = baseSql.rows("select `id`,`type` from table_type where org='保代-广管'")
         rows.each { type ->
             baseSql.executeUpdate("update settlement_sbt_czl_2 a,commission_${type.type} b set a.flag=1,a.type_id=${type.id} where a.`6-保单单号`=b.`6-保单单号` and a.`8-险种名称`=b.`8-险种名称` and a.flag=0" as String)
             baseSql.executeUpdate("update settlement_sbt_czl_2 a,settlement_${type.type} b set a.flag=1,a.type_id=${type.id} where a.`6-保单单号`=b.`6-保单单号` and a.`8-险种名称`=b.`8-险种名称` and a.flag=0" as String)
+            baseSql.executeUpdate("update commission_sbt_czl_2 a,commission_${type.type} b set a.flag=1,a.type_id=${type.id} where a.`6-保单单号`=b.`6-保单单号` and a.`8-险种名称`=b.`8-险种名称` and a.flag=0" as String)
+            baseSql.executeUpdate("update commission_sbt_czl_2 a,settlement_${type.type} b set a.flag=1,a.type_id=${type.id} where a.`6-保单单号`=b.`6-保单单号` and a.`8-险种名称`=b.`8-险种名称` and a.flag=0" as String)
         }
     }
 
     @Test
     void step5_1() {
-        def rows = baseSql.rows("select `id`,`type` from table_type where org='保代-广管' or id in (15,31,3)")
+        def rows = baseSql.rows("select `id`,`type` from table_type where org='保代-广管'")
         rows.each { type ->
             baseSql.executeUpdate("update settlement_sbt_czl_2 a,commission_${type.type} b set a.flag=1,a.type_id=${type.id},a.`8-险种名称`=b.`8-险种名称` where a.`6-保单单号`=b.`6-保单单号` and a.flag=0" as String)
             baseSql.executeUpdate("update settlement_sbt_czl_2 a,settlement_${type.type} b set a.flag=1,a.type_id=${type.id},a.`8-险种名称`=b.`8-险种名称` where a.`6-保单单号`=b.`6-保单单号` and a.flag=0" as String)
+            baseSql.executeUpdate("update commission_sbt_czl_2 a,commission_${type.type} b set a.flag=1,a.type_id=${type.id},a.`8-险种名称`=b.`8-险种名称` where a.`6-保单单号`=b.`6-保单单号` and a.flag=0" as String)
+            baseSql.executeUpdate("update commission_sbt_czl_2 a,settlement_${type.type} b set a.flag=1,a.type_id=${type.id},a.`8-险种名称`=b.`8-险种名称` where a.`6-保单单号`=b.`6-保单单号` and a.flag=0" as String)
+        }
+    }
+
+    @Test
+    void step5_1_1() {
+        def rows = baseSql.rows("select `id`,`type` from table_type where org='保代-北管'")
+        rows.each { type ->
+            baseSql.executeUpdate("update settlement_sbt_czl_2 a,commission_${type.type} b set a.flag=2,a.type_id=${type.id} where a.`6-保单单号`=b.`6-保单单号` and a.`8-险种名称`=b.`8-险种名称` and a.flag=0" as String)
+            baseSql.executeUpdate("update settlement_sbt_czl_2 a,settlement_${type.type} b set a.flag=2,a.type_id=${type.id} where a.`6-保单单号`=b.`6-保单单号` and a.`8-险种名称`=b.`8-险种名称` and a.flag=0" as String)
+            baseSql.executeUpdate("update commission_sbt_czl_2 a,commission_${type.type} b set a.flag=2,a.type_id=${type.id} where a.`6-保单单号`=b.`6-保单单号` and a.`8-险种名称`=b.`8-险种名称` and a.flag=0" as String)
+            baseSql.executeUpdate("update commission_sbt_czl_2 a,settlement_${type.type} b set a.flag=2,a.type_id=${type.id} where a.`6-保单单号`=b.`6-保单单号` and a.`8-险种名称`=b.`8-险种名称` and a.flag=0" as String)
+        }
+    }
+
+    @Test
+    void step5_1_2() {
+        def rows = baseSql.rows("select `id`,`type` from table_type where org='保代-北管'")
+        rows.each { type ->
+            baseSql.executeUpdate("update settlement_sbt_czl_2 a,commission_${type.type} b set a.flag=2,a.type_id=${type.id},a.`8-险种名称`=b.`8-险种名称` where a.`6-保单单号`=b.`6-保单单号` and a.flag=0" as String)
+            baseSql.executeUpdate("update settlement_sbt_czl_2 a,settlement_${type.type} b set a.flag=2,a.type_id=${type.id},a.`8-险种名称`=b.`8-险种名称` where a.`6-保单单号`=b.`6-保单单号` and a.flag=0" as String)
+            baseSql.executeUpdate("update commission_sbt_czl_2 a,commission_${type.type} b set a.flag=2,a.type_id=${type.id},a.`8-险种名称`=b.`8-险种名称` where a.`6-保单单号`=b.`6-保单单号` and a.flag=0" as String)
+            baseSql.executeUpdate("update commission_sbt_czl_2 a,settlement_${type.type} b set a.flag=2,a.type_id=${type.id},a.`8-险种名称`=b.`8-险种名称` where a.`6-保单单号`=b.`6-保单单号` and a.flag=0" as String)
+        }
+    }
+
+    @Test
+    void step5_1_3() {
+        def rows = baseSql.rows("select `id`,`type` from table_type where org='保代-广管'")
+        rows.each { type ->
+            def s1 = baseSql.firstRow("select count(9) c from settlement_${type.type} where source_file='settlement_sbt_czl_2'" as String)
+            def s2 = baseSql.firstRow("select count(9) c from settlement_sbt_czl_2 where flag=1 and type_id=${type.id}" as String)
+            log.info("结算{}:{}-{}",type.type,s1.c,s2.c)
+            def c1 = baseSql.firstRow("select count(9) c from commission_${type.type} where source_file='settlement_sbt_czl_2'" as String)
+            def c2 = baseSql.firstRow("select count(9) c from commission_sbt_czl_2 where flag=1 and type_id=${type.id}" as String)
+            log.info("付佣{}:{}-{}",type.type,c1.c,c2.c)
+        }
+    }
+
+    @Test
+    void step5_1_4() {
+        def rows = baseSql.rows("select `id`,`type` from table_type where org='保代-北管'")
+        rows.each { type ->
+            def s1 = baseSql.firstRow("select count(9) c from settlement_${type.type} where source_file='settlement_sbt_czl_2'" as String)
+            def s2 = baseSql.firstRow("select count(9) c from settlement_sbt_czl_2 where flag=2 and type_id=${type.id}" as String)
+            log.info("结算{}:{}-{}",type.type,s1.c,s2.c)
+            def c1 = baseSql.firstRow("select count(9) c from commission_${type.type} where source_file='settlement_sbt_czl_2'" as String)
+            def c2 = baseSql.firstRow("select count(9) c from commission_sbt_czl_2 where flag=2 and type_id=${type.id}" as String)
+            log.info("付佣{}:{}-{}",type.type,c1.c,c2.c)
         }
     }
 
