@@ -48,7 +48,8 @@ public class MatchSingleData {
             "             left(`9-保单出单日期`, 7)                   as orderMonth,\n" +
             "             ifnull(`sum_fee`, 0.00) as fee,\n" +
             "             ifnull(`sum_commission`, 0.00) as commission, \n" +
-            "             ifnull(`gross_profit`, 0.00) as grossMargin \n" +
+            "             ifnull(`gross_profit`, 0.00) as grossMargin, \n" +
+            "             r_flag as rFlag\n" +
             "      from `resultTableName` t1\n" +
             "      where handle_sign = 2\n" +
             "      and `8-险种名称` in ('交强险', '商业险') " +
@@ -63,7 +64,8 @@ public class MatchSingleData {
             "        `省` as province,\n" +
             "        left(`9-保单出单日期`, 7) as orderMonth,\n" +
             "        ifnull(`sum_fee`, 0.00) as fee,\n" +
-            "        ifnull(`sum_commission`, 0.00) as commission\n" +
+            "        ifnull(`sum_commission`, 0.00) as commission,\n" +
+            "        r_flag as rFlag\n" +
             "        from `resultTableName` t1\n" +
             "        where handle_sign = 6\n" +
             "        and `8-险种名称` in ('交强险', '商业险')" +
@@ -232,7 +234,7 @@ public class MatchSingleData {
                     sumCommission = sumCommission.add(sourceTotalVal);
                 }
                 BigDecimal grossMargin = getFinanceGrossMargin(sumFee, sumCommission);
-                if (grossMargin.abs().compareTo(BigDecimal.ONE) <= 0 && sumFee.compareTo(BigDecimal.ZERO)>0) {
+                if (grossMargin.abs().compareTo(BigDecimal.ONE) <= 0 && sumFee.compareTo(BigDecimal.ZERO) > 0) {
                     resultThsList.addAll(sourceDataList);
                     matchSuccess = true;
                     break;
@@ -343,7 +345,7 @@ public class MatchSingleData {
     }
 
     private boolean isNormalGrossMargin(BigDecimal sumFee, BigDecimal sumCommission) {
-        return getFinanceGrossMargin(sumFee, sumCommission).abs().compareTo(BigDecimal.ONE) <= 0 && sumFee.compareTo(BigDecimal.ZERO)>0;
+        return getFinanceGrossMargin(sumFee, sumCommission).abs().compareTo(BigDecimal.ONE) <= 0 && sumFee.compareTo(BigDecimal.ZERO) > 0;
     }
 
     private List<TwoHandleSign> getThsByRids(List<String> rIds, Map<String, List<TwoHandleSign>> twoHandleSignMap) {
@@ -357,18 +359,32 @@ public class MatchSingleData {
     private void insertResultRef(String resultName, List<TwoHandleSign> resultThsList, TwoHandleSign twoHandleSign, BigDecimal sumFee, BigDecimal sumCommission, int type) throws SQLException {
         List<Map<String, Object>> insertMapList = new ArrayList<>();
         if (type == 1) {
-            String cId = twoHandleSign.getCids().split(",")[0];
+            String cId;
+            if (twoHandleSign.getRFlag() == 1) {
+                cId = twoHandleSign.getSids().split(",")[0];
+                type = 3;
+            } else {
+                cId = twoHandleSign.getCids().split(",")[0];
+                type = 2;
+            }
             for (TwoHandleSign ths : resultThsList) {
                 for (String sId : ths.getSids().split(",")) {
-                    Map<String, Object> insertMap = makeInsertMap(resultName, twoHandleSign, sumFee, sumCommission, sId, cId, 2);
+                    Map<String, Object> insertMap = makeInsertMap(resultName, twoHandleSign, sumFee, sumCommission, sId, cId, type);
                     insertMapList.add(insertMap);
                 }
             }
         } else {
-            String sId = twoHandleSign.getSids().split(",")[0];
+            String sId;
+            if (twoHandleSign.getRFlag() == 2) {
+                sId = twoHandleSign.getCids().split(",")[0];
+                type = 4;
+            } else {
+                sId = twoHandleSign.getSids().split(",")[0];
+                type = 1;
+            }
             for (TwoHandleSign ths : resultThsList) {
                 for (String cId : ths.getCids().split(",")) {
-                    Map<String, Object> insertMap = makeInsertMap(resultName, twoHandleSign, sumFee, sumCommission, sId, cId, 1);
+                    Map<String, Object> insertMap = makeInsertMap(resultName, twoHandleSign, sumFee, sumCommission, sId, cId, type);
                     insertMapList.add(insertMap);
                 }
             }

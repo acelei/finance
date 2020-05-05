@@ -22,5 +22,6 @@ public class TwoHandleSign {
     private BigDecimal fee;
     private BigDecimal commission;
     private BigDecimal grossMargin;
+    private Integer rFlag;
 
 }

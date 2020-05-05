@@ -65,10 +65,10 @@ public class InitDataTest {
 
     @Test
     public void createTable() throws SQLException {
-        String type = "sbt_czl_gg";
+        String type = "test";
 
-        baseSql.execute("create table settlement_# like settlement_kj_czl_gg".replace("#", type));
-        baseSql.execute("create table commission_# like commission_kj_czl_gg".replace("#", type));
+        baseSql.execute("create table settlement_# like settlement_bj".replace("#", type));
+        baseSql.execute("create table commission_# like commission_bj".replace("#", type));
         baseSql.execute("create table result_# like result_bj".replace("#", type));
         baseSql.execute("create table result_#_2 like result_bj_2".replace("#", type));
         baseSql.execute("create table result_#_back like result_bj_back".replace("#", type));
@@ -80,12 +80,12 @@ public class InitDataTest {
 
     @Test
     public void modifyTable() throws SQLException {
-        List<String> types = Lists.newArrayList("anhui_2", "dongguan_2", "foshan_2", "fujian_2", "guangdong_2", "guangxi_2", "jiangsu_2", "liaoning_2", "shandong_2", "sichuan_2", "zhejiang_2", "zongbu_2");
+        List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type");
 
-        for (String type : types) {
+        for (GroovyRowResult row : rows) {
+            String type = row.get("type").toString();
             try {
-                baseSql.executeUpdate("ALTER TABLE commission_# ADD COLUMN `flag` tinyint(255) NULL DEFAULT 0,ADD COLUMN `type_id` int(11) NULL".replace("#", type));
-                baseSql.executeUpdate("ALTER TABLE settlement_# ADD COLUMN `flag` tinyint(255) NULL DEFAULT 0,ADD COLUMN `type_id` int(11) NULL".replace("#", type));
+                baseSql.executeUpdate("ALTER TABLE result_#_2 ADD COLUMN `r_flag` tinyint(4) NULL DEFAULT 0".replace("#", type));
             } catch (Exception e) {
                 log.error(type);
             }
@@ -140,7 +140,7 @@ public class InitDataTest {
 
     @Test
     public void fixRefType() throws SQLException {
-        List<GroovyRowResult> rows = baseSql.rows("select `id`,`type` from table_type where flag=4");
+        List<GroovyRowResult> rows = baseSql.rows("select `id`,`type` from table_type");
         for (GroovyRowResult row : rows) {
             String type = row.get("type").toString();
             String id = row.get("id").toString();
@@ -165,7 +165,7 @@ public class InitDataTest {
 
     @Test
     public void result3() throws SQLException {
-        List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type");
+        List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where id in (4,8,30,45,67,74)");
         for (GroovyRowResult row : rows) {
             String type = row.get("type").toString();
             initData.result3(type);

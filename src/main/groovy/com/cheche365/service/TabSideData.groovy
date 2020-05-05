@@ -18,10 +18,12 @@ class TabSideData {
     @Autowired
     private ThreadPool runThreadPool
 
-    String sideFlag = "update result_#_2 set handle_sign=6 where s_id is null or c_id is null"
+    String sideFlag1 = "update result_#_2 set handle_sign=6,r_flag=1 where c_id is null"
+    String sideFlag2 = "update result_#_2 set handle_sign=6,r_flag=2 where s_id is null"
 
     void setDefaultSideFlag(String type) {
-        baseSql.executeUpdate(sideFlag.replace("#", type))
+        baseSql.executeUpdate(sideFlag1.replace("#", type), )
+        baseSql.executeUpdate(sideFlag2.replace("#", type), )
     }
 
     private static final String errSettlementSql = "select id,s_id,`11-净保费` from result_#_2 where handle_sign=6 and c_id is null and `8-险种名称` in ('交强险','商业险') and (sum_fee/`11-净保费` <0 or sum_fee/`11-净保费`>0.7) and date_format(`9-保单出单日期`,'%Y')='2019'"
@@ -122,19 +124,19 @@ select id,s_id, c_id from result_#_2 where  handle_sign != 5 and `8-险种名称
 '''
 
     String resultSide2 = '''
-select id,s_id, c_id from result_#_2 where  handle_sign != 5 and `8-险种名称` in ('交强险','商业险') and handle_sign != 3 and date_format(`9-保单出单日期`,'%Y')='2019' and sum_fee > sum_commission and (sum_fee / abs(`11-净保费`)) < if(`8-险种名称` = '交强险', 0, 0.12)
+select id,s_id, c_id from result_#_2 where  handle_sign != 5 and `8-险种名称` in ('交强险','商业险') and handle_sign != 3 and date_format(`9-保单出单日期`,'%Y')='2019' and 0+sum_fee > 0+sum_commission and (sum_fee / abs(`11-净保费`)) < if(`8-险种名称` = '交强险', 0, 0.12)
 union all
-select id,s_id, c_id from result_#_2 where  handle_sign != 5 and `8-险种名称` in ('交强险','商业险') and handle_sign != 3 and date_format(`9-保单出单日期`,'%Y')='2019' and sum_fee > sum_commission and (sum_fee / abs(`11-净保费`)) > 0.7
+select id,s_id, c_id from result_#_2 where  handle_sign != 5 and `8-险种名称` in ('交强险','商业险') and handle_sign != 3 and date_format(`9-保单出单日期`,'%Y')='2019' and 0+sum_fee > 0+sum_commission and (sum_fee / abs(`11-净保费`)) > 0.7
 union all
-select id,s_id, c_id from result_#_2 where  handle_sign != 5 and `8-险种名称` in ('交强险','商业险') and handle_sign != 3 and date_format(`9-保单出单日期`,'%Y')='2019' and sum_fee < sum_commission and (sum_commission / abs(`11-净保费`)) > 0.7
+select id,s_id, c_id from result_#_2 where  handle_sign != 5 and `8-险种名称` in ('交强险','商业险') and handle_sign != 3 and date_format(`9-保单出单日期`,'%Y')='2019' and 0+sum_fee < 0+sum_commission and (sum_commission / abs(`11-净保费`)) > 0.7
 '''
 
     String resultSide3 = '''
-select id,s_id, c_id from result_#_2 where  handle_sign != 5 and `8-险种名称` in ('交强险','商业险') and handle_sign != 3 and date_format(`9-保单出单日期`,'%Y')='2019' and sum_fee > sum_commission and (sum_fee / abs(`11-净保费`)) < 0
+select id,s_id, c_id from result_#_2 where  handle_sign != 5 and `8-险种名称` in ('交强险','商业险') and handle_sign != 3 and date_format(`9-保单出单日期`,'%Y')='2019' and 0+sum_fee > 0+sum_commission and (sum_fee / abs(`11-净保费`)) < 0
 union all
-select id,s_id, c_id from result_#_2 where  handle_sign != 5 and `8-险种名称` in ('交强险','商业险') and handle_sign != 3 and date_format(`9-保单出单日期`,'%Y')='2019' and sum_fee > sum_commission and (sum_fee / abs(`11-净保费`)) > 0.7
+select id,s_id, c_id from result_#_2 where  handle_sign != 5 and `8-险种名称` in ('交强险','商业险') and handle_sign != 3 and date_format(`9-保单出单日期`,'%Y')='2019' and 0+sum_fee > 0+sum_commission and (sum_fee / abs(`11-净保费`)) > 0.7
 union all
-select id,s_id, c_id from result_#_2 where  handle_sign != 5 and `8-险种名称` in ('交强险','商业险') and handle_sign != 3 and date_format(`9-保单出单日期`,'%Y')='2019' and sum_fee < sum_commission and (sum_commission / abs(`11-净保费`)) > 0.7
+select id,s_id, c_id from result_#_2 where  handle_sign != 5 and `8-险种名称` in ('交强险','商业险') and handle_sign != 3 and date_format(`9-保单出单日期`,'%Y')='2019' and 0+sum_fee < 0+sum_commission and (sum_commission / abs(`11-净保费`)) > 0.7
 '''
     String downSettlement = "update settlement_# set d_id=5,handle_sign=6 where id in (:ids)"
     String downCommission = "update commission_# set d_id=5,handle_sign=6 where id in (:ids)"
@@ -174,8 +176,8 @@ select id,s_id, c_id from result_#_2 where  handle_sign != 5 and `8-险种名称
             return ("'${row.id}'" as String)
         })
 
-//        if (ids.size() > 0) {
-//            baseSql.executeUpdate("delete from result_gross_margin_ref where table_name='result_${type}_2' and result_id in (${ids.join(",")})" as String)
-//        }
+        if (ids.size() > 0) {
+            baseSql.executeUpdate("delete from result_gross_margin_ref where table_name='result_${type}_2' and result_id in (${ids.join(",")})" as String)
+        }
     }
 }

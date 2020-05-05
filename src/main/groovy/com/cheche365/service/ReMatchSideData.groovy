@@ -131,7 +131,9 @@ select id,s_id,c_id,sum_fee  as fee,
        `11-净保费` as premium,
        `14-手续费总额（报行内+报行外）(含税)`,`15-手续费总额（报行内+报行外）(不含税)`,
        `42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`,
-       version
+       version,
+       r_flag,
+       handle_sign
 from result_#_2
 where handle_sign in (0, 1, 3, 4, 6, 9, 10)
   and (abs(0+`11-净保费`)*0.7)-sum_fee > ?
@@ -149,7 +151,9 @@ select id,s_id,c_id,sum_fee  as fee,
        `11-净保费` as premium,
        `14-手续费总额（报行内+报行外）(含税)`,`15-手续费总额（报行内+报行外）(不含税)`,
        `42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`,
-       version
+       version,
+       r_flag,
+       handle_sign
 from result_#_2
 where handle_sign in (0, 1, 3, 4, 6, 9, 10)
   and sum_fee-(abs(0+`11-净保费`)*if(`8-险种名称` = '交强险', 0, 0.12))> ?
@@ -166,7 +170,9 @@ select id,s_id,c_id,sum_fee  as fee,
        `11-净保费` as premium,
        `14-手续费总额（报行内+报行外）(含税)`,`15-手续费总额（报行内+报行外）(不含税)`,
        `42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`,
-       version
+       version,
+       r_flag,
+       handle_sign
 from result_#_2
 where handle_sign in (0, 1, 3, 4, 6, 9, 10)
   and (abs(0+`11-净保费`)*0.7)-sum_commission > ?
@@ -185,10 +191,12 @@ select id,s_id,c_id,sum_fee  as fee,
        `11-净保费` as premium,
        `14-手续费总额（报行内+报行外）(含税)`,`15-手续费总额（报行内+报行外）(不含税)`,
        `42-佣金金额（已入账）`,`45-支付金额`,`46-未计提佣金（19年底尚未入帐）`,
-       version
+       version,
+       r_flag,
+       handle_sign
 from result_#_2
 where handle_sign in (0, 1, 3, 4, 6, 9, 10)
-  and sum_commission > ?
+  and 0+sum_commission > ?
   and `40-代理人名称`=?
   and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') <= ?
   and `保险公司` = ?
@@ -226,15 +234,20 @@ limit 100
         def s1 = (result.'14-手续费总额（报行内+报行外）(含税)' as double) + (row.'14-手续费总额（报行内+报行外）(含税)' as double)
         def s2 = (result.'15-手续费总额（报行内+报行外）(不含税)' as double) + (row.'15-手续费总额（报行内+报行外）(不含税)' as double)
         def fee = (result.fee as double) + (row.fee as double)
-        def i = baseSql.executeUpdate("update result_#_2 set handle_sign=4,`14-手续费总额（报行内+报行外）(含税)`=?,`15-手续费总额（报行内+报行外）(不含税)`=?,sum_fee=?,gross_profit=?,s_id=?,version=? where id=? and version=?".replace("#", type),
-                [s1, s2, fee, (fee - (result.commission as double)) / fee, "${result.s_id},${row.s_id}".replace("null,", "").replace(",null", ""), result.version + 1, result.id, result.version])
+        def handleSign = 4
+        if ((result.handle_sign as Integer) == 3) {
+            handleSign = 3
+        }
+
+        def i = baseSql.executeUpdate("update result_#_2 set handle_sign=?,`14-手续费总额（报行内+报行外）(含税)`=?,`15-手续费总额（报行内+报行外）(不含税)`=?,sum_fee=?,gross_profit=?,s_id=?,version=? where id=? and version=?".replace("#", type),
+                [handleSign, s1, s2, fee, (fee - (result.commission as double)) / fee, "${result.s_id},${row.s_id}".replace("null,", "").replace(",null", ""), result.version + 1, result.id, result.version])
 
         if (i == 0) {
             return false
         }
         String cId, tableName, joinType
         String[] sIds = (row.s_id as String).split(",")
-        if (result.c_id == null) {
+        if (result.c_id == null || (result.r_flag as Integer) == 1) {
             cId = (result.s_id as String).split(",")[0]
             tableName = "'${getsTable()}'"
             joinType = "3"
@@ -269,15 +282,19 @@ limit 100
         if ((result.fee as double) != 0) {
             r = (((result.fee as double) - commission) / (result.fee as double))
         }
-        def i = baseSql.executeUpdate("update result_#_2 set handle_sign=4,`42-佣金金额（已入账）`=?,`45-支付金额`=?,`46-未计提佣金（19年底尚未入帐）`=?,sum_commission=?,gross_profit=?,c_id=?,version=? where id =? and version=?".replace("#", type),
-                [c1, c2, c3, commission, r, "${result.c_id},${row.c_id}".replace("null,", "").replace(",null", ""), result.version + 1, result.id, result.version])
+        def handleSign = 4
+        if ((result.handle_sign as Integer) == 3) {
+            handleSign = 3
+        }
+        def i = baseSql.executeUpdate("update result_#_2 set handle_sign=?,`42-佣金金额（已入账）`=?,`45-支付金额`=?,`46-未计提佣金（19年底尚未入帐）`=?,sum_commission=?,gross_profit=?,c_id=?,version=? where id =? and version=?".replace("#", type),
+                [handleSign, c1, c2, c3, commission, r, "${result.c_id},${row.c_id}".replace("null,", "").replace(",null", ""), result.version + 1, result.id, result.version])
 
         if (i == 0) {
             return false
         }
         String sId, tableName, joinType
         String[] cIds = (row.c_id as String).split(",")
-        if (result.s_id == null) {
+        if (result.s_id == null || (result.r_flag as Integer) == 2) {
             sId = (result.c_id as String).split(",")[0]
             tableName = "'${getcTable()}'"
             joinType = "4"

@@ -195,7 +195,7 @@ from commission_# a
          left join result_gross_margin_ref c on a.id = c.c_id and c.type in (1,4) and c.table_name in ('result_#_2', 'settlement_#', 'commission_#')
          left join settlement_# d on d.id = c.s_id and c.type = 1
          left join commission_# e on e.id = c.s_id and c.type = 4
-         where a.source_file in ('commission_#_2','settlement_sbt_czl_2','科技超自律', '赛博坦超自律')
+         where a.source_file in ('commission_#_2','settlement_sbt_czl_2','科技超自律', '赛博坦超自律','commission_all_2')
 '''
 
     void getFixCZL(String bdType) {
@@ -224,6 +224,7 @@ from commission_# a
 
         baseSql.executeUpdate("update ${cTableName} set `42-佣金金额（已入账）`=`45-支付金额`" as String)
         baseSql.executeUpdate("update ${cTableName} set `45-支付金额`=0" as String)
+        baseSql.executeUpdate("update ${cTableName} set `46-未计提佣金（19年底尚未入帐）`=0" as String)
 
     }
 

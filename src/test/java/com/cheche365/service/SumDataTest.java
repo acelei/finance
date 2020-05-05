@@ -152,13 +152,28 @@ public class SumDataTest {
         ExcelUtil2.writeToExcel(sHead, list).renameTo(new File("统计.xlsx"));
     }
 
+    String errorCount = "select count(9) as c\n" +
+            "from result_#_2_final\n" +
+            "where `8-险种名称` in ('交强险', '商业险')\n" +
+            "  and date_format(`9-保单出单日期`, '%Y') = '2019'\n" +
+//            "  and abs(`10-全保费`)!=0\n" +
+            "  and (ROUND(sum_fee, 2) < 0 or\n" +
+            "       ROUND(sum_commission, 2) < 0 or\n" +
+            "       ROUND(`14-手续费总额（报行内+报行外）(含税)`,2)<0 or\n" +
+            "       ROUND(`42-佣金金额（已入账）`+`45-支付金额`+`46-未计提佣金（19年底尚未入帐）`)<0 or\n" +
+            "       ROUND(sum_fee, 2) > 0 + `10-全保费` or\n" +
+            "       ROUND(sum_commission, 2) > 0 + `10-全保费` or\n" +
+            "       ROUND(`14-手续费总额（报行内+报行外）(含税)`, 2) > 0 + `10-全保费` or\n" +
+            "       ROUND(`42-佣金金额（已入账）`+`45-支付金额`+`46-未计提佣金（19年底尚未入帐）`, 2) > 0 + `10-全保费`\n" +
+            "       )";
+
     @Test
     public void exportTjSign2() throws SQLException, IOException, InterruptedException {
 
         List<GroovyRowResult> rows = baseSql.rows("select `type`,`name`,`org` from table_type where flag=5");
         for (GroovyRowResult row : rows) {
             String type = row.get("type").toString();
-            GroovyRowResult r = baseSql.firstRow("select count(9) c from result_#_2_final where `8-险种名称` in ('交强险','商业险') and date_format(`9-保单出单日期`,'%Y') = '2019' and (ROUND(sum_fee,2)<0 or ROUND(sum_commission,2)<0)".replace("#", type));
+            GroovyRowResult r = baseSql.firstRow(errorCount.replace("#", type));
             Integer c = MapUtils.getInteger(r, "c");
             if (c > 0) {
                 log.info("{}:{}", type, c);

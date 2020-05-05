@@ -314,12 +314,14 @@ select group_concat(s_id)                          as s_id,
        `7-出单保险公司（明细至保险公司分支机构）`,
        `8-险种名称`,
        `9-保单出单日期`,
+       if(abs(sum(sum_fee))>10 or abs(sum(sum_commission))>10, max(0 + `10-全保费`),
        if(max(0 + `10-全保费`) > 0,
           max(0 + `10-全保费`) + if(min(0 + `10-全保费`) < 0, min(0 + `10-全保费`), 0),
-          min(0 + `10-全保费`))            as `10-全保费`,
-       if(max(0 + `11-净保费`) > 0,
-          max(0 + `11-净保费`) + if(min(0 + `11-净保费`) < 0, min(0 + `11-净保费`), 0),
-          min(0 + `11-净保费`))            as `11-净保费`,
+          min(0 + `10-全保费`)))            as `10-全保费`,
+       if(abs(sum(sum_fee))>10 or abs(sum(sum_commission))>10, max(0 + `10-全保费`),
+       if(max(0 + `10-全保费`) > 0,
+          max(0 + `10-全保费`) + if(min(0 + `10-全保费`) < 0, min(0 + `10-全保费`), 0),
+          min(0 + `10-全保费`)))/1.06            as `11-净保费`,
        `12-手续费等级（对应点位台账）`,
        `13-手续费率`,
        sum(`14-手续费总额（报行内+报行外）(含税)`)     as `14-手续费总额（报行内+报行外）(含税)`,
@@ -478,8 +480,10 @@ set handle_sign=3
 where handle_sign in (0, 1, 4, 6)
   and `8-险种名称` in ('交强险', '商业险')
   and abs(sum_fee) > 0
-  and (sum_fee / `11-净保费` < if(`8-险种名称` = '交强险', 0, 0.12) or
-       sum_fee / `11-净保费` > 0.7)
+  and (0+`11-净保费`=0 or 
+       sum_fee / `11-净保费` < if(`8-险种名称` = '交强险', 0, 0.12) or
+       sum_fee / `11-净保费` > 0.7
+       )
   and date_format(`9-保单出单日期`,'%Y')='2019'
 '''
     private static final String errSql2 = '''
@@ -488,8 +492,10 @@ set handle_sign=3
 where handle_sign in (0, 1, 4, 6)
   and `8-险种名称` in ('交强险', '商业险')
   and abs(sum_commission) > 0
-  and (sum_commission / `11-净保费` < if(`8-险种名称` = '交强险', 0, 0.12) or
-       sum_commission / `11-净保费` > 0.7)
+  and (0+`11-净保费`=0 or 
+       sum_commission / `11-净保费` < if(`8-险种名称` = '交强险', 0, 0.12) or
+       sum_commission / `11-净保费` > 0.7
+       )
   and date_format(`9-保单出单日期`,'%Y')='2019'
 '''
 
@@ -499,26 +505,17 @@ set handle_sign=3
 where handle_sign in (0, 1, 4, 6)
   and `8-险种名称` in ('交强险', '商业险')
   and abs(sum_fee) > 0
-  and sum_fee / `11-净保费` > 0.7
+  and (0+`11-净保费`=0 or sum_fee / `11-净保费` > 0.7)
   and date_format(`9-保单出单日期`,'%Y')='2019'
 '''
-    String[] strList = [
-            "set a.s_id=b.s_id,a.type=4 where a.type_id=b.type_id and a.s_id=b.c_id and a.type=4 and b.type=4 and a.s_id<>b.s_id",
-            "set a.s_id=b.c_id,a.type=1 where a.type_id=b.type_id and a.s_id=b.s_id and a.type=1 and b.type=3 and a.s_id<>b.c_id",
-            "set a.s_id=b.s_id,a.type=1 where a.type_id=b.type_id and a.s_id=b.c_id and a.type=4 and b.type=1 and a.s_id<>b.s_id",
-            "set a.s_id=b.c_id,a.type=4 where a.type_id=b.type_id and a.s_id=b.s_id and a.type=1 and b.type=2 and a.s_id<>b.c_id",
-            "set a.c_id=b.s_id,a.type=3 where a.type_id=b.type_id and a.c_id=b.c_id and a.type=2 and b.type=1 and a.c_id<>b.s_id",
-            "set a.c_id=b.c_id,a.type=2 where a.type_id=b.type_id and a.c_id=b.s_id and a.type=3 and b.type=2 and a.c_id<>b.c_id",
-            "set a.c_id=b.s_id,a.type=2 where a.type_id=b.type_id and a.c_id=b.c_id and a.type=2 and b.type=4 and a.c_id<>b.s_id",
-            "set a.c_id=b.c_id,a.type=3 where a.type_id=b.type_id and a.c_id=b.s_id and a.type=3 and b.type=3 and a.c_id<>b.c_id",
-    ]
+
     private static final String errSql22 = '''
 update result_#_2
 set handle_sign=3
 where handle_sign in (0, 1, 4, 6)
   and `8-险种名称` in ('交强险', '商业险')
   and abs(sum_commission) > 0
-  and sum_commission / `11-净保费` > 0.7
+  and (0+`11-净保费`=0 or sum_commission / `11-净保费` > 0.7)
   and date_format(`9-保单出单日期`,'%Y')='2019'
 '''
 
@@ -544,6 +541,16 @@ where handle_sign in (0, 1, 4, 6)
         baseSql.executeUpdate("update result_gross_margin_ref set type_id=? where table_name in ('result_${type}_2','settlement_${type}','commission_${type}')" as String, [typeId])
     }
 
+    String[] strList = [
+            "set a.s_id=b.s_id,a.type=4 where a.type_id=b.type_id and a.s_id=b.c_id and a.type=4 and b.type=4 and a.s_id<>b.s_id",
+            "set a.s_id=b.c_id,a.type=1 where a.type_id=b.type_id and a.s_id=b.s_id and a.type=1 and b.type=3 and a.s_id<>b.c_id",
+            "set a.s_id=b.s_id,a.type=1 where a.type_id=b.type_id and a.s_id=b.c_id and a.type=4 and b.type=1 and a.s_id<>b.s_id",
+            "set a.s_id=b.c_id,a.type=4 where a.type_id=b.type_id and a.s_id=b.s_id and a.type=1 and b.type=2 and a.s_id<>b.c_id",
+            "set a.c_id=b.s_id,a.type=3 where a.type_id=b.type_id and a.c_id=b.c_id and a.type=2 and b.type=1 and a.c_id<>b.s_id",
+            "set a.c_id=b.c_id,a.type=2 where a.type_id=b.type_id and a.c_id=b.s_id and a.type=3 and b.type=2 and a.c_id<>b.c_id",
+            "set a.c_id=b.s_id,a.type=2 where a.type_id=b.type_id and a.c_id=b.c_id and a.type=2 and b.type=4 and a.c_id<>b.s_id",
+            "set a.c_id=b.c_id,a.type=3 where a.type_id=b.type_id and a.c_id=b.s_id and a.type=3 and b.type=3 and a.c_id<>b.c_id",
+    ]
     void fixRef() {
         log.info("修正配对关联")
         strList.each {

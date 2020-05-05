@@ -46,10 +46,11 @@ public class DataRunTest {
 
     @Test
     public void init() throws SQLException {
-        List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=-2");
+        List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag in (-1,-2)");
 
         for (GroovyRowResult row : rows) {
             String type = row.get("type").toString();
+            initData.run(type);
             dataRunService.init(type);
 //            baseSql.executeUpdate("update table_type set flag=1 where `type`=?", new Object[]{type});
         }
@@ -150,12 +151,12 @@ public class DataRunTest {
         }
     }
 
-    private String type = "shandong";
+    private String type = "sx_baodai";
 
     @Test
     public void singRun() {
         initData.run(type);
-        dataRunService.init(type);
+//        dataRunService.init(type);
     }
 
     @Test
@@ -193,7 +194,29 @@ public class DataRunTest {
         dataRunService.reMatch(type);
     }
 
+    String[] strList = new String[]{
+            "set a.s_id=b.s_id,a.type=4 where a.type_id=b.type_id and a.type_id=11 and a.s_id=b.c_id and a.type=4 and b.type=4 and a.s_id<>b.s_id",
+            "set a.s_id=b.c_id,a.type=1 where a.type_id=b.type_id and a.type_id=11 and a.s_id=b.s_id and a.type=1 and b.type=3 and a.s_id<>b.c_id",
+            "set a.s_id=b.s_id,a.type=1 where a.type_id=b.type_id and a.type_id=11 and a.s_id=b.c_id and a.type=4 and b.type=1 and a.s_id<>b.s_id",
+            "set a.s_id=b.c_id,a.type=4 where a.type_id=b.type_id and a.type_id=11 and a.s_id=b.s_id and a.type=1 and b.type=2 and a.s_id<>b.c_id",
+            "set a.c_id=b.s_id,a.type=3 where a.type_id=b.type_id and a.type_id=11 and a.c_id=b.c_id and a.type=2 and b.type=1 and a.c_id<>b.s_id",
+            "set a.c_id=b.c_id,a.type=2 where a.type_id=b.type_id and a.type_id=11 and a.c_id=b.s_id and a.type=3 and b.type=2 and a.c_id<>b.c_id",
+            "set a.c_id=b.s_id,a.type=2 where a.type_id=b.type_id and a.type_id=11 and a.c_id=b.c_id and a.type=2 and b.type=4 and a.c_id<>b.s_id",
+            "set a.c_id=b.c_id,a.type=3 where a.type_id=b.type_id and a.type_id=11 and a.c_id=b.s_id and a.type=3 and b.type=3 and a.c_id<>b.c_id",
+    };
 
+    String updateSql = "update result_gross_margin_ref a,result_gross_margin_ref b &str";
+
+    @Test
+    public void fixRef() throws SQLException {
+        for (String s : strList) {
+            int n = 1;
+            while (n > 0) {
+                n = baseSql.executeUpdate(updateSql.replace("&str", s));
+                log.info("{}:{}", n, s);
+            }
+        }
+    }
 
     @Test
     public void exportSignFile() throws InterruptedException, ExecutionException, SQLException, IOException {

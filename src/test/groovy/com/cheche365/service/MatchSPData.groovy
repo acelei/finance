@@ -382,7 +382,7 @@ select 'commission_#_2',id, `1-序号`, `2-保代机构`, `3-出单保险代理�
 insert into commission_#1 (source_file,c_id, `1-序号`, `2-保代机构`, `3-出单保险代理机构（车车科技适用）`, `4-发票付款方（与发票一致）`,`5-投保人名称`,`6-保单单号`,`7-出单保险公司（明细至保险公司分支机构）`,`8-险种名称`,`9-保单出单日期`,`10-全保费`,`11-净保费`,`45-支付金额`,`保险公司id`,`保险公司`,`省`,`市`)
 select 'commission_all_2',id, `1-序号`, `2-保代机构`, `3-出单保险代理机构（车车科技适用）`, `4-发票付款方（与发票一致）`,`5-投保人名称`,`6-保单单号`,`7-出单保险公司（明细至保险公司分支机构）`,`8-险种名称`,`9-保单出单日期`,`10-全保费`,`11-净保费`,`45-支付金额`,`保险公司id`,`保险公司`,`省`,`市` from commission_all_2 where flag=1 and type_id=#2
 '''
-        def rows = baseSql.rows("select `id`,`type` from table_type where org='保代-广管'")
+        def rows = baseSql.rows("select `id`,`type` from table_type where org!='保代-广管'")
         rows.each {
             baseSql.executeInsert(sql.replace("#1", it.type).replace("#2", it.id as String))
         }
