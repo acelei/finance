@@ -141,7 +141,7 @@ select id,s_id, c_id from result_#_2 where  handle_sign != 5 and `8-险种名称
     String downSettlement = "update settlement_# set d_id=5,handle_sign=6 where id in (:ids)"
     String downCommission = "update commission_# set d_id=5,handle_sign=6 where id in (:ids)"
     //
-    String updateResult = "update result_#_2 set handle_sign=7 where id=?"
+    String updateResult = "update result_#_2 set handle_sign=7,s_id=null,c_id=null where id=?"
 
     void putDownFlag1(String type) {
         log.info("下放收入成本为负数的标志位:{}", type)
