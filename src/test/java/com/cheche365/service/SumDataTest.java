@@ -141,7 +141,7 @@ public class SumDataTest {
     public void exportTjSign() throws SQLException, IOException, InterruptedException {
         List<Map> list = new ArrayList<>();
 
-        List<GroovyRowResult> rows = baseSql.rows("select `type`,`name`,`org` from table_type where flag=5");
+        List<GroovyRowResult> rows = baseSql.rows("select `type`,`name`,`org` from table_type where flag=5 and org='科技'");
         for (GroovyRowResult row : rows) {
             String type = row.get("type").toString();
             String name = row.get("name").toString();

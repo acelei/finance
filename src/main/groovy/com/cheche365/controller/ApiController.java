@@ -41,6 +41,8 @@ public class ApiController {
     @Autowired
     private ResultService resultService;
     @Autowired
+    private ResultService2 resultService2;
+    @Autowired
     private SumData sumData;
     @Autowired
     private ReplaceHisBusiness replaceHisBusiness;
@@ -163,6 +165,26 @@ public class ApiController {
         }
         return RestResponse.success(type);
     }
+    @GetMapping({"data/result2/{type}", "data/result2"})
+    public RestResponse<String> result2(@PathVariable(required = false) String type) throws SQLException {
+        if (type != null) {
+            resultService2.result(type);
+        } else {
+            List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=4");
+
+            for (GroovyRowResult row : rows) {
+                String t = row.get("type").toString();
+                try {
+                    resultService2.result(t);
+                    baseSql.executeUpdate("update table_type set flag=5 where `type`=?", new Object[]{t});
+                } catch (SQLException e) {
+                    log.error("结果输出错误:" + t, e);
+                }
+            }
+        }
+        return RestResponse.success(type);
+    }
+
 
     @GetMapping("data/rollback/{type}")
     public RestResponse<String> rollback(@PathVariable String type) {
@@ -245,6 +267,23 @@ public class ApiController {
             String day = LocalDate.now().format(DateTimeFormatter.ofPattern("MMdd"));
             File f = new File("tmp/2019审计台账-" + name + "(" + day + ").xlsx");
             return resultService.exportResult(t, f);
+        });
+
+        File file = ExcelUtil2.zipFiles(fileList, null);
+
+        return downloadFile("车车保代.zip", file);
+    }
+
+    @GetMapping("data/exportResultBd2")
+    public ResponseEntity exportResult3() throws SQLException, ExecutionException, InterruptedException, IOException {
+        List<GroovyRowResult> rows = baseSql.rows("select `type`,`name` from table_type where flag=5 and org!='科技'");
+
+        List<File> fileList = taskThreadPool.submitWithResult(rows, row -> {
+            String t = row.get("type").toString();
+            String name = row.get("name").toString();
+            String day = LocalDate.now().format(DateTimeFormatter.ofPattern("MMdd"));
+            File f = new File("tmp/2019审计台账-" + name + "(" + day + ").xlsx");
+            return resultService2.exportResult(t, f);
         });
 
         File file = ExcelUtil2.zipFiles(fileList, null);
