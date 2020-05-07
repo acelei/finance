@@ -80,12 +80,12 @@ public class InitDataTest {
 
     @Test
     public void modifyTable() throws SQLException {
-        List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type");
+        List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=5 and org='科技'");
 
         for (GroovyRowResult row : rows) {
             String type = row.get("type").toString();
             try {
-                baseSql.executeUpdate("ALTER TABLE result_#_2 ADD COLUMN `r_flag` tinyint(4) NULL DEFAULT 0".replace("#", type));
+                baseSql.executeUpdate("create table result_#_3_final like result_bj_2_final".replace("#", type));
             } catch (Exception e) {
                 log.error(type);
             }
@@ -187,4 +187,5 @@ public class InitDataTest {
             dataRunService.init(t);
         }
     }
+
 }

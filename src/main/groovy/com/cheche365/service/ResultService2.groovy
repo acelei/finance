@@ -250,7 +250,7 @@ from (select a.id                                                               
                                                       c.table_name in ('result_#_2', 'settlement_#', 'commission_#')
                left join settlement_# d on d.id = c.s_id and c.type = 1
                left join commission_# e on e.id = c.s_id and c.type = 4) t,(SELECT @rownum:=0) temp
-group by `6-保单单号`, if(`8-险种名称` in ('交强险', '商业险'), `8-险种名称`, 'ODS'), `4-发票付款方（与发票一致）`, `7-出单保险公司（明细至保险公司分支机构）`
+group by `6-保单单号`, if(`8-险种名称` in ('交强险', '商业险'), `8-险种名称`, 'ODS'), `4-发票付款方（与发票一致）`, `7-出单保险公司（明细至保险公司分支机构）`, `40-代理人名称`
 '''
 
     String fixSql = '''

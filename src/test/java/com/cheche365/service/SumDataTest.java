@@ -178,7 +178,7 @@ public class SumDataTest {
         List<GroovyRowResult> rows = baseSql.rows("select `type`,`name`,`org` from table_type where flag=5 and org='科技'");
         for (GroovyRowResult row : rows) {
             String type = row.get("type").toString();
-            GroovyRowResult r = baseSql.firstRow(errorCount.replace("#", type));
+            GroovyRowResult r = baseSql.firstRow(errorCount2.replace("#", type));
             Integer c = MapUtils.getInteger(r, "c");
             if (c > 0) {
                 log.info("{}:{}", type, c);

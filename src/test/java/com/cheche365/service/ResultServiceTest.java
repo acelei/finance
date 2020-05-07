@@ -28,6 +28,8 @@ public class ResultServiceTest {
     @Autowired
     private ResultService resultService;
     @Autowired
+    private ResultService2 resultService2;
+    @Autowired
     private Sql baseSql;
     @Autowired
     private ThreadPool taskThreadPool;
@@ -36,6 +38,12 @@ public class ResultServiceTest {
     public void run() throws SQLException {
         resultService.run("sbt");
     }
+
+    @Test
+    public void run2() throws SQLException {
+        resultService2.run("sbt");
+    }
+
 
     @Test
     public void result2() throws SQLException {

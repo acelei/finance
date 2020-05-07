@@ -1,6 +1,7 @@
 package com.cheche365.service
 
 import app.SpringApplicationLauncher
+import com.cheche365.util.ThreadPool
 import groovy.sql.Sql
 import groovy.util.logging.Slf4j
 import org.junit.Test
@@ -15,6 +16,8 @@ import org.springframework.test.context.junit4.SpringRunner
 class CZLService {
     @Autowired
     private Sql baseSql
+    @Autowired
+    private ThreadPool runThreadPool
 
     List<Map<String, String>> types = [
             [source: "anhui_czl_keji", target: "anhui", type: "1"],
@@ -247,4 +250,50 @@ from commission_# a
     void runFix() {
         fix()
     }
+
+    Map typeModify = [
+            sks              : ['3-出单保险代理机构（车车科技适用）', '4-发票付款方（与发票一致）'],
+            chengshuo        : ['3-出单保险代理机构（车车科技适用）', '4-发票付款方（与发票一致）', '7-出单保险公司（明细至保险公司分支机构）'],
+            qinqi            : ['3-出单保险代理机构（车车科技适用）', '4-发票付款方（与发票一致）', '7-出单保险公司（明细至保险公司分支机构）'],
+            ningbo_dsf_keji  : ['4-发票付款方（与发票一致）'],
+            shandong_dsf_keji: ['4-发票付款方（与发票一致）'],
+            tianjin_dsf_keji : ['4-发票付款方（与发票一致）'],
+            zhejiang_dsf_keji: ['3-出单保险代理机构（车车科技适用）'],
+            kj_czl: ['3-出单保险代理机构（车车科技适用）', '4-发票付款方（与发票一致）'],
+
+    ]
+
+    String updateSql = "update result_#_3_final a, update_# b set & where a.`1-序号`=b.`1-序号`"
+    String selectSql = "select group_concat(s_id) as s_id,group_concat(c_id) as c_id,& from result_#_3_final group by &"
+    String updateCommission = "update commission_# set & where id in (@)"
+    String updateSettlement = "update settlement_# set & where id in (@)"
+
+    @Test
+    void d() {
+        typeModify.each { key, value ->
+//            def setStr = value.collect { "a.`${it}`=b.`${it}`" }.join(",")
+//            def tmp = updateSql.replace("#", key).replace("&", setStr)
+//            baseSql.executeUpdate(tmp)
+//            println(tmp)
+            def column = value.collect { "`${it}`" }.join(",")
+            def ss = selectSql.replace("#", key).replace("&", column)
+//            println(ss)
+            def rows = baseSql.rows(ss)
+            runThreadPool.executeWithLatch(rows, { row ->
+                def d = value.collect { "`${it}`='${row[it]}'".replace("'null'",'null') }.join(",")
+                if (row.s_id != null) {
+                    def us = updateSettlement.replace("#", key).replace("&", d).replace("@", row.s_id as String)
+                    baseSql.executeUpdate(us)
+//                    println(us)
+                }
+
+                if (row.c_id != null) {
+                    def uc = updateCommission.replace("#", key).replace("&", d).replace("@", row.c_id as String)
+                    baseSql.executeUpdate(uc)
+//                    println(uc)
+                }
+            }).await()
+        }
+    }
+
 }

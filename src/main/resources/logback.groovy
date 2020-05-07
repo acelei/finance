@@ -53,5 +53,5 @@ appender("FILE-ERROR", RollingFileAppender) {
     }
 }
 
-//root(curConfig.level, curConfig.appenders)
-root(DEBUG, ["console"])
+root(curConfig.level, curConfig.appenders)
+//root(DEBUG, ["console"])
