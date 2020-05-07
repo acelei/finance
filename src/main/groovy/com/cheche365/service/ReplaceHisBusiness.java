@@ -96,21 +96,22 @@ public class ReplaceHisBusiness {
 
     private String findBusinessSql = "select id, policy_no as policyNo, insurance_type_id as insuranceTypeId, insurance_company as insuranceCompany, insurance_company_id as insuranceCompanyId, province_id as provinceId, premium, applicant, order_date as orderDate from `tableNameVal` where " +
             " insurance_company_id = insuranceCompanyIdVal and order_date >= '2018-01-01' and premium > premiumVal";
+    private String updateRepeatHandleSign = "update `tableName` set handle_sign = '3' where id = idVal";
 
     public String getFindBusinessSql() {
         return findBusinessSql;
     }
 
-    public void replaceHistoryBusiness(String type) throws SQLException {
+    public void replaceHistoryBusiness(String type, Map<String, Set<String>> financeInsProMap) throws SQLException {
         String settlementTableName = "settlement_" + type;
         String commissionTableName = "commission_" + type;
         //查找2018年车险业务数据
-        replaceHistoryBusinesses(settlementTableName, commissionTableName);
+        replaceHistoryBusinesses(settlementTableName, commissionTableName, financeInsProMap);
         //查找2019年自身非车险数据
-        replaceUnAutoBusiness.replaceHistoryBusinesses(settlementTableName, commissionTableName);
+        replaceUnAutoBusiness.replaceHistoryBusinesses(settlementTableName, commissionTableName, financeInsProMap);
     }
 
-    public void replaceHistoryBusinesses(String settlementTableName, String commissionTableName) throws SQLException {
+    public void replaceHistoryBusinesses(String settlementTableName, String commissionTableName, Map<String, Set<String>> financeInsProMap) throws SQLException {
         List<ReplaceBusiness> replaceBusinessList = new ArrayList<>();
         List<GroovyRowResult> settlementList = baseSql.rows(listReplaceBusinessBySeGroup.replaceAll("resultTableNameVal", settlementTableName));
         if (CollectionUtils.isNotEmpty(settlementList)) {
@@ -123,9 +124,9 @@ public class ReplaceHisBusiness {
         }
 
         for (ReplaceBusiness finance : replaceBusinessList) {
-            DataPool dataPool = findReplaceData(finance, 1);
+            DataPool dataPool = findBusinessData(finance, 1, financeInsProMap);
             if (dataPool == null) {
-                dataPool = findReplaceData(finance, 2);
+                dataPool = findBusinessData(finance, 2, financeInsProMap);
             }
 
             if (dataPool == null) {
@@ -153,6 +154,43 @@ public class ReplaceHisBusiness {
 
             log.info("replace success! resultTableName:{}, financeId:{}, businessId:{}", finance.getTableName(), finance.getId(), dataPool.getId());
         }
+    }
+
+    private DataPool findBusinessData(ReplaceBusiness finance, int type, Map<String, Set<String>> financeInsProMap) throws SQLException {
+        DataPool dataPool = findReplaceData(finance, type);
+        if (dataPool == null) {
+            return null;
+        }
+        //如果为查找自身2019年非车数据
+        if (!isFindHistory()) {
+            return dataPool;
+        }
+
+        if (financeInsProMap == null || financeInsProMap.size() == 0) {
+            return dataPool;
+        }
+
+        Set<String> policyNoList = financeInsProMap.get(dataPool.getInsuranceCompanyId().toString());
+        if(CollectionUtils.isEmpty(policyNoList)) {
+            return dataPool;
+        }
+
+        int num = 0;
+        String policyNo = dataPool.getPolicyNo();
+        while (policyNoList.contains(policyNo)) {
+            if (num >= 100) {
+                break;
+            }
+
+            baseSql.executeUpdate(updateRepeatHandleSign.replace("tableName", "das_data_pool_history").replace("idVal", String.valueOf(dataPool.getId())));
+            dataPool = findReplaceData(finance, type);
+            if (dataPool == null) {
+                break;
+            }
+            policyNo = dataPool.getPolicyNo();
+            num++;
+        }
+        return dataPool;
     }
 
     private DataPool findReplaceData(ReplaceBusiness finance, int type) throws SQLException {

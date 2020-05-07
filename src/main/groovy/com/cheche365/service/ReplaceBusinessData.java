@@ -24,8 +24,6 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 /**
@@ -60,12 +58,13 @@ public class ReplaceBusinessData {
     private String updateTableType = "update table_type set flag = 4 where type = 'typeVal'";
     private String updateEigntHandleSign = "update `tableNameVal` set handle_sign = 8 where id in (idListVal)";
     private String updateBusinessDataHandleSign = "update `tableName` set handle_sign = '2' where id = idVal";
+    private String updateRepeatHandleSign = "update `tableName` set handle_sign = '3' where id = idVal";
     private String updateFinishHandleSign = "update `tableName` set handle_sign = 'handleSignVal' where id in (idList)";
     private String listReplaceBusiness = "select t1.id,\n" +
             "       t1.s_id                                                                                          as sids,\n" +
             "       t1.c_id                                                                                          as cids,\n" +
             "       保险公司                                                                                       as insuranceCompany,\n" +
-            "       t2.id                                                                                         as insuranceCompanyId,\n" +
+            "       保险公司id                                                                                         as insuranceCompanyId,\n" +
             "       省                                                                                            as province,\n" +
             "       t3.id                                                                                         as provinceId,\n" +
             "       if (`8-险种名称` = '交强险', 1, 2)                                                              as insuranceTypeId,\n" +
@@ -74,8 +73,6 @@ public class ReplaceBusinessData {
             "       `6-保单单号` as policyNo, `5-投保人名称` as applicant, \n" +
             "        if((sum_fee + 0) >= (0 + sum_commission), (0+sum_fee), (0+sum_commission)) as sumFee\n" +
             "        from `resultTableNameVal` t1\n" +
-            "       left join insurance_company t2\n" +
-            "                 on t1.保险公司 = t2.name\n" +
             "       left join area t3\n" +
             "                 on t1.省 = t3.name\n" +
             "       left join (select * from business_replace_ref\n" +
@@ -265,24 +262,36 @@ public class ReplaceBusinessData {
                 return;
             }
             List<String> insProList = grsInsProList.stream().map(it -> it.get("insPro").toString()).collect(Collectors.toList());
-            String settlementTableName = "settlement_" + tableNameRef;
-            replaceBusiness(settlementTableName, insProList, 2);
-            replaceBusiness(settlementTableName, insProList, 1);
-            String commissionTableName = "commission_" + tableNameRef;
-            replaceBusiness(commissionTableName, insProList, 2);
-            replaceBusiness(commissionTableName, insProList, 1);
-            //将散表中的负数替换为history中的数据
-            replaceHisBusiness.replaceHistoryBusiness(tableNameRef);
-            //将散表中数据推到result中设置handlesign=3
             String resultTableName = "result_" + tableNameRef + "_2";
+            String settlementTableName = "settlement_" + tableNameRef;
+            Map<String, Set<String>> financeInsProMap = getTargetInsProPolicyNo(resultTableName);
+            replaceBusiness(settlementTableName, insProList, 2, financeInsProMap);
+            replaceBusiness(settlementTableName, insProList, 1, financeInsProMap);
+            String commissionTableName = "commission_" + tableNameRef;
+            replaceBusiness(commissionTableName, insProList, 2, financeInsProMap);
+            replaceBusiness(commissionTableName, insProList, 1, financeInsProMap);
+            //将散表中的负数替换为history中的数据
+            replaceHisBusiness.replaceHistoryBusiness(tableNameRef, financeInsProMap);
+            //将散表中数据推到result中设置handlesign=3
             setResultThreeHs(commissionTableName, settlementTableName, resultTableName);
             //替换handle_sign为3的数据
-            replaceBusiness(resultTableName, insProList, 1);
+            replaceBusiness(resultTableName, insProList, 1, financeInsProMap);
             //baseSql.executeUpdate(updateTableType.replace("typeVal", tableNameRef));
             log.info("replaceBusiness success! tableNameRef:{}", tableNameRef);
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private Map<String, Set<String>> getTargetInsProPolicyNo(String tableName) throws SQLException {
+        List<GroovyRowResult> financeInsProNoResult = baseSql.rows("select `6-保单单号` as policyNo, 保险公司id as insuranceCompanyId from `" + tableName + "` where `8-险种名称` in ('交强险', '商业险')");
+        if (financeInsProNoResult == null || financeInsProNoResult.size() == 0) {
+            return null;
+        }
+
+        Map<String, Set<String>> financeInsProMap = financeInsProNoResult.stream()
+                .collect(Collectors.groupingBy(it -> it.get("insuranceCompanyId").toString(), Collectors.mapping(it -> it.get("policyNo").toString(), Collectors.toSet())));
+        return financeInsProMap;
     }
 
     private void setResultThreeHs(String commissionTableName, String settlementTableName, String resultTableName) throws SQLException {
@@ -314,15 +323,15 @@ public class ReplaceBusinessData {
         }
     }
 
-    private String replaceBusiness(String resultTableName, List<String> allInsPro, int type) throws SQLException, ExecutionException, InterruptedException {
-        List<ReplaceBusiness> businessList = replaceBusinessListByTableName(resultTableName, type);
+    private String replaceBusiness(String resultTableName, List<String> allInsPro, int type, Map<String, Set<String>> financeInsProMap) throws SQLException, ExecutionException, InterruptedException {
+        List<ReplaceBusiness> financeList = replaceBusinessListByTableName(resultTableName, type);
 
-        runThreadPool.submitWithResult(businessList, finance -> {
+        runThreadPool.submitWithResult(financeList, finance -> {
             String insPro = finance.getInsuranceCompanyId() + "_" + finance.getProvinceId();
             if (!resultTableName.startsWith("result_") && !allInsPro.contains(insPro)) {
                 return null;
             }
-            updateReplaceData(finance, allInsPro, resultTableName, type);
+            updateReplaceData(finance, allInsPro, resultTableName, type, financeInsProMap);
             return null;
         });
 
@@ -330,7 +339,7 @@ public class ReplaceBusinessData {
         return "success";
     }
 
-    private String updateReplaceData(ReplaceBusiness finance, List<String> allInsPro, String resultTableName, int type) throws SQLException {
+    private String updateReplaceData(ReplaceBusiness finance, List<String> allInsPro, String resultTableName, int type, Map<String, Set<String>> financeInsProMap) throws SQLException {
         synchronized (("run_thread_" + finance.getInsuranceCompanyId() + "_" + finance.getProvinceId()).intern()) {
             BigDecimal minPremium, maxPremium;
             //保险公司id 是空
@@ -352,28 +361,15 @@ public class ReplaceBusinessData {
             }
             boolean continueLoop = true;
             while (continueLoop) {
-                LocalDate startDate = getBusinessStartDate(date2LocalDate(finance.getFinanceOrderDate()));
-                String startDateStr = startDate.format(fmt);
-                String getReplaceData = "select id, policy_no as policyNo, insurance_type_id as insuranceTypeId, insurance_company as insuranceCompany, insurance_company_id as insuranceCompanyId, province_id as provinceId, premium, applicant, order_date as orderDate from " + insuranceCompanyTableName + " where ";
-                if (finance.getProvinceId() != null) {
-                    getReplaceData += " province_id = " + finance.getProvinceId() + " and ";
-                }
-                getReplaceData += " order_date >= '" + startDateStr + "' ";
-                if (finance.getFinanceOrderDate() != null) {
-                    getReplaceData += " and order_date <= '" + formatter.format(finance.getFinanceOrderDate()) + "' ";
-                }
-                getReplaceData += " and premium >= '" + minPremium + "' and premium <= '" + maxPremium + "' and handle_sign = 0 order by order_date desc, id desc limit 1";
-                GroovyRowResult dataPoolList = baseSql.firstRow(getReplaceData);
-                DataPool businessData;
+                DataPool businessData = findBusinessData(finance, insuranceCompanyTableName, minPremium, maxPremium, financeInsProMap, resultTableName);
                 boolean isFindBusiness = false;
-                if (dataPoolList == null || dataPoolList.size() == 0) {
+                if (businessData == null) {
                     if (resultTableName.startsWith("result_")) {
                         businessData = generDataPool(finance);
                     } else {
                         break;
                     }
                 } else {
-                    businessData = transMap2Bean(dataPoolList);
                     String getReplaceBusinessId = "select business_id as businessId from business_replace_ref where business_id = " + businessData.getId() + " and business_table_name = '" + insuranceCompanyTableName + "' limit 1";
                     GroovyRowResult businessId = baseSql.firstRow(getReplaceBusinessId);
                     if (businessId != null && businessId.get("businessId") != null) {
@@ -400,6 +396,70 @@ public class ReplaceBusinessData {
             }
         }
         return "success";
+    }
+
+    /**
+     * 查找对应的业务数据
+     * @param finance
+     * @param insuranceCompanyTableName
+     * @param minPremium
+     * @param maxPremium
+     * @return
+     * @throws SQLException
+     */
+    private DataPool findBusinessData(ReplaceBusiness finance, String insuranceCompanyTableName, BigDecimal minPremium, BigDecimal maxPremium, Map<String, Set<String>> financeInsProMap, String resultTableName) throws SQLException {
+        GroovyRowResult groovyRowResult = findUniqueBusinessData(finance, insuranceCompanyTableName, minPremium, maxPremium);
+        if (groovyRowResult == null || groovyRowResult.size() == 0) {
+            return null;
+        }
+        if (financeInsProMap == null || financeInsProMap.size() == 0) {
+            return transMap2Bean(groovyRowResult);
+        }
+
+        Set<String> policyNoSet = financeInsProMap.get(groovyRowResult.get("insuranceCompanyId").toString());
+        if (CollectionUtils.isEmpty(policyNoSet)) {
+            return transMap2Bean(groovyRowResult);
+        }
+
+        int num = 0;
+        String policyNo = groovyRowResult.get("policyNo").toString();
+        while (policyNoSet.contains(policyNo)) {
+            if (num >= 100) {
+                break;
+            }
+
+            //将重复数据更新掉
+            baseSql.executeUpdate(updateRepeatHandleSign.replace("tableName", insuranceCompanyTableName).replace("idVal", String.valueOf(groovyRowResult.get("id"))));
+            baseSql.executeUpdate(updateRepeatHandleSign.replace("tableName", "das_data_pool_business").replace("idVal", String.valueOf(groovyRowResult.get("id"))));
+            groovyRowResult = findUniqueBusinessData(finance, insuranceCompanyTableName, minPremium, maxPremium);
+            if (groovyRowResult == null || groovyRowResult.size() == 0) {
+                break;
+            }
+            policyNo = groovyRowResult.get("policyNo").toString();
+            num++;
+        }
+        return transMap2Bean(groovyRowResult);
+    }
+
+    private GroovyRowResult findUniqueBusinessData(ReplaceBusiness finance, String insuranceCompanyTableName, BigDecimal minPremium, BigDecimal maxPremium) throws SQLException {
+        LocalDate startDate = getBusinessStartDate(date2LocalDate(finance.getFinanceOrderDate()));
+        String startDateStr = startDate.format(fmt);
+        String getReplaceData = "select id, policy_no as policyNo, insurance_type_id as insuranceTypeId, insurance_company as insuranceCompany, insurance_company_id as insuranceCompanyId, province_id as provinceId, premium, applicant, order_date as orderDate from " + insuranceCompanyTableName;
+        getReplaceData += " where ";
+        if (finance.getProvinceId() != null) {
+            getReplaceData += " province_id = " + finance.getProvinceId() + " and ";
+        }
+        getReplaceData += " order_date >= '" + startDateStr + "' ";
+        if (finance.getFinanceOrderDate() != null) {
+            getReplaceData += " and order_date <= '" + formatter.format(finance.getFinanceOrderDate()) + "' ";
+        }
+        getReplaceData += " and premium >= '" + minPremium + "' and premium <= '" + maxPremium + "'";
+        getReplaceData += " and handle_sign = 0 order by order_date desc, id desc limit 1";
+        GroovyRowResult dataPoolList = baseSql.firstRow(getReplaceData);
+        if (dataPoolList == null || dataPoolList.size() == 0) {
+            return null;
+        }
+        return (GroovyRowResult) dataPoolList.get(0);
     }
 
     private void forceReplaceBusiness(ReplaceBusiness finance, String resultTableName, int type) throws SQLException {
@@ -545,6 +605,21 @@ public class ReplaceBusinessData {
             return null;
         }
         return "'" + obj.toString() + "'";
+    }
+
+    public static String getSqlFormatList(List<String> objList) {
+        StringBuffer sb = new StringBuffer();
+        if (CollectionUtils.isEmpty(objList)) {
+            return null;
+        }
+
+        for (int i = 0; i < objList.size(); i++) {
+            sb.append("'").append(objList.get(i)).append("'");
+            if (i != objList.size() - 1) {
+                sb.append(",");
+            }
+        }
+        return sb.toString();
     }
 
     private String generateSettlementTableName(String tableName) {
