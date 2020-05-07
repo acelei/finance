@@ -46,7 +46,7 @@ public class DataRunTest {
 
     @Test
     public void init() throws SQLException {
-        List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag in (-1,-2)");
+        List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag in (-1,-2,2)");
 
         for (GroovyRowResult row : rows) {
             String type = row.get("type").toString();
@@ -151,12 +151,12 @@ public class DataRunTest {
         }
     }
 
-    private String type = "sx_baodai";
+    private String type = "qinqi";
 
     @Test
     public void singRun() {
         initData.run(type);
-//        dataRunService.init(type);
+        dataRunService.init(type);
     }
 
     @Test

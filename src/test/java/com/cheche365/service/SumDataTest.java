@@ -32,7 +32,7 @@ public class SumDataTest {
 
     @Test
     public void sumResult3() throws SQLException {
-        List<GroovyRowResult> rows = baseSql.rows("select id,`type` from table_type where org='科技' and flag>0");
+        List<GroovyRowResult> rows = baseSql.rows("select id,`type` from table_type where org!='科技' and flag>0");
         baseSql.execute("truncate result_sum_data_3");
         for (GroovyRowResult row : rows) {
             Integer id = MapUtils.getInteger(row, "id");
@@ -87,7 +87,7 @@ public class SumDataTest {
         List<GroovyRowResult> rows = baseSql.rows(tjSql);
         List<Map> list = Lists.newArrayList(rows);
         File file = ExcelUtil2.writeToExcel(head, list);
-        FileUtils.moveFile(file, new File("统计_科技.xlsx"));
+        FileUtils.moveFile(file, new File("统计_保代.xlsx"));
     }
 
     @Test
@@ -141,7 +141,7 @@ public class SumDataTest {
     public void exportTjSign() throws SQLException, IOException, InterruptedException {
         List<Map> list = new ArrayList<>();
 
-        List<GroovyRowResult> rows = baseSql.rows("select `type`,`name`,`org` from table_type where flag=5");
+        List<GroovyRowResult> rows = baseSql.rows("select `type`,`name`,`org` from table_type where flag=5 and org='科技'");
         for (GroovyRowResult row : rows) {
             String type = row.get("type").toString();
             String name = row.get("name").toString();
@@ -161,16 +161,21 @@ public class SumDataTest {
             "       ROUND(sum_commission, 2) < 0 or\n" +
             "       ROUND(`14-手续费总额（报行内+报行外）(含税)`,2)<0 or\n" +
             "       ROUND(`42-佣金金额（已入账）`+`45-支付金额`+`46-未计提佣金（19年底尚未入帐）`)<0 or\n" +
-            "       ROUND(sum_fee, 2) > 0 + `10-全保费` or\n" +
-            "       ROUND(sum_commission, 2) > 0 + `10-全保费` or\n" +
-            "       ROUND(`14-手续费总额（报行内+报行外）(含税)`, 2) > 0 + `10-全保费` or\n" +
-            "       ROUND(`42-佣金金额（已入账）`+`45-支付金额`+`46-未计提佣金（19年底尚未入帐）`, 2) > 0 + `10-全保费`\n" +
+            "       ROUND(sum_fee, 2) > 0 + `11-净保费` or\n" +
+            "       ROUND(sum_commission, 2) > 0 + `11-净保费` or\n" +
+            "       ROUND(`14-手续费总额（报行内+报行外）(含税)`, 2) > 0 + `11-净保费` or\n" +
+            "       ROUND(`42-佣金金额（已入账）`+`45-支付金额`+`46-未计提佣金（19年底尚未入帐）`, 2) > 0 + `11-净保费`\n" +
             "       )";
+
+    String errorCount2 = "select count(9) as c\n" +
+            "from result_#_2_final\n" +
+            "where `8-险种名称` in ('交强险', '商业险')\n" +
+            "  and (abs(sum_fee)>abs(`11-净保费`) or abs(sum_commission)>abs(`11-净保费`))";
 
     @Test
     public void exportTjSign2() throws SQLException, IOException, InterruptedException {
 
-        List<GroovyRowResult> rows = baseSql.rows("select `type`,`name`,`org` from table_type where flag=5");
+        List<GroovyRowResult> rows = baseSql.rows("select `type`,`name`,`org` from table_type where flag=5 and org='科技'");
         for (GroovyRowResult row : rows) {
             String type = row.get("type").toString();
             GroovyRowResult r = baseSql.firstRow(errorCount.replace("#", type));

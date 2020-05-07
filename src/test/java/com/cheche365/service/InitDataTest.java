@@ -134,7 +134,12 @@ public class InitDataTest {
         List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type");
         for (GroovyRowResult row : rows) {
             String type = row.get("type").toString();
-            baseSql.executeUpdate("delete a.* from result_gross_margin_ref a,result_#_2 b where a.table_name='result_#_2' and a.result_id=b.id and b.handle_sign=7".replace("#", type));
+            List<GroovyRowResult> rows1 = baseSql.rows("select `8-险种名称` from settlement_# where `8-险种名称` like '机动车%' group by `8-险种名称`".replace("#", type));
+            List<GroovyRowResult> rows2 = baseSql.rows("select `8-险种名称` from commission_# where `8-险种名称` like '机动车%' group by `8-险种名称`".replace("#", type));
+            if (rows1.size()>0 || rows2.size()>0) {
+                log.info("{}:{}:{}",type,"结算",rows1);
+                log.info("{}:{}:{}",type,"付佣",rows2);
+            }
         }
     }
 

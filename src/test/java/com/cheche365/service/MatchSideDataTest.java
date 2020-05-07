@@ -25,7 +25,7 @@ public class MatchSideDataTest {
 
     @Test
     public void run2() {
-        reMatchSPSideData5.run("xj");
+        reMatchSPSideData5.run("sbt");
     }
 
 }
