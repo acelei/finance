@@ -247,7 +247,7 @@ public class ApiController {
         String day = LocalDate.now().format(DateTimeFormatter.ofPattern("MMdd"));
         File f = new File("tmp/2019审计台账-" + name + "(" + day + ").xlsx");
         File file = resultService2.exportResult(type, f);
-        return downloadFile("export_#.zip".replace("#", type), file);
+        return downloadFile("/2019审计台账-" + name + "(" + day + ").xlsx", file);
     }
 
     @GetMapping("data/exportResultKj")
