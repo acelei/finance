@@ -7,6 +7,7 @@ import com.cheche365.util.ThreadPool;
 import groovy.sql.GroovyRowResult;
 import groovy.sql.Sql;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -234,9 +235,18 @@ public class ApiController {
         return RestResponse.success(type);
     }
 
-    @GetMapping({"data/exportResult/{type}"})
-    public ResponseEntity exportResult(@PathVariable String type) throws SQLException, ExecutionException, InterruptedException, IOException {
-        File file = resultService.exportResult(type);
+    @GetMapping({"data/exportResult3/{type}"})
+    public ResponseEntity exportResult3(@PathVariable String type) throws SQLException, ExecutionException, InterruptedException, IOException {
+        List<GroovyRowResult> rows = baseSql.rows("select `type`,`name` from table_type where type = '" + type + "'");
+        if (CollectionUtils.isEmpty(rows)) {
+            return null;
+        }
+
+        GroovyRowResult row = rows.get(0);
+        String name = row.get("name").toString();
+        String day = LocalDate.now().format(DateTimeFormatter.ofPattern("MMdd"));
+        File f = new File("tmp/2019审计台账-" + name + "(" + day + ").xlsx");
+        File file = resultService2.exportResult(type, f);
         return downloadFile("export_#.zip".replace("#", type), file);
     }
 
