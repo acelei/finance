@@ -243,7 +243,7 @@ public class ApiController {
         }
         String name = row.get("name").toString();
         String day = LocalDate.now().format(DateTimeFormatter.ofPattern("MMdd"));
-        File file = resultService2.exportResult(type, null);
+        File file = resultService2.exportResult(type);
         return downloadFile("2019审计台账-" + name + "(" + day + ").xlsx", file);
     }
 
