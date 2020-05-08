@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * author:WangZhaoliang
@@ -102,6 +103,23 @@ public class ReplaceHisBusiness {
         return findBusinessSql;
     }
 
+    private Map<String, Set<String>> getTargetInsProPolicyNo(String tableName) throws SQLException {
+        List<GroovyRowResult> financeInsProNoResult = baseSql.rows("select `6-保单单号` as policyNo, 保险公司id as insuranceCompanyId from `" + tableName + "` where `8-险种名称` in ('交强险', '商业险')");
+        if (financeInsProNoResult == null || financeInsProNoResult.size() == 0) {
+            return null;
+        }
+
+        Map<String, Set<String>> financeInsProMap = financeInsProNoResult.stream()
+                .collect(Collectors.groupingBy(it -> it.get("insuranceCompanyId").toString(), Collectors.mapping(it -> it.get("policyNo").toString(), Collectors.toSet())));
+        return financeInsProMap;
+    }
+
+    public void replaceHistoryBusiness(String type) throws SQLException {
+        String resultTableName = "result_" + type + "_2";
+        Map<String, Set<String>> financeInsProMap = getTargetInsProPolicyNo(resultTableName);
+        replaceHistoryBusiness(type, financeInsProMap);
+    }
+
     public void replaceHistoryBusiness(String type, Map<String, Set<String>> financeInsProMap) throws SQLException {
         String settlementTableName = "settlement_" + type;
         String commissionTableName = "commission_" + type;
@@ -171,7 +189,7 @@ public class ReplaceHisBusiness {
         }
 
         Set<String> policyNoList = financeInsProMap.get(dataPool.getInsuranceCompanyId().toString());
-        if(CollectionUtils.isEmpty(policyNoList)) {
+        if (CollectionUtils.isEmpty(policyNoList)) {
             return dataPool;
         }
 
@@ -194,23 +212,23 @@ public class ReplaceHisBusiness {
     }
 
     private DataPool findReplaceData(ReplaceBusiness finance, int type) throws SQLException {
-         String tableName;
-         if (isFindHistory()) {
-             tableName = "das_data_pool_history";
-         } else {
-             tableName = finance.getTableName();
-         }
+        String tableName;
+        if (isFindHistory()) {
+            tableName = "das_data_pool_history";
+        } else {
+            tableName = finance.getTableName();
+        }
         String findBusiness = getFindBusinessSql().replaceAll("tableNameVal", tableName)
                 .replaceAll("insuranceCompanyIdVal", finance.getInsuranceCompanyId().toString())
                 .replaceAll("premiumVal", finance.getSumFee().abs().toString());
-         if (!isFindHistory()) {
-             findBusiness += " and `8-险种名称` not in ('交强险', '商业险') ";
-             findBusiness += " and `9-保单出单日期` <= '" + formatter.format(finance.getFinanceOrderDate()) + "' ";
-         }
+        if (!isFindHistory()) {
+            findBusiness += " and `8-险种名称` not in ('交强险', '商业险') ";
+            findBusiness += " and `9-保单出单日期` <= '" + formatter.format(finance.getFinanceOrderDate()) + "' ";
+        }
         if (type == 1) {
             if (finance.getTableName().startsWith("commission_") && StringUtils.isNotEmpty(finance.getAgentName())) {
                 if (isFindHistory()) {
-                    findBusiness += " and agent = '" + finance.getAgentName() + "' " ;
+                    findBusiness += " and agent = '" + finance.getAgentName() + "' ";
                 } else {
                     findBusiness += " and `40-代理人名称` = '" + finance.getAgentName() + "' ";
                 }

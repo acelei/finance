@@ -140,11 +140,11 @@ public class ApiController {
         return RestResponse.success(type);
     }
 
-//    @GetMapping({"data/replaceHis/{type}"})
-//    public RestResponse<String> replaceHis(@PathVariable String type) throws SQLException {
-//        replaceHisBusiness.replaceHistoryBusiness(type);
-//        return RestResponse.success(type);
-//    }
+    @GetMapping({"data/replaceHis/{type}"})
+    public RestResponse<String> replaceHis(@PathVariable String type) throws SQLException {
+        replaceHisBusiness.replaceHistoryBusiness(type);
+        return RestResponse.success(type);
+    }
 
     @GetMapping({"data/result/{type}", "data/result"})
     public RestResponse<String> result(@PathVariable(required = false) String type) throws SQLException {
