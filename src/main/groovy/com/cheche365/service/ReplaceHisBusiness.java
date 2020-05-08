@@ -10,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -220,7 +221,7 @@ public class ReplaceHisBusiness {
         }
         String findBusiness = getFindBusinessSql().replaceAll("tableNameVal", tableName)
                 .replaceAll("insuranceCompanyIdVal", finance.getInsuranceCompanyId().toString())
-                .replaceAll("premiumVal", finance.getSumFee().abs().toString());
+                .replaceAll("premiumVal", finance.getSumFee().multiply(BigDecimal.valueOf(1.06)).abs().toString());
         if (!isFindHistory()) {
             findBusiness += " and `8-险种名称` not in ('交强险', '商业险') ";
             findBusiness += " and `9-保单出单日期` <= '" + formatter.format(finance.getFinanceOrderDate()) + "' ";

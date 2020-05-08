@@ -166,12 +166,12 @@ public class ApiController {
         return RestResponse.success(type);
     }
 
-    @GetMapping({"data/result2/{type}", "data/result2"})
-    public RestResponse<String> result2(@PathVariable(required = false) String type) throws SQLException {
+    @GetMapping({"data/result3/{type}", "data/result3"})
+    public RestResponse<String> result3(@PathVariable(required = false) String type) throws SQLException {
         if (type != null) {
             resultService2.run(type);
         } else {
-            List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=4");
+            List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=4 and org='科技'");
 
             for (GroovyRowResult row : rows) {
                 String t = row.get("type").toString();
