@@ -105,7 +105,7 @@ select group_concat(s_id)                                  as s_id,
        sum(`37-开票金额（含税）`)                                  as `37-开票金额（含税）`,
        sum(`38-尚未开票金额（不含税）`)                               as `38-尚未开票金额（不含税）`,
        sum(`39-尚未开票金额（含税）`)                                as `39-尚未开票金额（含税）`,
-       max(`40-代理人名称`)                                     as `40-代理人名称`,
+       group_concat(distinct(`40-代理人名称`))                                     as `40-代理人名称`,
        sum(`42-佣金金额（已入账）`)                                 as `42-佣金金额（已入账）`,
        max(`43-支付主体`)                                      as `43-支付主体`,
        sum(`45-支付金额`)                                      as `45-支付金额`,
@@ -250,7 +250,7 @@ from (select a.id                                                               
                                                       c.table_name in ('result_#_2', 'settlement_#', 'commission_#')
                left join settlement_# d on d.id = c.s_id and c.type = 1
                left join commission_# e on e.id = c.s_id and c.type = 4) t,(SELECT @rownum:=0) temp
-group by `6-保单单号`, if(`8-险种名称` in ('交强险', '商业险'), `8-险种名称`, 'ODS'), `4-发票付款方（与发票一致）`, `7-出单保险公司（明细至保险公司分支机构）`, `40-代理人名称`
+group by `6-保单单号`, if(`8-险种名称` in ('交强险', '商业险'), `8-险种名称`, 'ODS'), `4-发票付款方（与发票一致）`, `7-出单保险公司（明细至保险公司分支机构）`
 '''
 
     String fixSql = '''

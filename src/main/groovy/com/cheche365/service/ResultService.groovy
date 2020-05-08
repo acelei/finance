@@ -2,7 +2,6 @@ package com.cheche365.service
 
 import com.cheche365.util.ExcelUtil2
 import groovy.util.logging.Slf4j
-import org.apache.commons.io.FileUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
@@ -446,41 +445,22 @@ update result_#_2_final set `13-手续费率`=`14-手续费总额（报行内+�
 
     File exportResult(String type, File targetFile) {
         List<Map> rows
-//        File f = null
-//        List<File> fileList = new ArrayList<>()
+        File file
         rows = baseSql.rows(getQueryResult().replace("#", type))
         if (rows.size() > 0) {
             log.info("导出整合数据:{}", type)
-//            f = File.createTempFile("审计台账_#".replace("#", type), '.xlsx', ExcelUtil2.tmp)
-            targetFile.deleteOnExit()
-            rows.each { row->
+            rows.each { row ->
                 sHead.each {
                     row[it] = row[it] == null ? 0 : (row[it] as Double)
                 }
             }
-
-            ExcelUtil2.writeToExcel(head, rows).renameTo(targetFile)
-//            fileList.add f
+            file = targetFile = ExcelUtil2.writeToExcel(head, rows)
+            if (targetFile != null) {
+                targetFile.deleteOnExit()
+                file.renameTo(targetFile)
+                file = targetFile
+            }
         }
-
-//        rows = baseSql.rows(queryErrorSettlement.replace("#", type))
-//        if (rows.size() > 0) {
-//            log.info("导出剩余结算数据:{}", type)
-//            File f = File.createTempFile("结算_#".replace("#", type), '.xlsx', ExcelUtil2.tmp)
-//            ExcelUtil2.writeToExcel(head, rows).renameTo(f)
-//            fileList.add f
-//        }
-//
-//
-//        rows = baseSql.rows(queryErrorCommission.replace("#", type))
-//        if (rows.size() > 0) {
-//            log.info("导出剩余付佣数据:{}", type)
-//            File f = File.createTempFile("佣金_#".replace("#", type), '.xlsx', ExcelUtil2.tmp)
-//            ExcelUtil2.writeToExcel(head, rows).renameTo(f)
-//            fileList.add f
-//        }
-//
-//        return ExcelUtil2.zipFiles(fileList, targetFile)
-        return targetFile
+        return file
     }
 }

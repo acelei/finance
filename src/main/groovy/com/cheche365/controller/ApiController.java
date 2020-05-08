@@ -7,7 +7,6 @@ import com.cheche365.util.ThreadPool;
 import groovy.sql.GroovyRowResult;
 import groovy.sql.Sql;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -166,6 +165,7 @@ public class ApiController {
         }
         return RestResponse.success(type);
     }
+
     @GetMapping({"data/result2/{type}", "data/result2"})
     public RestResponse<String> result2(@PathVariable(required = false) String type) throws SQLException {
         if (type != null) {
@@ -211,7 +211,7 @@ public class ApiController {
         for (GroovyRowResult row : rows) {
             String t = row.get("type").toString();
             String id = row.get("id").toString();
-            initData.fixRefType(t,id);
+            initData.fixRefType(t, id);
         }
 
         initData.fixRef();
@@ -236,18 +236,15 @@ public class ApiController {
     }
 
     @GetMapping({"data/exportResult3/{type}"})
-    public ResponseEntity exportResult3(@PathVariable String type) throws SQLException, ExecutionException, InterruptedException, IOException {
-        List<GroovyRowResult> rows = baseSql.rows("select `type`,`name` from table_type where type = '" + type + "'");
-        if (CollectionUtils.isEmpty(rows)) {
+    public ResponseEntity exportResult3(@PathVariable String type) throws SQLException {
+        GroovyRowResult row = baseSql.firstRow("select `type`,`name` from table_type where type = '" + type + "' and org='科技'");
+        if (row == null) {
             return null;
         }
-
-        GroovyRowResult row = rows.get(0);
         String name = row.get("name").toString();
         String day = LocalDate.now().format(DateTimeFormatter.ofPattern("MMdd"));
-        File f = new File("tmp/2019审计台账-" + name + "(" + day + ").xlsx");
-        File file = resultService2.exportResult(type, f);
-        return downloadFile("/2019审计台账-" + name + "(" + day + ").xlsx", file);
+        File file = resultService2.exportResult(type, null);
+        return downloadFile("2019审计台账-" + name + "(" + day + ").xlsx", file);
     }
 
     @GetMapping("data/exportResultKj")
@@ -267,8 +264,8 @@ public class ApiController {
         return downloadFile("车车科技.zip", file);
     }
 
-    @GetMapping("data/exportResultKj2")
-    public ResponseEntity exportResultKj2(@PathVariable(required = false) String type) throws SQLException, ExecutionException, InterruptedException, IOException {
+    @GetMapping("data/exportResultKj3")
+    public ResponseEntity exportResultKj3() throws SQLException, ExecutionException, InterruptedException, IOException {
         List<GroovyRowResult> rows = baseSql.rows("select `type`,`name` from table_type where flag=5 and org='科技'");
 
         List<File> fileList = taskThreadPool.submitWithResult(rows, row -> {
