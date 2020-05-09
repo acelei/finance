@@ -170,7 +170,7 @@ public class InitDataTest {
 
     @Test
     public void result3() throws SQLException {
-        List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where id in (4,8,30,45,67,74)");
+        List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=5 and org='科技'");
         for (GroovyRowResult row : rows) {
             String type = row.get("type").toString();
             initData.result3(type);

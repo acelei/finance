@@ -41,7 +41,7 @@ public class ApiController {
     @Autowired
     private ResultService resultService;
     @Autowired
-    private ResultService2 resultService2;
+    private ResultService3 resultService3;
     @Autowired
     private SumData sumData;
     @Autowired
@@ -169,14 +169,14 @@ public class ApiController {
     @GetMapping({"data/result3/{type}", "data/result3"})
     public RestResponse<String> result3(@PathVariable(required = false) String type) throws SQLException {
         if (type != null) {
-            resultService2.run(type);
+            resultService3.run(type);
         } else {
             List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=4 and org='科技'");
 
             for (GroovyRowResult row : rows) {
                 String t = row.get("type").toString();
                 try {
-                    resultService2.run(t);
+                    resultService3.run(t);
                     baseSql.executeUpdate("update table_type set flag=5 where `type`=?", new Object[]{t});
                 } catch (SQLException e) {
                     log.error("结果输出错误:" + t, e);
@@ -193,9 +193,24 @@ public class ApiController {
         return RestResponse.success(type);
     }
 
-    @GetMapping("data/reRun/{type}")
-    public RestResponse<String> reRun(@PathVariable String type) {
-        dataRunService.reRun(type);
+    @GetMapping({"data/reRun/{type}", "data/reRun"})
+    public RestResponse<String> reRun(@PathVariable(required = false) String type) throws SQLException {
+        if (type != null) {
+            dataRunService.reRun(type);
+        } else {
+            List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=3");
+            for (GroovyRowResult row : rows) {
+                taskThreadPool.getPool().execute(() -> {
+                    String t = row.get("type").toString();
+                    try {
+                        dataRunService.reRun(t);
+                        baseSql.executeUpdate("update table_type set flag=4 where `type`=?", new Object[]{t});
+                    } catch (SQLException e) {
+                        log.error("重新处理数据错误:" + t, e);
+                    }
+                });
+            }
+        }
         return RestResponse.success(type);
     }
 
@@ -243,7 +258,7 @@ public class ApiController {
         }
         String name = row.get("name").toString();
         String day = LocalDate.now().format(DateTimeFormatter.ofPattern("MMdd"));
-        File file = resultService2.exportResult(type);
+        File file = resultService3.exportResult(type);
         return downloadFile("2019审计台账-" + name + "(" + day + ").xlsx", file);
     }
 
@@ -273,7 +288,7 @@ public class ApiController {
             String name = row.get("name").toString();
             String day = LocalDate.now().format(DateTimeFormatter.ofPattern("MMdd"));
             File f = new File("tmp/2019审计台账-" + name + "(" + day + ").xlsx");
-            return resultService2.exportResult(t, f);
+            return resultService3.exportResult(t, f);
         });
 
         File file = ExcelUtil2.zipFiles(fileList, null);

@@ -47,7 +47,7 @@ public class DataCombineTest {
             // 写入back表
             initData.back(type);
             // 调整保费
-            initData.fixPremium(type, "");
+            initData.fixPremium(type, "result_#_2");
         }).await();
     }
 
@@ -62,7 +62,7 @@ public class DataCombineTest {
         // 写入back表
         initData.back(type);
         // 调整保费
-        initData.fixPremium(type, "");
+        initData.fixPremium(type, "result_#_2");
     }
 
     /**

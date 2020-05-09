@@ -233,12 +233,12 @@ where `8-险种名称` in (
         baseSql.execute('truncate result_#_2'.replace('#', type))
         baseSql.executeInsert(rollSql.replace("#", type))
         log.info("恢复back表完成:{}", type)
-        fixPremium(type, "")
+        fixPremium(type, "result_#_2")
         clean(type)
     }
 
     private static final List<String> fixPremiumSql = ['''
-update result_#_2&
+update &
 set `10-全保费`=if(abs(`10-全保费` - sum_fee) > abs(`11-净保费` - sum_fee), `11-净保费` * 1.06, `10-全保费`),
     `11-净保费`=if(abs(`10-全保费` - sum_fee) > abs(`11-净保费` - sum_fee), `11-净保费`, `10-全保费` / 1.06)
 where abs(`14-手续费总额（报行内+报行外）(含税)`) > 0
@@ -247,7 +247,7 @@ where abs(`14-手续费总额（报行内+报行外）(含税)`) > 0
 order by abs(ROUND(`10-全保费`) - ROUND(`11-净保费` * 1.06))
 ''',
                                                        '''
-update result_#_2&
+update &
 set `10-全保费`=if(abs(`10-全保费` - sum_commission) >
                 abs(`11-净保费` - sum_commission), `11-净保费` * 1.06, `10-全保费`),
     `11-净保费`=if(abs(`10-全保费` - sum_commission) >
@@ -257,16 +257,15 @@ where abs(`14-手续费总额（报行内+报行外）(含税)`) = 0
   and abs(ROUND(`10-全保费`) - ROUND(`11-净保费` * 1.06)) > 1
 order by abs(ROUND(`10-全保费`) - ROUND(`11-净保费` * 1.06))
 ''',
-                                                       '''update result_#_2& set `10-全保费`=0-`10-全保费`,`11-净保费`=0-`11-净保费` where abs(sum_fee)>0 and `10-全保费`>0 and sum_fee<0'''
-                                                       , '''update result_#_2& set `10-全保费`=0-`10-全保费`,`11-净保费`=0-`11-净保费` where abs(sum_fee)>0 and `10-全保费`<0 and sum_fee>0'''
-                                                       , '''update result_#_2& set `10-全保费`=0-`10-全保费`,`11-净保费`=0-`11-净保费` where abs(sum_fee)=0 and `10-全保费`>0 and sum_commission<0'''
-                                                       , '''update result_#_2& set `10-全保费`=0-`10-全保费`,`11-净保费`=0-`11-净保费` where abs(sum_fee)=0 and `10-全保费`<0 and sum_commission>0''']
+                                                       '''update & set `10-全保费`=0-`10-全保费`,`11-净保费`=0-`11-净保费` where abs(sum_fee)>0 and `10-全保费`>0 and sum_fee<0'''
+                                                       , '''update & set `10-全保费`=0-`10-全保费`,`11-净保费`=0-`11-净保费` where abs(sum_fee)>0 and `10-全保费`<0 and sum_fee>0'''
+                                                       , '''update & set `10-全保费`=0-`10-全保费`,`11-净保费`=0-`11-净保费` where abs(sum_fee)=0 and `10-全保费`>0 and sum_commission<0'''
+                                                       , '''update & set `10-全保费`=0-`10-全保费`,`11-净保费`=0-`11-净保费` where abs(sum_fee)=0 and `10-全保费`<0 and sum_commission>0''']
 
-    void fixPremium(String type, String suffix) {
+    void fixPremium(String type, String tableName) {
         log.info("在result2中修正保费:{}", type)
-        suffix = suffix ?: ""
         fixPremiumSql.each {
-            baseSql.executeUpdate(it.replace("#", type).replace("&", suffix))
+            baseSql.executeUpdate(it.replace("&", tableName).replace("#", type))
         }
         log.info("在result2中修正保费完成:{}", type)
     }

@@ -38,7 +38,7 @@ public class TypeCheckTest {
     @Test
     public void before() {
         initData.roll(type);
-        initData.fixPremium(type, "");
+        initData.fixPremium(type, "result_#_2");
         tabSideData.tabSettlement(type);
         tabSideData.tabCommission(type);
         matchResultSideData.run(type);

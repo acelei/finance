@@ -30,29 +30,40 @@ public class ResultServiceTest {
     @Autowired
     private ResultService2 resultService2;
     @Autowired
+    private ResultService3 resultService3;
+    @Autowired
     private Sql baseSql;
     @Autowired
     private ThreadPool taskThreadPool;
 
     @Test
     public void run() throws SQLException {
-        resultService.run("sbt");
+        resultService.run("chengshuo");
     }
 
     @Test
     public void run2() throws SQLException {
-        resultService2.run("sbt");
+        resultService2.run("chengshuo");
     }
 
+    @Test
+    public void run3() throws SQLException {
+        resultService3.run("chengshuo");
+    }
 
     @Test
     public void result2() throws SQLException {
-        List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=5");
+        List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=5 and org='科技'");
 
         for (GroovyRowResult row : rows) {
-            resultService.fix(row.get("type").toString());
+            resultService2.run(row.get("type").toString());
         }
 
+    }
+
+    @Test
+    public void exportResult2() {
+        resultService2.exportResult("chengshuo", null).renameTo(new File("2.xlsx"));
     }
 
     @Test

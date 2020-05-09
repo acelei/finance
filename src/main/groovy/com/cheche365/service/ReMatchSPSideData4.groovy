@@ -18,10 +18,12 @@ select id,s_id,c_id,sum_fee  as fee,
        handle_sign
 from result_#_2
 where handle_sign in (0, 1, 3, 4, 6, 9, 10)
+  and c_id is not null
   and abs(0+`11-净保费`)-sum_commission > ?
   and 0-sum_commission < ?
   and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') <= ?
   and `省` = ?
+  and `40-代理人名称` = ?
   and `8-险种名称` in ('交强险','商业险')
 order by rand()
 limit 100
@@ -40,6 +42,7 @@ where handle_sign in (0, 1, 3, 4, 6, 9, 10)
   and 0+sum_commission > ?
   and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') <= ?
   and `省` = ?
+  and `40-代理人名称`=?
   and `8-险种名称` in ('交强险','商业险')
 order by rand()
 limit 100
@@ -56,11 +59,11 @@ limit 100
         def commission = row.commission as double
 
         if (commission > 0) {
-            return baseSql.rows(getQuernCommissionUp().replace("#", type), [commission, commission, row.'order_month', row.'省'])
+            return baseSql.rows(getQuernCommissionUp().replace("#", type), [commission, commission, row.'order_month', row.'省', row.'40-代理人名称'])
         }
 
         if (commission < 0) {
-            return baseSql.rows(getQuernCommissionDown().replace("#", type), [0 - commission, row.'order_month', row.'省'])
+            return baseSql.rows(getQuernCommissionDown().replace("#", type), [0 - commission, row.'order_month', row.'省', row.'40-代理人名称'])
         }
     }
 

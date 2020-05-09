@@ -58,7 +58,7 @@ public class DataRunService {
         // 写入result3表
         initData.result3(type);
         // 调整保费
-        initData.fixPremium(type, "");
+        initData.fixPremium(type, "result_#_2");
     }
 
     /**

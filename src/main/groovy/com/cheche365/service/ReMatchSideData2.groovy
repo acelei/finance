@@ -20,6 +20,7 @@ where handle_sign in (0, 1, 3, 4, 6, 9, 10)
   and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') <= ?
   and `保险公司` = ?
   and `省` = ?
+  and if(s_id is null, 1, `4-发票付款方（与发票一致）`) = if(s_id is null, 1, ?)
   and `8-险种名称` in ('交强险','商业险')
 order by rand()
 limit 100
@@ -39,6 +40,7 @@ where handle_sign in (0, 1, 3, 4, 6, 9, 10)
   and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') <= ?
   and `保险公司` = ?
   and `省` = ?
+  and `4-发票付款方（与发票一致）` = ?
   and `8-险种名称` in ('交强险','商业险')
 order by rand()
 limit 100
@@ -56,7 +58,7 @@ from result_#_2
 where handle_sign in (0, 1, 3, 4, 6, 9, 10)
   and abs(0+`11-净保费`)-sum_commission > ?
   and 0-sum_commission < ?
-  and `40-代理人名称`=?
+  and if(c_id is null, 1, `40-代理人名称`)=if(c_id is null, 1, ?)
   and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') <= ?
   and `保险公司` = ?
   and `省` = ?

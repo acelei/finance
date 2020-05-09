@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service
 @Service
 @Slf4j
 class ResultService2 extends ResultService {
+    String tableFinal = 'result_#_3_final'
     String clean2Sql = 'truncate result_#_3_final'
     String result2Sql = '''
 insert into result_#_3_final (s_id,
@@ -65,8 +66,8 @@ select group_concat(s_id)                                  as s_id,
        source_file,
        @rownum:=@rownum+1 AS `1-序号`,
        `2-保代机构`,
-       `3-出单保险代理机构（车车科技适用）`,
-       `4-发票付款方（与发票一致）`,
+       if(group_concat(distinct(`4-发票付款方（与发票一致）`)) is null,max(`3-出单保险代理机构（车车科技适用）`),group_concat(distinct(`4-发票付款方（与发票一致）`))),
+       if(group_concat(distinct(`4-发票付款方（与发票一致）`)) is null,max(`3-出单保险代理机构（车车科技适用）`),group_concat(distinct(`4-发票付款方（与发票一致）`))),
        `5-投保人名称`,
        `6-保单单号`,
        `7-出单保险公司（明细至保险公司分支机构）`,
@@ -188,13 +189,13 @@ from (select a.id                                                               
              a.id                                                                                     as `c_id`,
              a.source_file,
              a.`2-保代机构`,
-             a.`3-出单保险代理机构（车车科技适用）`,
-             a.`4-发票付款方（与发票一致）`,
+             if(d.id is not null, d.`7-出单保险公司（明细至保险公司分支机构）`, if(e.id is not null, e.`7-出单保险公司（明细至保险公司分支机构）`, a.`7-出单保险公司（明细至保险公司分支机构）`)),
+             if(d.id is not null, d.`7-出单保险公司（明细至保险公司分支机构）`, if(e.id is not null, e.`7-出单保险公司（明细至保险公司分支机构）`, a.`7-出单保险公司（明细至保险公司分支机构）`)),
              if(b.finance_id is not null, b.applicant,
                 if(d.id is not null, d.`5-投保人名称`, if(e.id is not null, e.`5-投保人名称`, a.`5-投保人名称`)))    as '5-投保人名称',
              if(b.finance_id is not null, b.policy_no,
                 if(d.id is not null, d.`6-保单单号`, if(e.id is not null, e.`6-保单单号`, a.`6-保单单号`)))       as '6-保单单号',
-             a.`7-出单保险公司（明细至保险公司分支机构）`,
+             if(d.id is not null, d.`7-出单保险公司（明细至保险公司分支机构）`, if(e.id is not null, e.`7-出单保险公司（明细至保险公司分支机构）`, a.`7-出单保险公司（明细至保险公司分支机构）`)) as `7-出单保险公司（明细至保险公司分支机构）`,
              if(b.finance_id is not null, if(b.insurance_type is not null, b.insurance_type, if(b.insurance_type_id = 1, '交强险', '商业险')),
                 if(d.id is not null, d.`8-险种名称`, if(e.id is not null, e.`8-险种名称`, a.`8-险种名称`)))       as '8-险种名称',
              if(b.finance_id is not null, b.order_date,
@@ -250,33 +251,17 @@ from (select a.id                                                               
                                                       c.table_name in ('result_#_2', 'settlement_#', 'commission_#')
                left join settlement_# d on d.id = c.s_id and c.type = 1
                left join commission_# e on e.id = c.s_id and c.type = 4) t,(SELECT @rownum:=0) temp
-group by `6-保单单号`, if(`8-险种名称` in ('交强险', '商业险'), `8-险种名称`, 'ODS'), `4-发票付款方（与发票一致）`, `7-出单保险公司（明细至保险公司分支机构）`
+group by `6-保单单号`, if(`8-险种名称` in ('交强险', '商业险'), `8-险种名称`, 'ODS')
 '''
 
-    String fixSql = '''
-update result_#_3_final set `13-手续费率`=`14-手续费总额（报行内+报行外）(含税)`/`11-净保费`,
-                             `15-手续费总额（报行内+报行外）(不含税)`=`14-手续费总额（报行内+报行外）(含税)`/1.06,
-                             `18-手续费比例`=`19-手续费金额（含税）`/`11-净保费`,
-                             `20-手续费金额（不含税）`=`19-手续费金额（含税）`/1.06,
-                             `26-手续费比例`=`28-开票金额（含税）`/`11-净保费`,
-                             `27-开票金额（不含税）`=`28-开票金额（含税）`/1.06,
-                             `36-开票金额（不含税）`=`37-开票金额（含税）`/1.06,
-                             `38-尚未开票金额（不含税）`=`39-尚未开票金额（含税）`/1.06,
-                             `41-佣金比例`=`42-佣金金额（已入账）`/`11-净保费`,
-                             `44-支付比例`=`45-支付金额`/`11-净保费`
-'''
-
-    String fixSql2 = '''
-update result_#_3_final set `13-手续费率`=`14-手续费总额（报行内+报行外）(含税)`/`11-净保费`,
-                             `15-手续费总额（报行内+报行外）(不含税)`=`14-手续费总额（报行内+报行外）(含税)`/1.06,
-                             `18-手续费比例`=`19-手续费金额（含税）`/`11-净保费`,
-                             `26-手续费比例`=`28-开票金额（含税）`/`11-净保费`,
-                             `27-开票金额（不含税）`=`28-开票金额（含税）`/1.06,
-                             `36-开票金额（不含税）`=`37-开票金额（含税）`/1.06,
-                             `38-尚未开票金额（不含税）`=`39-尚未开票金额（含税）`/1.06,
-                             `41-佣金比例`=`42-佣金金额（已入账）`/`11-净保费`,
-                             `44-支付比例`=`45-支付金额`/`11-净保费`
-'''
     String queryResult = "select * from result_#_3_final"
 
+    void run(String type) {
+        log.info("输出final3 result:{}", type)
+//        result(type)
+        result2(type)
+        initData.fixPremium(type, getTableFinal())
+        fix(type)
+        log.info("输出final3 result完成:{}", type)
+    }
 }

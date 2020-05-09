@@ -58,7 +58,7 @@ class MatchSideData {
 
     void matchCommission(GroovyRowResult settlement, Map<String, List<GroovyRowResult>> commissionGroup, String type) {
         for (List<GroovyRowResult> commissions : commissionGroup.values()) {
-            if (commissions.size() == 0 || commissions[0].order_month == null || settlement.order_month < commissions[0].order_month) {
+            if (commissions.size() == 0 || commissions[0].order_month == null || settlement.order_month < commissions[0].order_month || commissions[0].'保险公司' != settlement.'保险公司' || commissions[0].'省' != settlement.'省') {
                 continue
             }
             int size = Math.ceil(commissions.size / 10)
@@ -89,7 +89,7 @@ class MatchSideData {
 
     void matchSettlement(GroovyRowResult commission, Map<String, List<GroovyRowResult>> settlementGroup, String type) {
         for (List<GroovyRowResult> settlements : settlementGroup.values()) {
-            if (settlements.size() == 0 || settlements[0].order_month == null || commission.order_month < settlements[0].order_month) {
+            if (settlements.size() == 0 || settlements[0].order_month == null || commission.order_month < settlements[0].order_month || settlements[0].'保险公司' != commission.'保险公司' || settlements[0].'省' != commission.'省') {
                 continue
             }
             int size = Math.ceil(settlements.size / 10)
@@ -116,7 +116,6 @@ class MatchSideData {
                 }
             }
         }
-
     }
 
     private static MatchResult<List<GroovyRowResult>, List<GroovyRowResult>> matchData(List<GroovyRowResult> settlements, List<GroovyRowResult> commissions, Object lock) {
@@ -238,7 +237,7 @@ class MatchSideData {
             sumFee += (c.'fee' as double)
             if ((row.r_flag as Integer) == 1) {
                 cId = (c.s_id as String).split(",")[0]
-            }else {
+            } else {
                 cId = (c.c_id as String).split(",")[0]
                 joinType = "2"
             }

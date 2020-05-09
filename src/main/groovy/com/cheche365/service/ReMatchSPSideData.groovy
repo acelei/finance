@@ -47,15 +47,7 @@ limit 100
 
     @Override
     List<GroovyRowResult> findResult(GroovyRowResult row, String type) {
-        def fee = row.fee as double
         def commission = row.commission as double
-        if (fee > 0) {
-            return baseSql.rows(getQuernSettlementUp().replace("#", type), [fee, fee, row.'order_month', row.'保险公司', row.'省'])
-        }
-
-        if (fee < 0) {
-            return baseSql.rows(getQuernSettlementDown().replace("#", type), [0 - fee, row.'order_month', row.'保险公司', row.'省'])
-        }
 
         if (commission > 0) {
             return baseSql.rows(getQuernCommissionUp().replace("#", type), [commission, commission, row.'order_month', row.'保险公司', row.'省'])

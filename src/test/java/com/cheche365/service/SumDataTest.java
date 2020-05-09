@@ -32,7 +32,7 @@ public class SumDataTest {
 
     @Test
     public void sumResult3() throws SQLException {
-        List<GroovyRowResult> rows = baseSql.rows("select id,`type` from table_type where org!='科技' and flag>0");
+        List<GroovyRowResult> rows = baseSql.rows("select id,`type` from table_type where org='科技' and flag>0");
         baseSql.execute("truncate result_sum_data_3");
         for (GroovyRowResult row : rows) {
             Integer id = MapUtils.getInteger(row, "id");
@@ -41,7 +41,7 @@ public class SumDataTest {
         }
     }
 
-    String tjSql = "select org,name,responsible,a.source_file,`3-出单保险代理机构（车车科技适用）`,`7-出单保险公司（明细至保险公司分支机构）`,\n" +
+    String tjSql = "select org,name,responsible,a.source_file,`4-发票付款方（与发票一致）`,`7-出单保险公司（明细至保险公司分支机构）`,\n" +
             "       sum(`14-手续费总额（报行内+报行外）(含税)`) as `14-手续费总额（报行内+报行外）(含税)`,\n" +
             "       sum(`15-手续费总额（报行内+报行外）(不含税)`) as `15-手续费总额（报行内+报行外）(不含税)`,\n" +
             "       sum(`19-手续费金额（含税）`) as `19-手续费金额（含税）`,\n" +
@@ -57,7 +57,7 @@ public class SumDataTest {
             "       sum(`42-佣金金额（已入账）`) as `42-佣金金额（已入账）`,\n" +
             "       sum(`45-支付金额`) as `45-支付金额`,\n" +
             "       sum(`46-未计提佣金（19年底尚未入帐）`) as `46-未计提佣金（19年底尚未入帐）`\n" +
-            "       from result_sum_data_3 a,table_type b where a.type_id=b.id group by type_id,a.source_file,`3-出单保险代理机构（车车科技适用）`,`7-出单保险公司（明细至保险公司分支机构）`";
+            "       from result_sum_data_3 a,table_type b where a.type_id=b.id group by type_id,a.source_file,`4-发票付款方（与发票一致）`,`7-出单保险公司（明细至保险公司分支机构）`";
 
     @Test
     public void exportFile() throws SQLException, IOException {
@@ -66,7 +66,7 @@ public class SumDataTest {
                 "name",
                 "responsible",
                 "source_file",
-                "3-出单保险代理机构（车车科技适用）",
+                "4-发票付款方（与发票一致）",
                 "7-出单保险公司（明细至保险公司分支机构）",
                 "14-手续费总额（报行内+报行外）(含税)",
                 "15-手续费总额（报行内+报行外）(不含税)",
@@ -172,19 +172,42 @@ public class SumDataTest {
             "where `8-险种名称` in ('交强险', '商业险')\n" +
             "  and (abs(sum_fee)>abs(`11-净保费`) or abs(sum_commission)>abs(`11-净保费`))";
 
-    @Test
-    public void exportTjSign2() throws SQLException, IOException, InterruptedException {
+    String errorCount3 = "select count(9) as c\n" +
+            "from result_#_3_final where `4-发票付款方（与发票一致）` like '%,%'";
 
-        List<GroovyRowResult> rows = baseSql.rows("select `type`,`name`,`org` from table_type where flag=5 and org='科技'");
+    @Test
+    public void exportTjSign2() throws SQLException {
+        List<GroovyRowResult> rows = baseSql.rows("select `type`,`name`,`org` from table_type where  type='chengshuo'");
         for (GroovyRowResult row : rows) {
             String type = row.get("type").toString();
-            GroovyRowResult r = baseSql.firstRow(errorCount2.replace("#", type));
+            GroovyRowResult r = baseSql.firstRow(errorCount.replace("#", type));
             Integer c = MapUtils.getInteger(r, "c");
             if (c > 0) {
                 log.info("{}:{}", type, c);
             }
         }
-
     }
 
+    String[] errorCount4 = new String[]{
+            "select count(9) as c from settlement_# a, result_gross_margin_ref b,commission_# c where a.id=b.s_id and c.id=b.c_id and b.type=2 and b.table_name in ('result_#_2','settlement_#','commission_#') and a.保险公司id!=c.保险公司id",
+            "select count(9) as c from settlement_# a, result_gross_margin_ref b,settlement_# c where a.id=b.s_id and c.id=b.c_id and b.type=3 and b.table_name in ('result_#_2','settlement_#','commission_#') and a.保险公司id!=c.保险公司id",
+            "select count(9) as c from commission_# a, result_gross_margin_ref b,commission_# c where a.id=b.c_id and c.id=b.s_id and b.type=4 and b.table_name in ('result_#_2','settlement_#','commission_#') and a.保险公司id!=c.保险公司id",
+            "select count(9) as c from commission_# a, result_gross_margin_ref b,settlement_# c where a.id=b.c_id and c.id=b.s_id and b.type=1 and b.table_name in ('result_#_2','settlement_#','commission_#') and a.保险公司id!=c.保险公司id"
+    };
+
+
+    @Test
+    public void exportTjSignX() throws SQLException {
+        List<GroovyRowResult> rows = baseSql.rows("select `type`,`name`,`org` from table_type where flag=5 and org!='科技'");
+        for (GroovyRowResult row : rows) {
+            String type = row.get("type").toString();
+            for (String s : errorCount4) {
+                GroovyRowResult r = baseSql.firstRow(s.replace("#", type));
+                Integer c = MapUtils.getInteger(r, "c");
+                if (c > 0) {
+                    log.info("{}:{}", type, c);
+                }
+            }
+        }
+    }
 }
