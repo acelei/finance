@@ -454,7 +454,7 @@ update result_#_2_final set `13-手续费率`=`14-手续费总额（报行内+�
                     row[it] = row[it] == null ? 0 : (row[it] as Double)
                 }
             }
-            file = targetFile = ExcelUtil2.writeToExcel(head, rows)
+            file = ExcelUtil2.writeToExcel(head, rows)
             if (targetFile != null) {
                 targetFile.deleteOnExit()
                 file.renameTo(targetFile)
