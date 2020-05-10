@@ -241,8 +241,42 @@ from commission_# a
         def rows = baseSql.rows("select `type` from table_type where org!='科技' and flag>0")
         rows.each {
             def type = it.type
-//            getCZL(type as String)
             getFixCZL(type as String)
+        }
+    }
+
+    List<String> stype = [
+            'settlement_anhui_2',
+            'settlement_dongguan_2',
+            'settlement_foshan_2',
+            'settlement_fujian_2',
+            'settlement_guangdong_2',
+            'settlement_guangxi_2',
+            'settlement_jiangsu_2',
+            'settlement_liaoning_2',
+            'settlement_sbt_czl_2',
+            'settlement_shandong_2',
+            'settlement_sichuan_2',
+            'settlement_zhejiang_2']
+    List<String> ctype = [
+            'commission_all_2',
+            'commission_anhui_2',
+            'commission_fujian_2',
+            'commission_jiangsu_2',
+            'commission_liaoning_2',
+            'commission_sichuan_2',
+            'commission_zhejiang_2',
+            'commission_zongbu_2'
+    ]
+
+
+    @Test
+    void reRun2() {
+        stype.each {
+            baseSql.executeUpdate("update ${sTableName} a,${it} b set a.`3-出单保险代理机构（车车科技适用）`=b.`3-出单保险代理机构（车车科技适用）`,a.`4-发票付款方（与发票一致）`=b.`4-发票付款方（与发票一致）` where a.c_id=b.id and a.source_file='${it}'" as String)
+        }
+        ctype.each {
+            baseSql.executeUpdate("update ${cTableName} a,${it} b set a.`40-代理人名称`=b.`40-代理人名称` where a.c_id=b.id and a.source_file='${it}'" as String)
         }
     }
 
@@ -262,9 +296,9 @@ from commission_# a
 //            kj_czl: ['3-出单保险代理机构（车车科技适用）', '4-发票付款方（与发票一致）'],
 //            dx: ['3-出单保险代理机构（车车科技适用）', '4-发票付款方（与发票一致）'],
 //            sbt: ['3-出单保险代理机构（车车科技适用）', '4-发票付款方（与发票一致）'],
-sbt: ['40-代理人名称'],
+sbt            : ['40-代理人名称'],
 yunnan_keji_ebt: ['40-代理人名称'],
-hebei_keji_ebt: ['40-代理人名称'],
+hebei_keji_ebt : ['40-代理人名称'],
 
     ]
 
@@ -284,7 +318,7 @@ hebei_keji_ebt: ['40-代理人名称'],
             def ss = selectSql.replace("#", key).replace("&", column)
             def rows = baseSql.rows(ss)
             runThreadPool.executeWithLatch(rows, { row ->
-                def d = value.collect { "`${it}`='${row[it]}'".replace("'null'",'null') }.join(",")
+                def d = value.collect { "`${it}`='${row[it]}'".replace("'null'", 'null') }.join(",")
                 if (row.s_id != null) {
                     def us = updateSettlement.replace("#", key).replace("&", d).replace("@", row.s_id as String)
                     baseSql.executeUpdate(us)
@@ -295,22 +329,6 @@ hebei_keji_ebt: ['40-代理人名称'],
                     baseSql.executeUpdate(uc)
                 }
             }).await()
-        }
-    }
-
-
-    String updated = "update settlement_# set 保险公司id=2024,保险公司='大家财产保险有限责任公司' where 保险公司id=9901"
-    String updated2 = "update commission_# set 保险公司id=2024,保险公司='大家财产保险有限责任公司' where 保险公司id=9901"
-    String updated3 = "update commission_# set 保险公司id=2024,保险公司='大家财产保险有限责任公司' where 保险公司id=2024"
-    @Test
-    void d2() {
-        def rows = baseSql.rows("select `type` from table_type where flag>0")
-        rows.each {
-            def type = it.type
-
-            baseSql.executeUpdate(updated.replace("#",type))
-            baseSql.executeUpdate(updated2.replace("#",type))
-            baseSql.executeUpdate(updated3.replace("#",type))
         }
     }
 

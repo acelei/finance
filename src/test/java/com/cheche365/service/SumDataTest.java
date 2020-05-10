@@ -87,7 +87,7 @@ public class SumDataTest {
         List<GroovyRowResult> rows = baseSql.rows(tjSql);
         List<Map> list = Lists.newArrayList(rows);
         File file = ExcelUtil2.writeToExcel(head, list);
-        FileUtils.moveFile(file, new File("统计_科技.xlsx"));
+        FileUtils.moveFile(file, new File("统计_科技(0510).xlsx"));
     }
 
     @Test

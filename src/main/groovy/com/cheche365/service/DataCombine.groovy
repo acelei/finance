@@ -82,6 +82,8 @@ class DataCombine {
                 def c = commission.get(i)
                 c.'c_id' = c.'id'
                 c.'id' = null
+                c.'3-出单保险代理机构（车车科技适用）' = c.'7-出单保险公司（明细至保险公司分支机构）'
+                c.'4-发票付款方（与发票一致）' = c.'7-出单保险公司（明细至保险公司分支机构）'
                 result.add(c)
             }
         }
