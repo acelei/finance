@@ -220,7 +220,7 @@ public class ReplaceBusinessData {
             "  on t1.`6-保单单号` = t2.`6-保单单号`\n" +
             "    and t1.`8-险种名称` = t2.`8-险种名称`\n" +
             "set t2.handle_sign    = 3,\n" +
-            "    t2.s_id           = concat(t2.s_id, ',', t1.ids),\n" +
+            "    t2.s_id           = if(t2.s_id is null, t1.ids,concat(t2.s_id, ',', t1.ids)),\n" +
             "    t2.sum_fee = (t2.sum_fee + t1.sumFee)";
 
     private String updateThreeHandleSignCom = "update (select `6-保单单号`, `8-险种名称`, group_concat(id) as ids, sum(sum_commission) as sumCommission\n" +
@@ -235,7 +235,7 @@ public class ReplaceBusinessData {
             "  on t1.`6-保单单号` = t2.`6-保单单号`\n" +
             "    and t1.`8-险种名称` = t2.`8-险种名称`\n" +
             "set t2.handle_sign    = 3,\n" +
-            "    t2.c_id           = concat(t2.c_id, ',', t1.ids),\n" +
+            "    t2.c_id           = if(t2.c_id is null, t1.ids,concat(t2.c_id, ',', t1.ids)),\n" +
             "    t2.sum_commission = (t2.sum_commission + t1.sumCommission)";
 
     private String updateFinishHandleSignFee = "update `settlementTableName` t1\n" +

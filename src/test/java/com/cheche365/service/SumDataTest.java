@@ -177,7 +177,7 @@ public class SumDataTest {
 
     @Test
     public void exportTjSign2() throws SQLException {
-        List<GroovyRowResult> rows = baseSql.rows("select `type`,`name`,`org` from table_type where  type='chengshuo'");
+        List<GroovyRowResult> rows = baseSql.rows("select `type`,`name`,`org` from table_type where flag=5 and org='科技'");
         for (GroovyRowResult row : rows) {
             String type = row.get("type").toString();
             GroovyRowResult r = baseSql.firstRow(errorCount.replace("#", type));

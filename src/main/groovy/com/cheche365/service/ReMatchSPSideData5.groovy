@@ -24,9 +24,10 @@ from result_#_2
 where handle_sign in (0, 1, 3, 4, 6, 9, 10)
   and abs(0+`11-净保费`)-sum_fee > ?
   and 0 - sum_fee < ?
-  and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') = '2019-08'
+  and DATE_FORMAT(`9-保单出单日期`,'%Y-%m')  = '2019-08'
   and `保险公司` = ?
   and `省` = ?
+  and if(s_id is null, 1, `4-发票付款方（与发票一致）`) = if(s_id is null, 1, ?)
   and `8-险种名称` in ('交强险','商业险')
 order by rand()
 limit 100
@@ -43,9 +44,10 @@ select id,s_id,c_id,sum_fee  as fee,
 from result_#_2
 where handle_sign in (0, 1, 3, 4, 6, 9, 10)
   and 0+sum_fee > ?
-  and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') = '2019-08'
+  and DATE_FORMAT(`9-保单出单日期`,'%Y-%m')  = '2019-08'
   and `保险公司` = ?
   and `省` = ?
+  and `4-发票付款方（与发票一致）` = ?
   and `8-险种名称` in ('交强险','商业险')
 order by rand()
 limit 100
@@ -63,7 +65,9 @@ from result_#_2
 where handle_sign in (0, 1, 3, 4, 6, 9, 10)
   and abs(0+`11-净保费`)-sum_commission > ?
   and 0-sum_commission < ?
-  and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') = '2019-08'
+  and if(c_id is null, 1, `40-代理人名称`)=if(c_id is null, 1, ?)
+  and DATE_FORMAT(`9-保单出单日期`,'%Y-%m')  = '2019-08'
+  and `保险公司` = ?
   and `省` = ?
   and `8-险种名称` in ('交强险','商业险')
 order by rand()
@@ -81,7 +85,9 @@ select id,s_id,c_id,sum_fee  as fee,
 from result_#_2
 where handle_sign in (0, 1, 3, 4, 6, 9, 10)
   and 0+sum_commission > ?
+  and `40-代理人名称`=?
   and DATE_FORMAT(`9-保单出单日期`,'%Y-%m') = '2019-08'
+  and `保险公司` = ?
   and `省` = ?
   and `8-险种名称` in ('交强险','商业险')
 order by rand()
@@ -93,19 +99,19 @@ limit 100
         def fee = row.fee as double
         def commission = row.commission as double
         if (fee > 0) {
-            return baseSql.rows(getQuernSettlementUp().replace("#", type), [fee, fee, row.'保险公司', row.'省'])
+            return baseSql.rows(getQuernSettlementUp().replace("#", type), [fee, fee, row.'保险公司', row.'省' , row.'4-发票付款方（与发票一致）'])
         }
 
         if (fee < 0) {
-            return baseSql.rows(getQuernSettlementDown().replace("#", type), [0 - fee, row.'保险公司', row.'省'])
+            return baseSql.rows(getQuernSettlementDown().replace("#", type), [0 - fee, row.'保险公司', row.'省', row.'4-发票付款方（与发票一致）'])
         }
 
         if (commission > 0) {
-            return baseSql.rows(getQuernCommissionUp().replace("#", type), [commission, commission, row.'省'])
+            return baseSql.rows(getQuernCommissionUp().replace("#", type), [commission, commission, row.'40-代理人名称', row.'保险公司', row.'省'])
         }
 
         if (commission < 0) {
-            return baseSql.rows(getQuernCommissionDown().replace("#", type), [0 - commission, row.'省'])
+            return baseSql.rows(getQuernCommissionDown().replace("#", type), [0 - commission, row.'40-代理人名称', row.'保险公司', row.'省'])
         }
     }
 

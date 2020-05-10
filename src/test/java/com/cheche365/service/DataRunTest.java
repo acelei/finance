@@ -317,7 +317,7 @@ public class DataRunTest {
 
     @Test
     public void testReplaceBusinessData() {
-        replaceBusinessData.replaceBusinessList("bj");
+        replaceBusinessData.replaceBusinessList("shandong_dsf_keji");
     }
 
 }
