@@ -184,7 +184,7 @@ where `8-险种名称` in (
 
         //处理das_data_pool_business中handle_sign
         List<GroovyRowResult> insProList = baseSql.rows("select insurance_company_id as insuranceCompanyId, province_id as provinceId from business_replace_ref " +
-                "where table_name in ('" + commissionTableName + "','" + settleMentTableName + "') group by insurance_company_id, province_id")
+                "where table_name in ('" + commissionTableName + "','" + settleMentTableName + "') and business_table_name!='das_data_pool_history' group by insurance_company_id, province_id")
         if (CollectionUtils.isNotEmpty(insProList)) {
             for (GroovyRowResult map : insProList) {
                 String insuranceCompanyId = map.get("insuranceCompanyId").toString()
