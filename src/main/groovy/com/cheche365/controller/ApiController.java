@@ -171,7 +171,7 @@ public class ApiController {
         if (type != null) {
             resultService3.run(type);
         } else {
-            List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=4 and org='科技'");
+            List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=4");
 
             for (GroovyRowResult row : rows) {
                 String t = row.get("type").toString();
@@ -252,7 +252,7 @@ public class ApiController {
 
     @GetMapping({"data/exportResult3/{type}"})
     public ResponseEntity exportResult3(@PathVariable String type) throws SQLException {
-        GroovyRowResult row = baseSql.firstRow("select `type`,`name` from table_type where type = '" + type + "' and org='科技'");
+        GroovyRowResult row = baseSql.firstRow("select `type`,`name` from table_type where type = '" + type + "'");
         if (row == null) {
             return null;
         }
@@ -306,6 +306,23 @@ public class ApiController {
             String day = LocalDate.now().format(DateTimeFormatter.ofPattern("MMdd"));
             File f = new File("tmp/2019审计台账-" + name + "(" + day + ").xlsx");
             return resultService.exportResult(t, f);
+        });
+
+        File file = ExcelUtil2.zipFiles(fileList, null);
+
+        return downloadFile("车车保代.zip", file);
+    }
+
+    @GetMapping("data/exportResultBd3")
+    public ResponseEntity exportResultBd3() throws SQLException, ExecutionException, InterruptedException, IOException {
+        List<GroovyRowResult> rows = baseSql.rows("select `type`,`name` from table_type where flag=5 and org!='科技'");
+
+        List<File> fileList = taskThreadPool.submitWithResult(rows, row -> {
+            String t = row.get("type").toString();
+            String name = row.get("name").toString();
+            String day = LocalDate.now().format(DateTimeFormatter.ofPattern("MMdd"));
+            File f = new File("tmp/2019审计台账-" + name + "(" + day + ").xlsx");
+            return resultService3.exportResult(t, f);
         });
 
         File file = ExcelUtil2.zipFiles(fileList, null);

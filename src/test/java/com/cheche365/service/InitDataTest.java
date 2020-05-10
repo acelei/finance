@@ -80,7 +80,7 @@ public class InitDataTest {
 
     @Test
     public void modifyTable() throws SQLException {
-        List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=5 and org='科技'");
+        List<GroovyRowResult> rows = baseSql.rows("select `type` from table_type where flag=5 and org!='科技'");
 
         for (GroovyRowResult row : rows) {
             String type = row.get("type").toString();

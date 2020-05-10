@@ -87,7 +87,7 @@ public class SumDataTest {
         List<GroovyRowResult> rows = baseSql.rows(tjSql);
         List<Map> list = Lists.newArrayList(rows);
         File file = ExcelUtil2.writeToExcel(head, list);
-        FileUtils.moveFile(file, new File("统计_保代.xlsx"));
+        FileUtils.moveFile(file, new File("统计_科技.xlsx"));
     }
 
     @Test
@@ -189,23 +189,35 @@ public class SumDataTest {
     }
 
     String[] errorCount4 = new String[]{
-            "select count(9) as c from settlement_# a, result_gross_margin_ref b,commission_# c where a.id=b.s_id and c.id=b.c_id and b.type=2 and b.table_name in ('result_#_2','settlement_#','commission_#') and a.保险公司id!=c.保险公司id",
-            "select count(9) as c from settlement_# a, result_gross_margin_ref b,settlement_# c where a.id=b.s_id and c.id=b.c_id and b.type=3 and b.table_name in ('result_#_2','settlement_#','commission_#') and a.保险公司id!=c.保险公司id",
-            "select count(9) as c from commission_# a, result_gross_margin_ref b,commission_# c where a.id=b.c_id and c.id=b.s_id and b.type=4 and b.table_name in ('result_#_2','settlement_#','commission_#') and a.保险公司id!=c.保险公司id",
-            "select count(9) as c from commission_# a, result_gross_margin_ref b,settlement_# c where a.id=b.c_id and c.id=b.s_id and b.type=1 and b.table_name in ('result_#_2','settlement_#','commission_#') and a.保险公司id!=c.保险公司id"
+            "select count(9) as c\n" +
+                    "from settlement_# a\n" +
+                    "         left join business_replace_ref b on a.id = b.finance_id and b.table_name = 'settlement_#'\n" +
+                    "         left join result_gross_margin_ref c on a.id = c.s_id and c.type in (2,3)  and c.table_name in ('result_#_2', 'settlement_#', 'commission_#')\n" +
+                    "         left join commission_# d on d.id = c.c_id and c.type = 2\n" +
+                    "         left join settlement_# e on e.id = c.c_id and c.type = 3\n" +
+                    "where a.保险公司id!=if(b.finance_id is not null, b.insurance_company_id, if(d.id is not null, d.保险公司id, if(e.id is not null, e.保险公司id, a.保险公司id)))",
+            "select count(9) as c\n" +
+                    "from commission_# a\n" +
+                    "         left join business_replace_ref b on a.id = b.finance_id and b.table_name = 'commission_#'\n" +
+                    "         left join result_gross_margin_ref c on a.id = c.c_id and c.type in (1,4)  and c.table_name in ('result_#_2', 'settlement_#', 'commission_#')\n" +
+                    "         left join settlement_# d on d.id = c.s_id and c.type = 1\n" +
+                    "         left join commission_# e on e.id = c.s_id and c.type = 4\n" +
+                    "where a.保险公司id!=if(b.finance_id is not null, b.insurance_company_id, if(d.id is not null, d.保险公司id, if(e.id is not null, e.保险公司id, a.保险公司id)))"
     };
 
 
     @Test
     public void exportTjSignX() throws SQLException {
-        List<GroovyRowResult> rows = baseSql.rows("select `type`,`name`,`org` from table_type where flag=5 and org!='科技'");
+        List<GroovyRowResult> rows = baseSql.rows("select `type`,`name`,`org` from table_type where flag>=4 and org!='科技'");
         for (GroovyRowResult row : rows) {
             String type = row.get("type").toString();
+            int i=0;
             for (String s : errorCount4) {
                 GroovyRowResult r = baseSql.firstRow(s.replace("#", type));
                 Integer c = MapUtils.getInteger(r, "c");
+                ++i;
                 if (c > 0) {
-                    log.info("{}:{}", type, c);
+                    log.info("{},{}:{}", i,type, c);
                 }
             }
         }

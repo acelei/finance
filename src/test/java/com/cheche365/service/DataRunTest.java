@@ -151,7 +151,7 @@ public class DataRunTest {
         }
     }
 
-    private String type = "chengshuo";
+    private String type = "zongbu";
 
     @Test
     public void singRun() {
